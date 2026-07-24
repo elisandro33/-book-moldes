@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ProdTech - Diário de Bordo</title>
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --accent: #f59e0b;
+            --bg-light: #f8fafc;
+            --text-dark: #1e293b;
+            --border-gray: #e2e8f0;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { margin: 0; padding: 0; background-color: var(--bg-light); color: var(--text-dark); }
+        
+        /* Navegação e Abas */
+        .header-top { background: #1e293b; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-tabs { display: flex; background: white; border-bottom: 2px solid var(--border-gray); overflow-x: auto; }
+        .tab-button { flex: 1; padding: 15px 10px; border: none; background: none; font-weight: bold; color: #64748b; font-size: 0.85rem; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; }
+        .tab-button.active { color: var(--primary-blue); border-bottom-color: var(--primary-blue); }
+        
+        /* Telas */
+        .view-content { display: none; padding: 15px; }
+        .view-content.active { display: block; }
+        
+        /* Formulários e Inputs */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; color: #475569; }
+        .input-text-white, .input-select-gray { width: 100%; padding: 12px; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 1rem; background: white; }
+        
+        /* Botões */
+        .btn-submit-system { width: 100%; padding: 15px; background: var(--primary-blue); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .btn-danger { background: var(--danger); }
+        .btn-secondary { background: #64748b; }
+        
+        /* Cards OEE */
+        .oee-box-display { background: var(--border-gray); padding: 15px; border-radius: 8px; text-align: center; color: white; font-weight: bold; font-size: 1.2rem; margin-top: 15px; }
+        
+        /* Tabelas Responsivas */
+        .table-responsive { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid var(--border-gray); }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-gray); font-size: 0.85rem; }
+        th { background: #f1f5f9; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <!-- Tela de Setup Inicial (Admin Master) -->
+    <div id="setup-screen" style="display: none; padding: 20px; text-align: center; margin-top: 50px;">
+        <h2>Configuração Inicial do Sistema</h2>
+        <p>Crie o primeiro acesso de Administrador.</p>
+        <input type="email" id="setup-email" class="input-text-white" placeholder="E-mail Admin" style="margin-bottom:10px;">
+        <input type="password" id="setup-senha" class="input-text-white" placeholder="Senha (mín 6 dígitos)" style="margin-bottom:10px;">
+        <button id="btn-save-setup" class="btn-submit-system">Configurar Sistema</button>
+    </div>
+
+    <!-- Tela de Login -->
+    <div id="auth-screen" style="display: flex; flex-direction: column; padding: 20px; margin-top: 50px;">
+        <h2 style="text-align: center; color: var(--primary-blue);">PROD-TECH</h2>
+        <div id="login-erro-banner" style="display:none; background:var(--danger); color:white; padding:10px; border-radius:8px; margin-bottom:15px; text-align:center;"></div>
+        <input type="email" id="login-email" class="input-text-white" placeholder="Seu E-mail" style="margin-bottom:10px;">
+        <input type="password" id="login-senha" class="input-text-white" placeholder="Sua Senha" style="margin-bottom:15px;">
+        <button id="btn-login" class="btn-submit-system">ENTRAR</button>
+    </div>
+
+    <!-- Tela Principal do App -->
+    <div id="app-screen" style="display: none;">
+        
+        <!-- Cabeçalho Superior -->
+        <header class="header-top">
+            <div style="font-weight: 900; font-size: 1.2rem; color: #60a5fa;">PROD-<br>TECH</div>
+            <div style="font-size: 0.75rem; text-align: right; position: relative;">
+                <span id="user-display" onclick="toggleDropdownMenu()" style="cursor:pointer; text-decoration:underline;"></span>
+                
+                <!-- Menu Dropdown (Sair / Painel Adm) -->
+                <div id="menu-dropdown-box" style="display:none; position:absolute; right:0; top:100%; background:white; color:var(--text-dark); border:1px solid #ccc; border-radius:8px; padding:10px; width:200px; box-shadow:0 4px 6px rgba(0,0,0,0.1); z-index:99;">
+                    <div id="menu-adm-gate" style="display:none; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                        <b style="color:var(--primary-blue); font-size:0.8rem; display:block; margin-bottom:5px;">Painel Admin</b>
+                        <input type="email" id="adm-new-user-email" class="input-text-white" placeholder="Novo Operador (E-mail)" style="font-size:0.75rem; padding:8px; margin-bottom:5px;">
+                        <button id="btn-create-operator" class="btn-submit-system" style="padding:8px; font-size:0.75rem;">CRIAR CONTA</button>
+                        <div style="max-height:150px; overflow-y:auto; margin-top:5px;">
+                            <table style="min-width:100%; font-size:0.7rem;">
+                                <tbody id="table-users-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <button onclick="triggerSystemLogout()" class="btn-submit-system btn-danger" style="padding:8px; font-size:0.8rem; margin:0;">Sair do Sistema</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Barra de Abas -->
+        <nav class="nav-tabs">
+            <button class="tab-button active" id="tab-link-calc" onclick="switchViewTab('calc')">📊 LANÇAMENTO</button>
+            <button class="tab-button" id="tab-link-rel" onclick="switchViewTab('rel')">📋 RELATÓRIO</button>
+            <button class="tab-button" id="tab-link-dash" onclick="switchViewTab('dash')">📈 DASHBOARD OEE</button>
+        </nav>
+
+        <!-- ABA 1: LANÇAMENTO -->
+        <main id="calc" class="view-content active">
+            <input type="hidden" id="entry-edit-id">
+            
+            <div class="form-group"><label>Data da Produção</label><input type="date" id="form-data" class="input-text-white"></div>
+            <div class="form-group"><label>Nome do Operador</label><input type="text" id="form-nome" class="input-text-white" placeholder="Ex: João Silva"></div>
+            <div class="form-group"><label>NR.da Máquina</label><input type="text" id="form-maq" class="input-text-white" placeholder="Ex: 01"></div>
+            <div class="form-group"><label>Código Produto</label><input type="text" id="form-prod" class="input-text-white" placeholder="Ex: 00.000.000"></div>
+            <div class="form-group"><label>Número da OP</label><input type="text" id="form-op" class="input-text-white" placeholder="Ex: 12345"></div>
+            
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex:1;"><label>Início do Turno</label><input type="time" id="form-ini" class="input-select-gray" value="06:00"></div>
+                <div class="form-group" style="flex:1;"><label>Fim do Turno</label><input type="time" id="form-fim" class="input-select-gray" value="14:00"></div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex:1;"><label>Ciclo (Segundos)</label><input type="number" id="form-ciclo" class="input-text-white" placeholder="0"></div>
+                <div class="form-group" style="flex:1;"><label>Nr. Cavidades</label><input type="number" id="form-cav" class="input-text-white" placeholder="0"></div>
+            </div>
+            
+            <div class="form-group"><label>Qtd. Produzida</label><input type="number" id="form-real" class="input-text-white" placeholder="0"></div>
+            
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex:1;"><label>Refugo (Processo)</label><input type="number" id="form-refugo" class="input-text-white" value="0"></div>
+                <div class="form-group" style="flex:1;"><label>Refugo (Setup)</label><input type="number" id="form-refugo-setup" class="input-text-white" value="0"></div>
+            </div>
+
+            <!-- Módulo de Paradas -->
+            <div style="margin-top: 20px; border-top: 2px solid var(--border-gray); padding-top: 15px;">
+                <h3 style="font-size: 1rem; color: var(--primary-blue); margin-top: 0;">Mapeamento de Paradas</h3>
+                <input type="hidden" id="form-total-parada" value="00:00">
+                <div style="font-size:0.9rem; margin-bottom:15px;">Total Parado Apontado: <b id="display-total-parada" style="color:var(--danger);">00:00</b></div>
+                <div id="wrapper-paradas-dinamicas"></div>
+            </div>
+
+            <div class="form-group" style="margin-top:15px;"><label>Observações do Turno</label><input type="text" id="form-obs" class="input-text-white" placeholder="Opcional"></div>
+
+            <div class="oee-box-display">Eficiência Atual: <span id="oee-pct">0%</span><br><span id="oee-target" style="font-size:0.8rem; font-weight:normal;">meta=0</span></div>
+
+            <button id="btn-save-production" class="btn-submit-system" style="margin-top:20px;">SALVAR REGISTRO</button>
+            <button id="btn-cancel-edit" class="btn-submit-system btn-secondary" style="display:none;">CANCELAR EDIÇÃO</button>
+            <button id="btn-delete-entry" class="btn-submit-system btn-danger" style="display:none;">EXCLUIR REGISTRO</button>
+        </main>
+
+        <!-- ABA 2: RELATÓRIO -->
+        <main id="rel" class="view-content">
+            <h3 style="font-size: 1rem; color: var(--primary-blue); margin-top: 0;">Filtros de Busca</h3>
+            
+            <div class="form-group"><label>Data Lançada</label><select id="filter-launch-date" class="input-select-gray"><option value="">Todas as datas lançadas</option></select></div>
+            
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex:1;"><label>Período (Início)</label><input type="date" id="filter-start-date" class="input-text-white"></div>
+                <div class="form-group" style="flex:1;"><label>Período (Fim)</label><input type="date" id="filter-end-date" class="input-text-white"></div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex:1;"><label>Máquina</label><input type="text" id="filter-maq" class="input-text-white" placeholder="Filtro Máq"></div>
+                <div class="form-group" style="flex:1;"><label>Produto</label><input type="text" id="filter-prod" class="input-text-white" placeholder="Filtro Prod"></div>
+            </div>
+            
+            <div class="form-group" id="box-filter-user-adm" style="display:none;"><label>Filtrar por Usuário (Admin)</label><input type="text" id="filter-user" class="input-text-white" placeholder="E-mail do operador"></div>
+
+            <button id="btn-trigger-csv-export" class="btn-submit-system" style="background:#10b981; margin-bottom:20px;">EXPORTAR PARA EXCEL (CSV)</button>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th><th>Operador</th><th>Máquina</th><th>Produto</th><th>OP</th><th>Início</th><th>Fim</th><th>Real</th><th>Refugo Proc.</th><th>Ref. Setup</th><th>Cav</th><th>Ciclo</th><th>OEE</th><th>Tot. Parado</th><th>Detalhamento Paradas</th><th>Obs</th><th>Usuário</th><th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-entries-body"></tbody>
+                </table>
+            </div>
+        </main>
+
+        <!-- ABA 3: DASHBOARD OEE -->
+        <div id="dash" class="view-content">
+            <!-- CARDS SUPERIORES -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
+                <div style="background: white; border: 1px solid #cbd5e1; border-left: 4px solid #2563eb; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size: 0.7rem; font-weight: 700; color: #64748b; display: block; text-transform: uppercase;">OEE Global</span>
+                    <b id="dash-card-oee" style="font-size: 1.4rem; color: #1e293b;">0%</b>
+                </div>
+                <div style="background: white; border: 1px solid #cbd5e1; border-left: 4px solid #ef4444; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size: 0.7rem; font-weight: 700; color: #64748b; display: block; text-transform: uppercase;">Tempo Parado</span>
+                    <b id="dash-card-parado" style="font-size: 1.4rem; color: #1e293b;">0h 00m</b>
+                </div>
+                <div style="background: white; border: 1px solid #cbd5e1; border-left: 4px solid #10b981; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size: 0.65rem; font-weight: 700; color: #64748b; display: block; text-transform: uppercase;">Horas Disponíveis (Mês)</span>
+                    <b id="dash-card-disponivel" style="font-size: 1.4rem; color: #1e293b;">7248 hrs</b>
+                </div>
+                <div style="background: white; border: 1px solid #cbd5e1; border-left: 4px solid #6366f1; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size: 0.65rem; font-weight: 700; color: #64748b; display: block; text-transform: uppercase;">Horas Utilizadas (Filtro)</span>
+                    <b id="dash-card-utilizado" style="font-size: 1.4rem; color: #1e293b;">0 hrs</b>
+                </div>
+            </div>
+
+            <!-- GRÁFICO 1: BALANÇO DE CARGA -->
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <h4 style="color:#2563eb; font-size:0.9rem; margin-top:0; margin-bottom:5px;">📉 BALANÇO DE CARGA: DISPONÍVEIS VS UTILIZADAS</h4>
+                <p style="font-size: 0.75rem; color:#64748b; margin-bottom:15px;">Aproveitamento de Carga Instalada: <span id="dash-txt-aproveitamento" style="font-weight:bold; color:#1e293b;">0%</span></p>
+                <div style="position: relative; height: 180px; width: 100%;">
+                    <canvas id="chartBalançoCarga"></canvas>
+                </div>
+            </div>
+
+            <!-- GRÁFICO 2: ÍNDICES OEE -->
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <h4 style="color:#2563eb; font-size:0.9rem; margin-top:0; margin-bottom:15px;">📊 ÍNDICES OEE INDUSTRIAL</h4>
+                <div style="position: relative; height: 240px; width: 100%;">
+                    <canvas id="chartIndicesOEE"></canvas>
+                </div>
+            </div>
+
+            <!-- GRÁFICO 3: PARETO DE PARADAS -->
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <h4 style="color:#2563eb; font-size:0.9rem; margin-top:0; margin-bottom:15px;">🔴 PARETO DE PARADAS (MINUTOS)</h4>
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="chartParetoParadas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bibliotecas Externas via CDN Global (Compatível com Mobile) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- Nosso Script Principal -->
+    <script src="app.js"></script>
+</body>
+</html>
