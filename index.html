@@ -42,6 +42,354 @@
 	<div class="card">
 	  <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
 	  <input type="hidden" id="edit-codigo-orig" value="">
+	  <input type="hidden" id="edit-chave-coluna" value="">
+	  
+	  <div id="form-campos"></div>
+	  
+	  <button onclick="salvarMolde()" id="btn-salvar">Salvar Registro</button>
+	</div>
+
+	<!-- Busca -->
+	<div class="card">
+	  <h3 style="margin-top:0; font-size:16px;">🔍 Consulta Rápida</h3>
+	  <input type="text" id="input-busca" placeholder="Buscar registros..." onkeyup="filtrarLocalmente()">
+	</div>
+
+	<!-- Tabela -->
+	<div class="card" style="overflow-x:auto;">
+	  <table>
+		<thead>
+		  <tr id="tabela-cabecalho"></tr>
+		</thead>
+		<tbody id="tabela-corpo"></tbody>
+	  </table>
+	</div>
+
+<script>
+    const BASE_API = "https://sheetdb.io/api/v1/0ur8be20x0bq3";
+    let abaAtual = "ATUALIZADA";
+    let listaMoldes = [];
+    let timerBusca = null;
+
+    function obterApiUrl() {
+      return `${BASE_API}?sheet=${encodeURIComponent(abaAtual)}`;
+    }
+
+    // Busca tanto a chave quanto o valor real no objeto
+    function acharChaveEValor(item, palavrasChave, indicePadrao = -1) {
+      if (!item) return { chave: '', valor: '-' };
+      const keys = Object.keys(item);
+      
+      for (let k of keys) {
+        const keyLimpa = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        for (let p of palavrasChave) {
+          if (keyLimpa.includes(p)) {
+            const val = item[k] !== undefined && item[k] !== null && item[k] !== '' ? item[k] : '-';
+            return { chave: k, valor: val };
+          }
+        }
+      }
+      
+      if (indicePadrao >= 0 && keys[indicePadrao] !== undefined) {
+        return { chave: keys[indicePadrao], valor: item[keys[indicePadrao]] || '-' };
+      }
+
+      return { chave: keys[0] || '', valor: '-' };
+    }
+
+    function acharCampo(item, palavrasChave, indicePadrao = -1) {
+      return acharChaveEValor(item, palavrasChave, indicePadrao).valor;
+    }
+
+    // Monta os campos do formulário
+    function redefinirFormulario() {
+      const container = document.getElementById('form-campos');
+      
+      if (abaAtual === 'Transferências e Step Bay Step') {
+        container.innerHTML = `
+          <input type="text" id="input-col1" placeholder="Código Qualifix">
+          <input type="text" id="input-col2" placeholder="Código Arteb">
+          <input type="text" id="input-col3" placeholder="Descrição">
+          <input type="text" id="input-col4" placeholder="Mercado">
+          <input type="text" id="input-col5" placeholder="Maq.">
+          <input type="text" id="input-col6" placeholder="Troca de Versão">
+        `;
+      } else {
+        container.innerHTML = `
+          <input type="text" id="input-col1" placeholder="${abaAtual === 'Moldes QLX' ? 'Molde Nº (ex: 101)' : 'Local (ex: A1)'}">
+          <input type="text" id="input-col2" placeholder="Código">
+          <input type="text" id="input-col3" placeholder="Descrição">
+        `;
+      }
+    }
+
+    // 1. TROCA DE ABA
+    function trocarAba(novaAba) {
+      if (abaAtual === novaAba) return;
+      abaAtual = novaAba;
+
+      document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
+      document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
+      document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
+      
+      redefinirFormulario();
+      limparFormulario();
+      carregarDados();
+    }
+
+    // 2. LEITURA (GET)
+    async function carregarDados() {
+      const statusDiv = document.getElementById('status-msg');
+      statusDiv.innerText = `Sincronizando (${abaAtual})...`;
+      statusDiv.style.color = "#555";
+
+      try {
+        const response = await fetch(obterApiUrl());
+        if (!response.ok) throw new Error("Status " + response.status);
+        
+        listaMoldes = await response.json();
+        renderTabela(listaMoldes);
+        
+        statusDiv.innerText = `Sincronizado (${listaMoldes.length} itens em ${abaAtual})`;
+        statusDiv.style.color = "green";
+      } catch (error) {
+        console.error(error);
+        statusDiv.innerText = "Erro ao carregar dados: " + error.message;
+        statusDiv.style.color = "red";
+      }
+    }
+
+    // 3. RENDERIZAR TABELA
+    function renderTabela(dados) {
+      const thead = document.getElementById('tabela-cabecalho');
+      const tbody = document.getElementById('tabela-corpo');
+      
+      tbody.innerHTML = '';
+
+      if (abaAtual === 'Transferências e Step Bay Step') {
+        thead.innerHTML = `
+          <th>Cód. Qualifix</th>
+          <th>Cód. Arteb</th>
+          <th>Descrição</th>
+          <th>Mercado</th>
+          <th>Maq.</th>
+          <th>Troca Versão</th>
+          <th>Ações</th>
+        `;
+      } else {
+        thead.innerHTML = `
+          <th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th>Ações</th>
+        `;
+      }
+
+      if (!dados || dados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${abaAtual === 'Transferências e Step Bay Step' ? 7 : 4}" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+
+      dados.forEach((item, index) => {
+        const tr = document.createElement('tr');
+
+        if (abaAtual === 'Transferências e Step Bay Step') {
+          const codQ = acharCampo(item, ['qualifix', 'col1'], 0);
+          const codA = acharCampo(item, ['arteb', 'col2'], 1);
+          const desc = acharCampo(item, ['desc', 'descricao'], 2);
+          const merc = acharCampo(item, ['mercado'], 3);
+          const maq = acharCampo(item, ['maq', 'maquina'], 4);
+          const troca = acharCampo(item, ['troca', 'versao'], 5);
+
+          tr.innerHTML = `
+            <td><b>${codQ}</b></td>
+            <td>${codA}</td>
+            <td>${desc}</td>
+            <td>${merc}</td>
+            <td>${maq}</td>
+            <td>${troca}</td>
+            <td><button class="btn-edit" onclick="prepararEdicao(${index})">Editar</button></td>
+          `;
+        } else {
+          const local = acharCampo(item, ['local', 'molde', 'num', 'nº'], 0);
+          const codigo = acharCampo(item, ['cod', 'codigo'], 1);
+          const desc = acharCampo(item, ['desc', 'descricao'], 2);
+
+          tr.innerHTML = `
+            <td><b>${local}</b></td>
+            <td>${codigo}</td>
+            <td>${desc}</td>
+            <td><button class="btn-edit" onclick="prepararEdicao(${index})">Editar</button></td>
+          `;
+        }
+        fragment.appendChild(tr);
+      });
+
+      tbody.appendChild(fragment);
+    }
+
+    // 4. SALVAR / EDITAR
+    async function salvarMolde() {
+      const col1 = document.getElementById('input-col1').value.trim();
+      const col2 = document.getElementById('input-col2').value.trim();
+      const col3 = document.getElementById('input-col3').value.trim();
+      const codigoOrig = document.getElementById('edit-codigo-orig').value;
+      const chaveColuna = document.getElementById('edit-chave-coluna').value;
+
+      if (!col1 && !col2) {
+        alert('Preencha os campos principais!');
+        return;
+      }
+
+      const statusDiv = document.getElementById('status-msg');
+      statusDiv.innerText = "Enviando dados...";
+      statusDiv.style.color = "blue";
+
+      let payloadData = {};
+      
+      // Mapeamento usando os nomes exatos retornados do primeiro item da lista ou padrão
+      const primeiroItem = listaMoldes[0] || {};
+      const keys = Object.keys(primeiroItem);
+
+      if (abaAtual === 'Transferências e Step Bay Step') {
+        const col4 = document.getElementById('input-col4').value.trim();
+        const col5 = document.getElementById('input-col5').value.trim();
+        const col6 = document.getElementById('input-col6').value.trim();
+
+        payloadData[keys[0] || "CÓDIGO QUALIFIX"] = col1;
+        payloadData[keys[1] || "CÓDIGO ARTEB"] = col2;
+        payloadData[keys[2] || "DESCRIÇÃO"] = col3;
+        payloadData[keys[3] || "MERCADO"] = col4;
+        payloadData[keys[4] || "Maq."] = col5;
+        payloadData[keys[5] || "TROCA DE VERSÃO"] = col6;
+      } else if (abaAtual === 'Moldes QLX') {
+        payloadData[keys[0] || "molde número"] = col1;
+        payloadData[keys[1] || "código"] = col2;
+        payloadData[keys[2] || "descrição"] = col3;
+      } else {
+        payloadData[keys[0] || "LOCAL"] = col1;
+        payloadData[keys[1] || "CÓDIGO"] = col2;
+        payloadData[keys[2] || "DESCRIÇÃO"] = col3;
+      }
+
+      try {
+        if (!codigoOrig) {
+          // Adicionar Novo (POST)
+          const resp = await fetch(obterApiUrl(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: [payloadData] })
+          });
+          if (!resp.ok) throw new Error("Erro na gravação!");
+        } else {
+          // Editar Existente (PATCH)
+          const colBusca = chaveColuna || keys[0] || 'CÓDIGO';
+          const patchUrl = `${BASE_API}/${encodeURIComponent(colBusca)}/${encodeURIComponent(codigoOrig)}?sheet=${encodeURIComponent(abaAtual)}`;
+
+          const resp = await fetch(patchUrl, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: payloadData })
+          });
+          if (!resp.ok) throw new Error("Erro na edição!");
+        }
+        
+        statusDiv.innerText = "Salvo com sucesso!";
+        statusDiv.style.color = "green";
+        limparFormulario();
+        await carregarDados();
+      } catch (error) {
+        console.error(error);
+        alert("Erro ao salvar os dados. Verifique a conexão.");
+        statusDiv.innerText = "Falha ao salvar.";
+        statusDiv.style.color = "red";
+      }
+    }
+
+    // 5. PREPARAR EDIÇÃO
+    function prepararEdicao(index) {
+      const item = listaMoldes[index];
+      if (!item) return;
+
+      if (abaAtual === 'Transferências e Step Bay Step') {
+        const campoQ = acharChaveEValor(item, ['qualifix'], 0);
+        document.getElementById('input-col1').value = campoQ.valor !== '-' ? campoQ.valor : '';
+        document.getElementById('input-col2').value = acharCampo(item, ['arteb'], 1);
+        document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2);
+        document.getElementById('input-col4').value = acharCampo(item, ['mercado'], 3);
+        document.getElementById('input-col5').value = acharCampo(item, ['maq'], 4);
+        document.getElementById('input-col6').value = acharCampo(item, ['troca'], 5);
+        
+        document.getElementById('edit-codigo-orig').value = campoQ.valor;
+        document.getElementById('edit-chave-coluna').value = campoQ.chave;
+      } else {
+        const campoCod = acharChaveEValor(item, ['cod', 'codigo'], 1);
+        const campoLocal = acharChaveEValor(item, ['local', 'molde', 'num'], 0);
+
+        document.getElementById('input-col1').value = campoLocal.valor !== '-' ? campoLocal.valor : '';
+        document.getElementById('input-col2').value = campoCod.valor !== '-' ? campoCod.valor : '';
+        document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2);
+        
+        // Usa o código ou a primeira coluna para localizar no PATCH
+        if (campoCod.valor !== '-') {
+          document.getElementById('edit-codigo-orig').value = campoCod.valor;
+          document.getElementById('edit-chave-coluna').value = campoCod.chave;
+        } else {
+          document.getElementById('edit-codigo-orig').value = campoLocal.valor;
+          document.getElementById('edit-chave-coluna').value = campoLocal.chave;
+        }
+      }
+
+      document.getElementById('form-title').innerText = "Editar Registro";
+      document.getElementById('btn-salvar').innerText = "Atualizar Registro";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 6. BUSCA LOCAL
+    function filtrarLocalmente() {
+      clearTimeout(timerBusca);
+
+      timerBusca = setTimeout(() => {
+        const termo = document.getElementById('input-busca').value.trim().toLowerCase();
+
+        if (!termo) {
+          renderTabela(listaMoldes);
+          return;
+        }
+
+        const filtrados = listaMoldes.filter(item => {
+          const valores = Object.values(item).join(' ').toLowerCase();
+          return valores.includes(termo);
+        });
+
+        renderTabela(filtrados);
+      }, 250);
+    }
+
+    function limparFormulario() {
+      document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
+      document.getElementById('edit-codigo-orig').value = '';
+      document.getElementById('edit-chave-coluna').value = '';
+      document.getElementById('form-title').innerText = "Adicionar Registro";
+      document.getElementById('btn-salvar').innerText = "Salvar Registro";
+    }
+
+    // Inicialização
+    redefinirFormulario();
+    carregarDados();
+</script>
+  </body>
+</html>
+    </div>
+
+	<div id="status-msg" class="status">Iniciando...</div>
+
+	<!-- Formulário Dinâmico -->
+	<div class="card">
+	  <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
+	  <input type="hidden" id="edit-codigo-orig" value="">
 	  
 	  <div id="form-campos"></div>
 	  
