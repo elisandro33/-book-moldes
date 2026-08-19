@@ -140,31 +140,38 @@
     }
 
     async function carregarTodosDados() {
-      const statusDiv = document.getElementById('status-msg');
-      statusDiv.innerText = "Sincronizando com Google Sheets...";
-      statusDiv.style.color = "#1a73e8";
+  const statusDiv = document.getElementById('status-msg');
+  statusDiv.innerText = "Sincronizando com Google Sheets...";
+  statusDiv.style.color = "#1a73e8";
 
-      const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step"];
+  const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step"];
 
-      try {
-        for (let aba of abas) {
-          const resp = await fetch(`${BASE_API}?sheet=${encodeURIComponent(aba)}`);
-          if (resp.ok) {
-            bancoCompleto[aba] = await resp.json();
-          }
-        }
-
-        renderTabelaAbaAtual();
-        const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
-        statusDiv.innerText = `Sincronizado! Total: ${total} itens.`;
-        statusDiv.style.color = "green";
-      } catch (error) {
-        console.error(error);
-        statusDiv.innerText = "Erro ao conectar com o Google Sheets.";
-        statusDiv.style.color = "red";
+  try {
+    for (let aba of abas) {
+      // Agregado redirect: 'follow' para permitir o redirecionamento interno do Google
+      const resp = await fetch(`${BASE_API}?sheet=${encodeURIComponent(aba)}`, {
+        method: 'GET',
+        redirect: 'follow'
+      });
+      
+      if (resp.ok) {
+        const texto = await resp.text();
+        bancoCompleto[aba] = JSON.parse(texto);
+      } else {
+        throw new Error("Falha na resposta do servidor.");
       }
     }
 
+    renderTabelaAbaAtual();
+    const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
+    statusDiv.innerText = `Sincronizado! Total: ${total} itens.`;
+    statusDiv.style.color = "green";
+  } catch (error) {
+    console.error(error);
+    statusDiv.innerText = "Erro ao conectar com o Google Sheets. Verifique a permissão do Script.";
+    statusDiv.style.color = "red";
+  }
+}
     function renderTabelaAbaAtual() {
       const dados = bancoCompleto[abaAtual] || [];
       const dadosComAba = dados.map(item => ({ ...item, _abaOrigem: abaAtual }));
