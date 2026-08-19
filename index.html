@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book de Moldes</title>
   <style>
@@ -67,8 +68,7 @@
   </div>
 
   <script>
-    // URL da sua API no Google Apps Script:
-    const BASE_API = "https://script.google.com/macros/s/AKfycbzMPt903lhKNOScw5JY6zH0LZbmVND1KZhB822BTlblWRivMsxMhraQA9uYTwNeXBrs/exec";
+    const BASE_API = "https://script.google.com/macros/s/AKfycbwqiaHjLyiuumWjAiclxC4Fmw5Jq87aCoaprgTUKW0fRZXUNFkdi1yl19TgS0wiOWTk/exec";
     
     let abaAtual = "ATUALIZADA";
     let bancoCompleto = {
@@ -140,38 +140,38 @@
     }
 
     async function carregarTodosDados() {
-  const statusDiv = document.getElementById('status-msg');
-  statusDiv.innerText = "Sincronizando com Google Sheets...";
-  statusDiv.style.color = "#1a73e8";
+      const statusDiv = document.getElementById('status-msg');
+      statusDiv.innerText = "Sincronizando com Google Sheets...";
+      statusDiv.style.color = "#1a73e8";
 
-  const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step"];
+      const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step"];
 
-  try {
-    for (let aba of abas) {
-      // Agregado redirect: 'follow' para permitir o redirecionamento interno do Google
-      const resp = await fetch(`${BASE_API}?sheet=${encodeURIComponent(aba)}`, {
-        method: 'GET',
-        redirect: 'follow'
-      });
-      
-      if (resp.ok) {
-        const texto = await resp.text();
-        bancoCompleto[aba] = JSON.parse(texto);
-      } else {
-        throw new Error("Falha na resposta do servidor.");
+      try {
+        for (let aba of abas) {
+          const resp = await fetch(`${BASE_API}?sheet=${encodeURIComponent(aba)}`, {
+            method: 'GET',
+            redirect: 'follow'
+          });
+
+          if (resp.ok) {
+            const texto = await resp.text();
+            bancoCompleto[aba] = JSON.parse(texto);
+          } else {
+            throw new Error("Erro na resposta");
+          }
+        }
+
+        renderTabelaAbaAtual();
+        const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
+        statusDiv.innerText = `Sincronizado! Total: ${total} itens.`;
+        statusDiv.style.color = "green";
+      } catch (error) {
+        console.error(error);
+        statusDiv.innerText = "Erro ao conectar com o Google Sheets. Verifique o Script e o ID da planilha.";
+        statusDiv.style.color = "red";
       }
     }
 
-    renderTabelaAbaAtual();
-    const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
-    statusDiv.innerText = `Sincronizado! Total: ${total} itens.`;
-    statusDiv.style.color = "green";
-  } catch (error) {
-    console.error(error);
-    statusDiv.innerText = "Erro ao conectar com o Google Sheets. Verifique a permissão do Script.";
-    statusDiv.style.color = "red";
-  }
-}
     function renderTabelaAbaAtual() {
       const dados = bancoCompleto[abaAtual] || [];
       const dadosComAba = dados.map(item => ({ ...item, _abaOrigem: abaAtual }));
