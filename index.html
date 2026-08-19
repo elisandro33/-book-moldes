@@ -21,11 +21,8 @@
     table { width: 100%; border-collapse: collapse; margin-top: 5px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; white-space: nowrap; }
     th { background-color: #1a73e8; color: white; }
-    .btn-edit { background: #f39c12; padding: 6px 10px; border-radius: 4px; border: none; color: white; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .btn-edit { background: #f39c12; padding: 6px 10px; border-radius: 4px; border: none; color: white; font-size: 12px; font-weight: bold; }
     .status { text-align: center; font-size: 13px; margin-bottom: 10px; font-weight: bold; color: #555; }
-    
-    /* Tag de identificação da aba */
-    .badge-aba { background: #e8f0fe; color: #1a73e8; padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-block; }
 </style>
   </head>
   <body>
@@ -42,7 +39,7 @@
 	<div id="status-msg" class="status">Iniciando...</div>
 
 	<!-- Formulário Dinâmico -->
-	<div class="card" id="card-formulario">
+	<div class="card">
 	  <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
 	  <input type="hidden" id="edit-codigo-orig" value="">
 	  <input type="hidden" id="edit-chave-coluna" value="">
@@ -52,10 +49,10 @@
 	  <button onclick="salvarMolde()" id="btn-salvar">Salvar Registro</button>
 	</div>
 
-	<!-- Consulta Global -->
+	<!-- Busca -->
 	<div class="card">
-	  <h3 style="margin-top:0; font-size:16px;">🔍 Consulta Geral (Busca em Todas as Abas)</h3>
-	  <input type="text" id="input-busca" placeholder="Digite Código, Local ou Descrição..." onkeyup="filtrarGeral()">
+	  <h3 style="margin-top:0; font-size:16px;">🔍 Consulta Rápida</h3>
+	  <input type="text" id="input-busca" placeholder="Buscar registros..." onkeyup="filtrarLocalmente()">
 	</div>
 
 	<!-- Tabela -->
@@ -71,17 +68,14 @@
 <script>
     const BASE_API = "https://sheetdb.io/api/v1/0ur8be20x0bq3";
     let abaAtual = "ATUALIZADA";
-    
-    // Armazena os dados de todas as abas para busca global
-    let bancoCompleto = {
-      "ATUALIZADA": [],
-      "Moldes QLX": [],
-      "Transferências e Step Bay Step": []
-    };
-    
-    let listaExibida = [];
+    let listaMoldes = [];
     let timerBusca = null;
 
+    function obterApiUrl() {
+      return `${BASE_API}?sheet=${encodeURIComponent(abaAtual)}`;
+    }
+
+    // Busca tanto a chave quanto o valor real no objeto
     function acharChaveEValor(item, palavrasChave, indicePadrao = -1) {
       if (!item) return { chave: '', valor: '-' };
       const keys = Object.keys(item);
@@ -107,10 +101,10 @@
       return acharChaveEValor(item, palavrasChave, indicePadrao).valor;
     }
 
+    // Monta os campos do formulário
     function redefinirFormulario() {
       const container = document.getElementById('form-campos');
-      container.innerHTML = '';
-
+      
       if (abaAtual === 'Transferências e Step Bay Step') {
         container.innerHTML = `
           <input type="text" id="input-col1" placeholder="Código Qualifix">
@@ -129,70 +123,50 @@
       }
     }
 
+    // 1. TROCA DE ABA
     function trocarAba(novaAba) {
+      if (abaAtual === novaAba) return;
       abaAtual = novaAba;
 
       document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
       document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
       document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
       
-      document.getElementById('input-busca').value = ''; // Limpa a busca ao trocar de aba
       redefinirFormulario();
       limparFormulario();
-      renderTabelaAbaAtual();
+      carregarDados();
     }
 
-    // Carrega os dados de todas as abas
-    async function carregarTodosDados() {
+    // 2. LEITURA (GET)
+    async function carregarDados() {
       const statusDiv = document.getElementById('status-msg');
-      statusDiv.innerText = "Sincronizando todas as abas...";
+      statusDiv.innerText = `Sincronizando (${abaAtual})...`;
       statusDiv.style.color = "#555";
 
-      const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step"];
-
       try {
-        await Promise.all(abas.map(async (aba) => {
-          const resp = await fetch(`${BASE_API}?sheet=${encodeURIComponent(aba)}`);
-          if (resp.ok) {
-            bancoCompleto[aba] = await resp.json();
-          }
-        }));
-
-        renderTabelaAbaAtual();
+        const response = await fetch(obterApiUrl());
+        if (!response.ok) throw new Error("Status " + response.status);
         
-        const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
-        statusDiv.innerText = `Sincronizado! Total de ${total} registros carregados.`;
+        listaMoldes = await response.json();
+        renderTabela(listaMoldes);
+        
+        statusDiv.innerText = `Sincronizado (${listaMoldes.length} itens em ${abaAtual})`;
         statusDiv.style.color = "green";
       } catch (error) {
         console.error(error);
-        statusDiv.innerText = "Erro ao carregar dados do servidor.";
+        statusDiv.innerText = "Erro ao carregar dados: " + error.message;
         statusDiv.style.color = "red";
       }
     }
 
-    function renderTabelaAbaAtual() {
-      const dados = bancoCompleto[abaAtual] || [];
-      // Adiciona tag da aba no objeto
-      const dadosComAba = dados.map(item => ({ ...item, _abaOrigem: abaAtual }));
-      renderTabela(dadosComAba, false);
-    }
-
-    function renderTabela(dados, modoBuscaGlobal = false) {
-      listaExibida = dados;
+    // 3. RENDERIZAR TABELA
+    function renderTabela(dados) {
       const thead = document.getElementById('tabela-cabecalho');
       const tbody = document.getElementById('tabela-corpo');
       
       tbody.innerHTML = '';
 
-      if (modoBuscaGlobal) {
-        thead.innerHTML = `
-          <th>Aba / Origem</th>
-          <th>Local / Molde</th>
-          <th>Código</th>
-          <th>Descrição</th>
-          <th>Ações</th>
-        `;
-      } else if (abaAtual === 'Transferências e Step Bay Step') {
+      if (abaAtual === 'Transferências e Step Bay Step') {
         thead.innerHTML = `
           <th>Cód. Qualifix</th>
           <th>Cód. Arteb</th>
@@ -212,7 +186,7 @@
       }
 
       if (!dados || dados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${abaAtual === 'Transferências e Step Bay Step' ? 7 : 4}" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
         return;
       }
 
@@ -220,22 +194,8 @@
 
       dados.forEach((item, index) => {
         const tr = document.createElement('tr');
-        const abaOrigem = item._abaOrigem || abaAtual;
-        const nomeAbaExibicao = abaOrigem === 'ATUALIZADA' ? 'PLÁSTICO' : abaOrigem;
 
-        if (modoBuscaGlobal) {
-          const local = acharCampo(item, ['local', 'molde', 'num', 'nº', 'qualifix'], 0);
-          const codigo = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
-          const desc = acharCampo(item, ['desc', 'descricao'], 2);
-
-          tr.innerHTML = `
-            <td><span class="badge-aba">${nomeAbaExibicao}</span></td>
-            <td><b>${local}</b></td>
-            <td>${codigo}</td>
-            <td>${desc}</td>
-            <td><button class="btn-edit" onclick="irParaItemEEditar('${abaOrigem}', ${index})">Ir / Editar</button></td>
-          `;
-        } else if (abaAtual === 'Transferências e Step Bay Step') {
+        if (abaAtual === 'Transferências e Step Bay Step') {
           const codQ = acharCampo(item, ['qualifix', 'col1'], 0);
           const codA = acharCampo(item, ['arteb', 'col2'], 1);
           const desc = acharCampo(item, ['desc', 'descricao'], 2);
@@ -270,84 +230,7 @@
       tbody.appendChild(fragment);
     }
 
-    // BUSCA GERAL EM TODAS AS ABAS
-    function filtrarGeral() {
-      clearTimeout(timerBusca);
-
-      timerBusca = setTimeout(() => {
-        const termo = document.getElementById('input-busca').value.trim().toLowerCase();
-
-        if (!termo) {
-          renderTabelaAbaAtual();
-          return;
-        }
-
-        let resultados = [];
-
-        // Varre as 3 abas procurando o termo
-        Object.keys(bancoCompleto).forEach(nomeAba => {
-          const itensDaAba = bancoCompleto[nomeAba];
-          
-          itensDaAba.forEach(item => {
-            const textoCompleto = Object.values(item).join(' ').toLowerCase();
-            if (textoCompleto.includes(termo)) {
-              resultados.push({ ...item, _abaOrigem: nomeAba });
-            }
-          });
-        });
-
-        renderTabela(resultados, true);
-      }, 250);
-    }
-
-    function irParaItemEEditar(abaDestino, indexNaListaExibida) {
-      trocarAba(abaDestino);
-      const item = listaExibida[indexNaListaExibida];
-      if (item) {
-        prepararEdicaoDireta(item);
-      }
-    }
-
-    function prepararEdicaoDireta(item) {
-      if (!item) return;
-
-      if (abaAtual === 'Transferências e Step Bay Step') {
-        const campoQ = acharChaveEValor(item, ['qualifix'], 0);
-        document.getElementById('input-col1').value = campoQ.valor !== '-' ? campoQ.valor : '';
-        document.getElementById('input-col2').value = acharCampo(item, ['arteb'], 1);
-        document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2);
-        document.getElementById('input-col4').value = acharCampo(item, ['mercado'], 3);
-        document.getElementById('input-col5').value = acharCampo(item, ['maq'], 4);
-        document.getElementById('input-col6').value = acharCampo(item, ['troca'], 5);
-        
-        document.getElementById('edit-codigo-orig').value = campoQ.valor;
-        document.getElementById('edit-chave-coluna').value = campoQ.chave;
-      } else {
-        const campoCod = acharChaveEValor(item, ['cod', 'codigo'], 1);
-        const campoLocal = acharChaveEValor(item, ['local', 'molde', 'num'], 0);
-
-        document.getElementById('input-col1').value = campoLocal.valor !== '-' ? campoLocal.valor : '';
-        document.getElementById('input-col2').value = campoCod.valor !== '-' ? campoCod.valor : '';
-        document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2);
-        
-        if (campoCod.valor !== '-') {
-          document.getElementById('edit-codigo-orig').value = campoCod.valor;
-          document.getElementById('edit-chave-coluna').value = campoCod.chave;
-        } else {
-          document.getElementById('edit-codigo-orig').value = campoLocal.valor;
-          document.getElementById('edit-chave-coluna').value = campoLocal.chave;
-        }
-      }
-
-      document.getElementById('form-title').innerText = "Editar Registro";
-      document.getElementById('btn-salvar').innerText = "Atualizar Registro";
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function prepararEdicao(index) {
-      prepararEdicaoDireta(listaExibida[index]);
-    }
-
+    // 4. SALVAR / EDITAR
     async function salvarMolde() {
       const col1 = document.getElementById('input-col1').value.trim();
       const col2 = document.getElementById('input-col2').value.trim();
@@ -365,8 +248,9 @@
       statusDiv.style.color = "blue";
 
       let payloadData = {};
-      const listaDaAba = bancoCompleto[abaAtual] || [];
-      const primeiroItem = listaDaAba[0] || {};
+      
+      // Mapeamento usando os nomes exatos retornados do primeiro item da lista ou padrão
+      const primeiroItem = listaMoldes[0] || {};
       const keys = Object.keys(primeiroItem);
 
       if (abaAtual === 'Transferências e Step Bay Step') {
@@ -392,13 +276,15 @@
 
       try {
         if (!codigoOrig) {
-          const resp = await fetch(`${BASE_API}?sheet=${encodeURIComponent(abaAtual)}`, {
+          // Adicionar Novo (POST)
+          const resp = await fetch(obterApiUrl(), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data: [payloadData] })
           });
           if (!resp.ok) throw new Error("Erro na gravação!");
         } else {
+          // Editar Existente (PATCH)
           const colBusca = chaveColuna || keys[0] || 'CÓDIGO';
           const patchUrl = `${BASE_API}/${encodeURIComponent(colBusca)}/${encodeURIComponent(codigoOrig)}?sheet=${encodeURIComponent(abaAtual)}`;
 
@@ -413,13 +299,73 @@
         statusDiv.innerText = "Salvo com sucesso!";
         statusDiv.style.color = "green";
         limparFormulario();
-        await carregarTodosDados();
+        await carregarDados();
       } catch (error) {
         console.error(error);
-        alert("Erro ao salvar os dados.");
+        alert("Erro ao salvar os dados. Verifique a conexão.");
         statusDiv.innerText = "Falha ao salvar.";
         statusDiv.style.color = "red";
       }
+    }
+
+    // 5. PREPARAR EDIÇÃO
+    function prepararEdicao(index) {
+      const item = listaMoldes[index];
+      if (!item) return;
+
+      if (abaAtual === 'Transferências e Step Bay Step') {
+        const campoQ = acharChaveEValor(item, ['qualifix'], 0);
+        document.getElementById('input-col1').value = campoQ.valor !== '-' ? campoQ.valor : '';
+        document.getElementById('input-col2').value = acharCampo(item, ['arteb'], 1);
+        document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2);
+        document.getElementById('input-col4').value = acharCampo(item, ['mercado'], 3);
+        document.getElementById('input-col5').value = acharCampo(item, ['maq'], 4);
+        document.getElementById('input-col6').value = acharCampo(item, ['troca'], 5);
+        
+        document.getElementById('edit-codigo-orig').value = campoQ.valor;
+        document.getElementById('edit-chave-coluna').value = campoQ.chave;
+      } else {
+        const campoCod = acharChaveEValor(item, ['cod', 'codigo'], 1);
+        const campoLocal = acharChaveEValor(item, ['local', 'molde', 'num'], 0);
+
+        document.getElementById('input-col1').value = campoLocal.valor !== '-' ? campoLocal.valor : '';
+        document.getElementById('input-col2').value = campoCod.valor !== '-' ? campoCod.valor : '';
+        document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2);
+        
+        // Usa o código ou a primeira coluna para localizar no PATCH
+        if (campoCod.valor !== '-') {
+          document.getElementById('edit-codigo-orig').value = campoCod.valor;
+          document.getElementById('edit-chave-coluna').value = campoCod.chave;
+        } else {
+          document.getElementById('edit-codigo-orig').value = campoLocal.valor;
+          document.getElementById('edit-chave-coluna').value = campoLocal.chave;
+        }
+      }
+
+      document.getElementById('form-title').innerText = "Editar Registro";
+      document.getElementById('btn-salvar').innerText = "Atualizar Registro";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 6. BUSCA LOCAL
+    function filtrarLocalmente() {
+      clearTimeout(timerBusca);
+
+      timerBusca = setTimeout(() => {
+        const termo = document.getElementById('input-busca').value.trim().toLowerCase();
+
+        if (!termo) {
+          renderTabela(listaMoldes);
+          return;
+        }
+
+        const filtrados = listaMoldes.filter(item => {
+          const valores = Object.values(item).join(' ').toLowerCase();
+          return valores.includes(termo);
+        });
+
+        renderTabela(filtrados);
+      }, 250);
     }
 
     function limparFormulario() {
@@ -430,8 +376,9 @@
       document.getElementById('btn-salvar').innerText = "Salvar Registro";
     }
 
+    // Inicialização
     redefinirFormulario();
-    carregarTodosDados();
+    carregarDados();
 </script>
   </body>
 </html>
