@@ -34,16 +34,12 @@
     }
 	
 	html, body {
-    width: 100%;
-    max-width: 100vw;
-    overflow-x: hidden;
-    margin: 0;
-    padding: 0;
-}
-
-* {
-    box-sizing: border-box;
-}
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+    }
 
     * {
       box-sizing: border-box;
@@ -255,34 +251,34 @@
       margin-bottom: 12px;
     }
 
-  .filter-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-  width: 100%;
-}
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      width: 100%;
+    }
 
-.filter-input {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.95rem;
-}
+    .filter-input {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
 
-.btn-filter {
-  background-color: var(--primary-blue);
-  color: white;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 6px;
-  font-weight: bold;
-  font-size: 0.85rem;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+    .btn-filter {
+      background-color: var(--primary-blue);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
 
     .checkbox-container {
       display: flex;
@@ -775,808 +771,508 @@
 	<!-- NAVEGAÇÃO INFERIOR -->
 	<nav class="bottom-nav">
 	  <button class="nav-item active" id="btnNavPonto" onclick="mudarAba('ponto')">
-		<span class="nav-icon">&#9432;</span>
+		<span class="nav-icon">🕒</span>
 		Ponto
 	  </button>
 	  <button class="nav-item" id="btnNavRelatorio" onclick="mudarAba('relatorio')">
-		<span class="nav-icon">&#128202;</span>
+		<span class="nav-icon">📊</span>
 		Relatório
 	  </button>
 	</nav>
 
 <script>
-    // URL Web App do Google Apps Script
-    const SHEETDB_URL = 'https://script.google.com/macros/s/AKfycbx4EIgcMd7bTnGA_Nn8dcLA3H7BxzCMx1qm9sgB1c1Slad2C1FQTxVZDwGkMr4OTuBt/exec';
+// --- VARIÁVEIS GLOBAIS E ESTADO ---
+let config = {
+  lat: null,
+  lng: null,
+  raio: 200,
+  valorHora: 0,
+  jornadaSemana: { entrada: "08:00", intervalo: "01:00", saida: "17:30" },
+  jornadaSabado: { ativo: "nao", entrada: "08:00", intervalo: "01:00", saida: "12:00" }
+};
 
-    let VALOR_HORA_EXTRA = parseFloat(localStorage.getItem('VALOR_HORA_EXTRA')) || 38.00;
+let dentroDoPerimetro = false;
+let dataEditando = null;
 
-    // Configurações de Jornada
-    let JORNADA_SEMANA_ENTRADA = localStorage.getItem('JORNADA_SEMANA_ENTRADA') || '08:00';
-    let JORNADA_SEMANA_INTERVALO = localStorage.getItem('JORNADA_SEMANA_INTERVALO') || '01:00';
-    let JORNADA_SEMANA_SAIDA = localStorage.getItem('JORNADA_SEMANA_SAIDA') || '17:30';
+// --- INICIALIZAÇÃO ---
+window.onload = function() {
+  carregarConfiguracoes();
+  atualizarDataCabecalho();
+  carregarPontosHoje();
+  iniciarMonitoramentoGPS();
+  definirMesAnoAtualFiltro();
+};
 
-    let JORNADA_SABADO_ALTERNADO = localStorage.getItem('JORNADA_SABADO_ALTERNADO') || 'nao';
-    let JORNADA_SABADO_ENTRADA = localStorage.getItem('JORNADA_SABADO_ENTRADA') || '08:00';
-    let JORNADA_SABADO_INTERVALO = localStorage.getItem('JORNADA_SABADO_INTERVALO') || '01:00';
-    let JORNADA_SABADO_SAIDA = localStorage.getItem('JORNADA_SABADO_SAIDA') || '12:00';
+function carregarConfiguracoes() {
+  const cfgSalva = localStorage.getItem('pf_config');
+  if (cfgSalva) {
+    config = JSON.parse(cfgSalva);
+  }
+}
 
-    let empresaLat = parseFloat(localStorage.getItem('EMPRESA_LAT')) || -23.550520;
-    let empresaLng = parseFloat(localStorage.getItem('EMPRESA_LNG')) || -46.633308;
-    let raioPermitidoMetros = parseInt(localStorage.getItem('RAIO_PERMITIDO_METROS')) || 200;
+function salvarConfiguracoes() {
+  localStorage.setItem('pf_config', JSON.stringify(config));
+}
 
-    let userLatAtual = null;
-    let userLngAtual = null;
+function atualizarDataCabecalho() {
+  const hoje = new Date();
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const ano = hoje.getFullYear();
+  document.getElementById('dataAtual').innerText = `${dia}/${mes}/${ano}`;
+}
 
-    const hoje = new Date();
-    const dia = String(hoje.getDate()).padStart(2, '0');
-    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-    const ano = hoje.getFullYear();
-    const dataFormatadaExibicao = `${dia}/${mes}/${ano}`;
-    const mesAnoAtual = `${mes}/${ano}`;
+function definirMesAnoAtualFiltro() {
+  const hoje = new Date();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const ano = hoje.getFullYear();
+  document.getElementById('filtroMesAno').value = `${mes}/${ano}`;
+}
 
-    let dataEdicaoAtual = null;
+// --- NAVEGAÇÃO ENTRE ABAS ---
+function mudarAba(aba) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
-    document.getElementById('dataAtual').innerText = dataFormatadaExibicao;
-    document.getElementById('filtroMesAno').value = mesAnoAtual;
+  if (aba === 'ponto') {
+    document.getElementById('tabPonto').classList.add('active');
+    document.getElementById('btnNavPonto').classList.add('active');
+  } else if (aba === 'relatorio') {
+    document.getElementById('tabRelatorio').classList.add('active');
+    document.getElementById('btnNavRelatorio').classList.add('active');
+    carregarRelatorio();
+  }
+}
 
-    function atualizarDoGithub() {
-      if (confirm("Deseja buscar a versão mais recente do GitHub e atualizar o app?")) {
-        window.location.reload(true);
-      }
+function toggleMenu() {
+  document.getElementById('dropdownMenu').classList.toggle('show');
+}
+
+window.onclick = function(event) {
+  if (!event.target.matches('.menu-btn')) {
+    const dropdown = document.getElementById('dropdownMenu');
+    if (dropdown && dropdown.classList.contains('show')) {
+      dropdown.classList.remove('show');
     }
+  }
+};
 
-    function calcularDistanciaEmMetros(lat1, lon1, lat2, lon2) {
-      const R = 6371e3;
-      const φ1 = lat1 * Math.PI / 180;
-      const φ2 = lat2 * Math.PI / 180;
-      const Δφ = (lat2 - lat1) * Math.PI / 180;
-      const Δλ = (lon2 - lon1) * Math.PI / 180;
+// --- GEOLOCALIZAÇÃO (GPS) ---
+function iniciarMonitoramentoGPS() {
+  if ("geolocation" in navigator) {
+    navigator.geolocation.watchPosition(
+      posicaoSucesso,
+      posicaoErro,
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 }
+    );
+  } else {
+    document.getElementById('statusPerimetro').innerHTML = "❌ GPS não suportado no navegador.";
+  }
+}
 
-      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+function posicaoSucesso(pos) {
+  const latUser = pos.coords.latitude;
+  const lngUser = pos.coords.longitude;
 
-      return Math.round(R * c);
-    }
+  if (!config.lat || !config.lng) {
+    document.getElementById('statusPerimetro').className = "status-location inside";
+    document.getElementById('statusPerimetro').innerHTML = "📍 GPS OK (Local da empresa não configurado)";
+    dentroDoPerimetro = true;
+    return;
+  }
 
-    function atualizarCoordenadas(lat, lng) {
-      userLatAtual = lat;
-      userLngAtual = lng;
+  const dist = calcularDistanciaMetros(latUser, lngUser, config.lat, config.lng);
 
-      const elStatus = document.getElementById('statusPerimetro');
-      const distancia = calcularDistanciaEmMetros(lat, lng, empresaLat, empresaLng);
+  if (dist <= config.raio) {
+    dentroDoPerimetro = true;
+    document.getElementById('statusPerimetro').className = "status-location inside";
+    document.getElementById('statusPerimetro').innerHTML = `✔️ Dentro do Perímetro<br><span>(${Math.round(dist)}m da empresa)</span>`;
+  } else {
+    dentroDoPerimetro = false;
+    document.getElementById('statusPerimetro').className = "status-location";
+    document.getElementById('statusPerimetro').innerHTML = `❌ Fora do Perímetro<br><span>(${Math.round(dist)}m da empresa)</span>`;
+  }
+}
 
-      if (distancia <= raioPermitidoMetros) {
-        elStatus.innerHTML = `&#9989; Dentro do perímetro da empresa!<br><span id="distanciaTexto">(${distancia}m)</span>`;
-        elStatus.classList.add('inside');
-      } else {
-        elStatus.innerHTML = `&#10060; Fora do perímetro da empresa!<br><span id="distanciaTexto">(${distancia}m)</span>`;
-        elStatus.classList.remove('inside');
-      }
-    }
+function posicaoErro(err) {
+  document.getElementById('statusPerimetro').className = "status-location";
+  document.getElementById('statusPerimetro').innerHTML = "❌ Sem sinal de GPS local";
+}
 
-    function atualizarGpsNativo(lat, lng) {
-      atualizarCoordenadas(lat, lng);
-    }
+function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
 
-    function iniciarGPS() {
-      const elStatus = document.getElementById('statusPerimetro');
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-      if ("geolocation" in navigator) {
-        navigator.geolocation.watchPosition(
-          (posicao) => {
-            atualizarCoordenadas(posicao.coords.latitude, posicao.coords.longitude);
-          },
-          (erro) => {
-            if (!userLatAtual) {
-              let msg = "Aguardando sinal do GPS...";
-              if (erro.code === erro.PERMISSION_DENIED) msg = "Permissão de GPS negada!";
-              elStatus.innerHTML = `&#10060; ${msg}<br><span id="distanciaTexto">(--m)</span>`;
-              elStatus.classList.remove('inside');
-            }
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      }
-    }
+  return R * c;
+}
 
-    /* MODAL LOCAL */
-    function abrirConfigLocal() {
-      toggleMenu();
-      document.getElementById('cfgLat').value = empresaLat;
-      document.getElementById('cfgLng').value = empresaLng;
-      document.getElementById('cfgRaio').value = raioPermitidoMetros;
-      document.getElementById('modalLocal').classList.add('active');
-    }
+// --- BATER PONTO AUTOMÁTICO ---
+function baterPontoAutomatico() {
+  if (!dentroDoPerimetro) {
+    alert("Você precisa estar dentro do raio permitido da empresa para registrar o ponto.");
+    return;
+  }
 
-    function fecharModalLocal() {
-      document.getElementById('modalLocal').classList.remove('active');
-    }
+  const chaveHoje = obterChaveHoje();
+  let pontoHoje = JSON.parse(localStorage.getItem(chaveHoje)) || { e: '', si: '', vi: '', sf: '' };
 
-    function usarGpsAtual() {
-      if (userLatAtual && userLngAtual) {
-        document.getElementById('cfgLat').value = userLatAtual;
-        document.getElementById('cfgLng').value = userLngAtual;
-        alert("Sua localização atual foi preenchida nos campos!");
-      } else {
-        if (window.AndroidGPS && typeof window.AndroidGPS.solicitarGPS === 'function') {
-          window.AndroidGPS.solicitarGPS();
-        }
-        alert("Aguardando sinal do GPS... Tente novamente em alguns segundos.");
-      }
-    }
+  const agora = new Date();
+  const horaFormatada = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
 
-    function salvarConfigLocal() {
-      const latInput = parseFloat(document.getElementById('cfgLat').value);
-      const lngInput = parseFloat(document.getElementById('cfgLng').value);
-      const raioInput = parseInt(document.getElementById('cfgRaio').value);
+  if (!pontoHoje.e) {
+    pontoHoje.e = horaFormatada;
+  } else if (!pontoHoje.si) {
+    pontoHoje.si = horaFormatada;
+  } else if (!pontoHoje.vi) {
+    pontoHoje.vi = horaFormatada;
+  } else if (!pontoHoje.sf) {
+    pontoHoje.sf = horaFormatada;
+  } else {
+    alert("Todas as 4 marcações de hoje já foram realizadas!");
+    return;
+  }
 
-      if (isNaN(latInput) || isNaN(lngInput) || isNaN(raioInput)) {
-        alert("Preencha valores válidos.");
-        return;
-      }
+  localStorage.setItem(chaveHoje, JSON.stringify(pontoHoje));
+  carregarPontosHoje();
+}
 
-      empresaLat = latInput;
-      empresaLng = lngInput;
-      raioPermitidoMetros = raioInput;
+function carregarPontosHoje() {
+  const chaveHoje = obterChaveHoje();
+  const pontoHoje = JSON.parse(localStorage.getItem(chaveHoje)) || { e: '', si: '', vi: '', sf: '' };
 
-      localStorage.setItem('EMPRESA_LAT', empresaLat);
-      localStorage.setItem('EMPRESA_LNG', empresaLng);
-      localStorage.setItem('RAIO_PERMITIDO_METROS', raioPermitidoMetros);
+  document.getElementById('dispE').innerText = pontoHoje.e || '--:--';
+  document.getElementById('dispSI').innerText = pontoHoje.si || '--:--';
+  document.getElementById('dispVI').innerText = pontoHoje.vi || '--:--';
+  document.getElementById('dispSF').innerText = pontoHoje.sf || '--:--';
 
-      alert("Local da empresa atualizado!");
-      fecharModalLocal();
+  let proximo = "Entrada";
+  if (pontoHoje.e && !pontoHoje.si) proximo = "Saída Intervalo";
+  else if (pontoHoje.si && !pontoHoje.vi) proximo = "Volta Intervalo";
+  else if (pontoHoje.vi && !pontoHoje.sf) proximo = "Saída Final";
+  else if (pontoHoje.sf) proximo = "Jornada Concluída";
 
-      if (userLatAtual && userLngAtual) atualizarCoordenadas(userLatAtual, userLngAtual);
-    }
+  document.getElementById('lblProximoReg').innerText = proximo;
+}
 
-    /* MODAL SALÁRIO */
-    function abrirModalSalario() {
-      toggleMenu();
-      document.getElementById('cfgValorHora').value = VALOR_HORA_EXTRA;
-      document.getElementById('modalSalario').classList.add('active');
-    }
+function obterChaveHoje() {
+  const d = new Date();
+  return `ponto_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
-    function fecharModalSalario() {
-      document.getElementById('modalSalario').classList.remove('active');
-    }
+// --- RELATÓRIO E CÁLCULO DE HORAS ---
+function carregarRelatorio() {
+  const filtro = document.getElementById('filtroMesAno').value.trim();
+  const apenasFaltas = document.getElementById('chkFaltas').checked;
+  const listaContainer = document.getElementById('listaCardsRelatorio');
+  listaContainer.innerHTML = '';
 
-    function salvarSalario() {
-      const v = parseFloat(document.getElementById('cfgValorHora').value);
-      if (isNaN(v) || v <= 0) {
-        alert("Digite um valor de hora válido.");
-        return;
-      }
-      VALOR_HORA_EXTRA = v;
-      localStorage.setItem('VALOR_HORA_EXTRA', v);
-      alert("Valor da Hora Extra atualizado!");
-      fecharModalSalario();
-      carregarRelatorio();
-    }
+  let totalMinutosExtra = 0;
 
-    /* MODAL JORNADA */
-    function abrirModalJornada() {
-      toggleMenu();
-      document.getElementById('cfgEntradaSemana').value = JORNADA_SEMANA_ENTRADA;
-      document.getElementById('cfgIntervaloSemana').value = JORNADA_SEMANA_INTERVALO;
-      document.getElementById('cfgSaidaSemana').value = JORNADA_SEMANA_SAIDA;
+  Object.keys(localStorage).sort().reverse().forEach(key => {
+    if (key.startsWith('ponto_')) {
+      const dataIso = key.replace('ponto_', '');
+      const [ano, mes, dia] = dataIso.split('-');
+      const dataFmt = `${dia}/${mes}/${ano}`;
+      const mesAnoFmt = `${mes}/${ano}`;
 
-      document.getElementById('cfgSabadoAlternado').value = JORNADA_SABADO_ALTERNADO;
-      document.getElementById('cfgEntradaSabado').value = JORNADA_SABADO_ENTRADA;
-      document.getElementById('cfgIntervaloSabado').value = JORNADA_SABADO_INTERVALO;
-      document.getElementById('cfgSaidaSabado').value = JORNADA_SABADO_SAIDA;
+      if (filtro && mesAnoFmt !== filtro) return;
 
-      toggleSabadoCampos();
-      document.getElementById('modalJornada').classList.add('active');
-    }
+      const p = JSON.parse(localStorage.getItem(key));
+      const incompleto = !p.e || !p.si || !p.vi || !p.sf;
 
-    function toggleSabadoCampos() {
-      const val = document.getElementById('cfgSabadoAlternado').value;
-      const container = document.getElementById('containerSabadoCampos');
-      if (val === 'sim') {
-        container.style.display = 'block';
-      } else {
-        container.style.display = 'none';
-      }
-    }
+      if (apenasFaltas && !incompleto) return;
 
-    function fecharModalJornada() {
-      document.getElementById('modalJornada').classList.remove('active');
-    }
-
-    function salvarJornada() {
-      JORNADA_SEMANA_ENTRADA = document.getElementById('cfgEntradaSemana').value || '08:00';
-      JORNADA_SEMANA_INTERVALO = document.getElementById('cfgIntervaloSemana').value || '01:00';
-      JORNADA_SEMANA_SAIDA = document.getElementById('cfgSaidaSemana').value || '17:30';
-
-      JORNADA_SABADO_ALTERNADO = document.getElementById('cfgSabadoAlternado').value;
-      JORNADA_SABADO_ENTRADA = document.getElementById('cfgEntradaSabado').value || '08:00';
-      JORNADA_SABADO_INTERVALO = document.getElementById('cfgIntervaloSabado').value || '01:00';
-      JORNADA_SABADO_SAIDA = document.getElementById('cfgSaidaSabado').value || '12:00';
-
-      localStorage.setItem('JORNADA_SEMANA_ENTRADA', JORNADA_SEMANA_ENTRADA);
-      localStorage.setItem('JORNADA_SEMANA_INTERVALO', JORNADA_SEMANA_INTERVALO);
-      localStorage.setItem('JORNADA_SEMANA_SAIDA', JORNADA_SEMANA_SAIDA);
-
-      localStorage.setItem('JORNADA_SABADO_ALTERNADO', JORNADA_SABADO_ALTERNADO);
-      localStorage.setItem('JORNADA_SABADO_ENTRADA', JORNADA_SABADO_ENTRADA);
-      localStorage.setItem('JORNADA_SABADO_INTERVALO', JORNADA_SABADO_INTERVALO);
-      localStorage.setItem('JORNADA_SABADO_SAIDA', JORNADA_SABADO_SAIDA);
-
-      alert("Jornada de trabalho atualizada!");
-      fecharModalJornada();
-      carregarRelatorio();
-    }
-
-    /* MODAL PONTO MANUAL */
-    function abrirModalManual() {
-      toggleMenu();
-      document.getElementById('manData').value = dataFormatadaExibicao;
-      document.getElementById('manEntrada').value = '';
-      document.getElementById('manSaidaInt').value = '';
-      document.getElementById('manVoltaInt').value = '';
-      document.getElementById('manSaidaFin').value = '';
-      document.getElementById('modalManual').classList.add('active');
-    }
-
-    function fecharModalManual() {
-      document.getElementById('modalManual').classList.remove('active');
-    }
-
-    function salvarPontoManual() {
-      const d = document.getElementById('manData').value.trim();
-      const e = document.getElementById('manEntrada').value.trim();
-      const sI = document.getElementById('manSaidaInt').value.trim();
-      const vI = document.getElementById('manVoltaInt').value.trim();
-      const sF = document.getElementById('manSaidaFin').value.trim();
-
-      if (!d) {
-        alert("A data é obrigatória!");
-        return;
-      }
-
-      const payload = {
-        action: 'upsert',
-        data: {
-          id: 'ID_' + Date.now(),
-          data: d,
-          entrada: e,
-          saida_intervalo: sI,
-          volta_intervalo: vI,
-          saida_final: sF
-        }
-      };
-
-      fetch(SHEETDB_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (res.status === 'success') {
-          alert("Ponto manual adicionado com sucesso!");
-          fecharModalManual();
-          carregarRelatorio();
-          if (d === dataFormatadaExibicao) carregarPontoDeHoje();
-        } else {
-          alert("Erro ao adicionar ponto.");
-        }
-      })
-      .catch(() => alert("Erro de conexão."));
-    }
-
-    /* BACKUP E IMPORTAÇÃO JSON */
-    function fazerBackup() {
-      toggleMenu();
-      alert("Gerando backup em JSON...");
-      fetch(SHEETDB_URL)
-        .then(res => res.json())
-        .then(dados => {
-          const jsonStr = JSON.stringify(dados, null, 2);
-          const blob = new Blob([jsonStr], { type: "application/json" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `ponto_facil_backup_${dataExibicaoParaArquivo(dataFormatadaExibicao)}.json`;
-          a.click();
-        })
-        .catch(() => alert("Erro ao obter dados para backup."));
-    }
-
-    function dataExibicaoParaArquivo(d) {
-      return d.replace(/\//g, '-');
-    }
-
-    function importarBackup() {
-      toggleMenu();
-      document.getElementById('inputImportarJson').click();
-    }
-
-    function processarArquivoImportado(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const dados = JSON.parse(e.target.result);
-          if (Array.isArray(dados)) {
-            if (confirm(`Deseja importar ${dados.length} registros para o banco de dados?`)) {
-              let sucessos = 0;
-              let promessas = dados.map(item => {
-                return fetch(SHEETDB_URL, {
-                  method: 'POST',
-                  body: JSON.stringify({ action: 'upsert', data: item })
-                });
-              });
-
-              Promise.all(promessas).then(() => {
-                alert("Dados importados com sucesso!");
-                carregarRelatorio();
-                carregarPontoDeHoje();
-              }).catch(() => alert("Erro ao importar alguns registros."));
-            }
-          } else {
-            alert("O arquivo selecionado não contém um formato de backup válido.");
-          }
-        } catch (err) {
-          alert("Arquivo JSON inválido.");
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function toggleMenu() {
-      document.getElementById('dropdownMenu').classList.toggle('show');
-    }
-
-    function mudarAba(aba) {
-      if (aba === 'ponto') {
-        document.getElementById('tabPonto').classList.add('active');
-        document.getElementById('tabRelatorio').classList.remove('active');
-        document.getElementById('btnNavPonto').classList.add('active');
-        document.getElementById('btnNavRelatorio').classList.remove('active');
-      } else {
-        document.getElementById('tabPonto').classList.remove('active');
-        document.getElementById('tabRelatorio').classList.add('active');
-        document.getElementById('btnNavPonto').classList.remove('active');
-        document.getElementById('btnNavRelatorio').classList.add('active');
-        carregarRelatorio();
-      }
-    }
-
-    function timeToMinutes(timeStr) {
-      if (!timeStr || timeStr === '--:--' || !timeStr.includes(':')) return null;
-      const [h, m] = timeStr.split(':').map(Number);
-      return (h * 60) + m;
-    }
-
-    function minutesToTime(totalMinutes) {
-      const h = Math.floor(Math.abs(totalMinutes) / 60);
-      const m = Math.abs(totalMinutes) % 60;
-      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-    }
-
-    function parseDateString(dateStr) {
-      if (!dateStr) return new Date(0);
-      const parts = dateStr.split('/');
-      if (parts.length !== 3) return new Date(0);
-      return new Date(parts[2], parts[1] - 1, parts[0]);
-    }
-
-    /* REGRAS DE HORA EXTRA DINÂMICAS */
-    function calcularHorasExtras(p) {
-      const e = timeToMinutes(p.entrada || p.Entrada);
-      const sI = timeToMinutes(p.saida_intervalo || p.saiAlm || p['Sai Almoço']);
-      const vI = timeToMinutes(p.volta_intervalo || p.voltAlm || p['Vol Almoço']);
-      const sF = timeToMinutes(p.saida_final || p.saidaFin || p.Fim);
-
-      let extraManhaMinutos = 0;
-      let extraTardeMinutos = 0;
-      let minutosExtra = 0;
-
-      if (e !== null && sF !== null) {
-        const dataObjeto = parseDateString(p.data);
-        const diaDaSemana = dataObjeto.getDay(); // 0: Dom, 6: Sáb
-        const ehDomingo = (diaDaSemana === 0);
-        const ehSabado = (diaDaSemana === 6);
-
-        if (ehDomingo || (ehSabado && JORNADA_SABADO_ALTERNADO === 'nao')) {
-          let intervalo = 0;
-          if (sI !== null && vI !== null && vI > sI) {
-            intervalo = vI - sI;
-          }
-          const totalTrabalhado = (sF - e) - intervalo;
-          minutosExtra = totalTrabalhado > 0 ? totalTrabalhado : 0;
-          extraTardeMinutos = minutosExtra;
-        } else {
-          let entradaPadrao = timeToMinutes(JORNADA_SEMANA_ENTRADA) || 480;
-          let saidaPadrao = timeToMinutes(JORNADA_SEMANA_SAIDA) || 1050;
-
-          if (ehSabado && JORNADA_SABADO_ALTERNADO === 'sim') {
-            entradaPadrao = timeToMinutes(JORNADA_SABADO_ENTRADA) || 480;
-            saidaPadrao = timeToMinutes(JORNADA_SABADO_SAIDA) || 720;
-          }
-
-          // Tolerância ajustada dinamicamente conforme horário configurado
-          const LIMITE_ENTRADA_EXTRA = entradaPadrao - 30; 
-          const LIMITE_SAIDA_EXTRA = saidaPadrao + 30;      
-
-          if (e <= LIMITE_ENTRADA_EXTRA) {
-            extraManhaMinutos = entradaPadrao - e;
-          }
-
-          if (sF >= LIMITE_SAIDA_EXTRA) {
-            extraTardeMinutos = sF - saidaPadrao;
-          }
-
-          minutosExtra = extraManhaMinutos + extraTardeMinutos;
-        }
-      }
-
-      const valorReais = (minutosExtra / 60) * VALOR_HORA_EXTRA;
-
-      return {
-        extraManhaMinutos,
-        extraTardeMinutos,
-        minutosExtra,
-        textoExtraManha: minutesToTime(extraManhaMinutos),
-        textoExtraTarde: minutesToTime(extraTardeMinutos),
-        textoHoras: minutesToTime(minutosExtra),
-        valorFormatado: valorReais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-      };
-    }
-
-    /* EXPORTAR SOMENTE ENTRADAS E SAÍDAS DE HORAS EXTRAS PARA CSV */
-    function exportarCSV() {
-      const filtroMesAno = document.getElementById('filtroMesAno').value.trim();
+      const minTrabalhados = calcularMinutosTrabalhados(p);
+      const minJornada = obterMinutosJornadaEsperada(new Date(ano, mes - 1, dia));
+      const minExtra = (p.e && p.sf) ? (minTrabalhados - minJornada) : 0;
       
-      fetch(SHEETDB_URL)
-        .then(res => res.json())
-        .then(pontos => {
-          if (!Array.isArray(pontos) || pontos.length === 0) {
-            alert("Nenhum dado encontrado para exportação!");
-            return;
-          }
+      totalMinutosExtra += minExtra;
 
-          let pontosFiltrados = pontos.filter(p => {
-            if (!p.data) return false;
-            return p.data.endsWith(filtroMesAno) || p.data.includes('/' + filtroMesAno);
-          });
+      const card = document.createElement('div');
+      card.className = 'day-card';
+      card.onclick = () => abrirModalEdicao(key, dataFmt, p);
 
-          if (pontosFiltrados.length === 0) {
-            alert(`Nenhum registro encontrado para a data ${filtroMesAno}!`);
-            return;
-          }
-
-          pontosFiltrados.sort((a, b) => parseDateString(a.data) - parseDateString(b.data));
-
-          let csvContent = "\uFEFFData;Entrada Registrada;Extra Manha;Saida Registrada;Extra Tarde;Total Extra (Horas);Valor Extra (R$)\n";
-
-          let exportouLinha = false;
-
-          pontosFiltrados.forEach(p => {
-            const extra = calcularHorasExtras(p);
-
-            if (extra.minutosExtra > 0) {
-              const e = p.entrada || p.Entrada || '--:--';
-              const sF = p.saida_final || p.saidaFin || p.Fim || '--:--';
-
-              const valorMonetario = ((extra.minutosExtra / 60) * VALOR_HORA_EXTRA).toFixed(2).replace('.', ',');
-
-              csvContent += `"${p.data}";"${e}";"${extra.textoExtraManha}";"${sF}";"${extra.textoExtraTarde}";"${extra.textoHoras}";"R$ ${valorMonetario}"\n`;
-              exportouLinha = true;
-            }
-          });
-
-          if (!exportouLinha) {
-            alert("Não há registros com horas extras para exportar neste período.");
-            return;
-          }
-
-          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.setAttribute("href", url);
-          link.setAttribute("download", `Horas_Extras_${filtroMesAno.replace('/', '_')}.csv`);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        })
-        .catch(() => alert("Erro ao exportar arquivo CSV."));
+      card.innerHTML = `
+        <span class="edit-hint">✏️ Editar</span>
+        <div class="day-row"><strong>Data:</strong> ${dataFmt}</div>
+        <div class="day-row"><strong>Ent:</strong> ${p.e || '--:--'} | <strong>S.Int:</strong> ${p.si || '--:--'} | <strong>V.Int:</strong> ${p.vi || '--:--'} | <strong>Saí:</strong> ${p.sf || '--:--'}</div>
+        <div class="day-row"><strong>Trabalhado:</strong> ${formatarMinutosHora(minTrabalhados)} | <strong>Extra:</strong> ${formatarMinutosHora(minExtra)}</div>
+      `;
+      listaContainer.appendChild(card);
     }
+  });
 
-    function abrirModalEdicao(dataStr, e, sI, vI, sF) {
-      dataEdicaoAtual = dataStr;
-      document.getElementById('modalTitulo').innerText = `Editar Ponto - ${dataStr}`;
-      document.getElementById('editEntrada').value = e === '--:--' ? '' : e;
-      document.getElementById('editSaidaInt').value = sI === '--:--' ? '' : sI;
-      document.getElementById('editVoltaInt').value = vI === '--:--' ? '' : vI;
-      document.getElementById('editSaidaFin').value = sF === '--:--' ? '' : sF;
-      document.getElementById('modalEdicao').classList.add('active');
+  document.getElementById('totalHorasExtra').innerText = formatarMinutosHora(totalMinutosExtra);
+  const valorExtraTotal = (totalMinutosExtra / 60) * (config.valorHora || 0);
+  document.getElementById('totalValorExtra').innerText = `R$ ${valorExtraTotal.toFixed(2)}`;
+}
+
+function calcularMinutosTrabalhados(p) {
+  if (!p.e || !p.sf) return 0;
+  let t1 = horaParaMinutos(p.sf) - horaParaMinutos(p.e);
+  let tIntervalo = 0;
+  if (p.si && p.vi) {
+    tIntervalo = horaParaMinutos(p.vi) - horaParaMinutos(p.si);
+  }
+  return Math.max(0, t1 - tIntervalo);
+}
+
+function obterMinutosJornadaEsperada(dataObj) {
+  const diaSemana = dataObj.getDay();
+  if (diaSemana === 0) return 0;
+
+  if (diaSemana === 6) {
+    if (config.jornadaSabado.ativo === 'sim') {
+      const e = horaParaMinutos(config.jornadaSabado.entrada);
+      const s = horaParaMinutos(config.jornadaSabado.saida);
+      const i = horaParaMinutos(config.jornadaSabado.intervalo);
+      return (s - e) - i;
     }
+    return 0;
+  }
 
-    function fecharModal() {
-      document.getElementById('modalEdicao').classList.remove('active');
-      dataEdicaoAtual = null;
+  const e = horaParaMinutos(config.jornadaSemana.entrada);
+  const s = horaParaMinutos(config.jornadaSemana.saida);
+  const i = horaParaMinutos(config.jornadaSemana.intervalo);
+  return (s - e) - i;
+}
+
+function horaParaMinutos(h) {
+  if (!h || !h.includes(':')) return 0;
+  const [hrs, mins] = h.split(':').map(Number);
+  return (hrs * 60) + mins;
+}
+
+function formatarMinutosHora(minutosTotais) {
+  const sinal = minutosTotais < 0 ? "-" : "";
+  const absMin = Math.abs(minutosTotais);
+  const hrs = Math.floor(absMin / 60);
+  const mins = absMin % 60;
+  return `${sinal}${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+}
+
+// --- MODAIS E CONFIGURAÇÕES ---
+function abrirModalEdicao(chave, dataFmt, p) {
+  dataEditando = chave;
+  document.getElementById('modalTitulo').innerText = `Editar: ${dataFmt}`;
+  document.getElementById('editEntrada').value = p.e || '';
+  document.getElementById('editSaidaInt').value = p.si || '';
+  document.getElementById('editVoltaInt').value = p.vi || '';
+  document.getElementById('editSaidaFin').value = p.sf || '';
+  document.getElementById('modalEdicao').classList.add('active');
+}
+
+function fecharModal() {
+  document.getElementById('modalEdicao').classList.remove('active');
+}
+
+function salvarModal() {
+  if (!dataEditando) return;
+  const p = {
+    e: document.getElementById('editEntrada').value.trim(),
+    si: document.getElementById('editSaidaInt').value.trim(),
+    vi: document.getElementById('editVoltaInt').value.trim(),
+    sf: document.getElementById('editSaidaFin').value.trim()
+  };
+  localStorage.setItem(dataEditando, JSON.stringify(p));
+  fecharModal();
+  carregarPontosHoje();
+  carregarRelatorio();
+}
+
+function deletarRegistro() {
+  if (dataEditando && confirm("Tem certeza que deseja excluir este registro?")) {
+    localStorage.removeItem(dataEditando);
+    fecharModal();
+    carregarPontosHoje();
+    carregarRelatorio();
+  }
+}
+
+// Ponto Manual
+function abrirModalManual() {
+  document.getElementById('modalManual').classList.add('active');
+}
+function fecharModalManual() {
+  document.getElementById('modalManual').classList.remove('active');
+}
+function salvarPontoManual() {
+  const dataTxt = document.getElementById('manData').value.trim();
+  if (!dataTxt || dataTxt.length !== 10) {
+    alert("Digite a data no formato DD/MM/AAAA");
+    return;
+  }
+  const [dia, mes, ano] = dataTxt.split('/');
+  const chave = `ponto_${ano}-${mes}-${dia}`;
+  const p = {
+    e: document.getElementById('manEntrada').value.trim(),
+    si: document.getElementById('manSaidaInt').value.trim(),
+    vi: document.getElementById('manVoltaInt').value.trim(),
+    sf: document.getElementById('manSaidaFin').value.trim()
+  };
+  localStorage.setItem(chave, JSON.stringify(p));
+  fecharModalManual();
+  carregarPontosHoje();
+  carregarRelatorio();
+}
+
+// Config Salário
+function abrirModalSalario() {
+  document.getElementById('cfgValorHora').value = config.valorHora || '';
+  document.getElementById('modalSalario').classList.add('active');
+}
+function fecharModalSalario() {
+  document.getElementById('modalSalario').classList.remove('active');
+}
+function salvarSalario() {
+  config.valorHora = parseFloat(document.getElementById('cfgValorHora').value) || 0;
+  salvarConfiguracoes();
+  fecharModalSalario();
+  carregarRelatorio();
+}
+
+// Config Jornada
+function abrirModalJornada() {
+  document.getElementById('cfgEntradaSemana').value = config.jornadaSemana.entrada;
+  document.getElementById('cfgIntervaloSemana').value = config.jornadaSemana.intervalo;
+  document.getElementById('cfgSaidaSemana').value = config.jornadaSemana.saida;
+
+  document.getElementById('cfgSabadoAlternado').value = config.jornadaSabado.ativo;
+  document.getElementById('cfgEntradaSabado').value = config.jornadaSabado.entrada;
+  document.getElementById('cfgIntervaloSabado').value = config.jornadaSabado.intervalo;
+  document.getElementById('cfgSaidaSabado').value = config.jornadaSabado.saida;
+
+  toggleSabadoCampos();
+  document.getElementById('modalJornada').classList.add('active');
+}
+function fecharModalJornada() {
+  document.getElementById('modalJornada').classList.remove('active');
+}
+function toggleSabadoCampos() {
+  const val = document.getElementById('cfgSabadoAlternado').value;
+  document.getElementById('containerSabadoCampos').style.display = (val === 'sim') ? 'block' : 'none';
+}
+function salvarJornada() {
+  config.jornadaSemana = {
+    entrada: document.getElementById('cfgEntradaSemana').value,
+    intervalo: document.getElementById('cfgIntervaloSemana').value,
+    saida: document.getElementById('cfgSaidaSemana').value
+  };
+  config.jornadaSabado = {
+    ativo: document.getElementById('cfgSabadoAlternado').value,
+    entrada: document.getElementById('cfgEntradaSabado').value,
+    intervalo: document.getElementById('cfgIntervaloSabado').value,
+    saida: document.getElementById('cfgSaidaSabado').value
+  };
+  salvarConfiguracoes();
+  fecharModalJornada();
+  carregarRelatorio();
+}
+
+// Config Local
+function abrirConfigLocal() {
+  document.getElementById('cfgLat').value = config.lat || '';
+  document.getElementById('cfgLng').value = config.lng || '';
+  document.getElementById('cfgRaio').value = config.raio || 200;
+  document.getElementById('modalLocal').classList.add('active');
+}
+function fecharModalLocal() {
+  document.getElementById('modalLocal').classList.remove('active');
+}
+function usarGpsAtual() {
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      document.getElementById('cfgLat').value = pos.coords.latitude;
+      document.getElementById('cfgLng').value = pos.coords.longitude;
+      alert("Localização obtida com sucesso!");
+    }, () => alert("Erro ao obter GPS atual."));
+  }
+}
+function salvarConfigLocal() {
+  config.lat = parseFloat(document.getElementById('cfgLat').value) || null;
+  config.lng = parseFloat(document.getElementById('cfgLng').value) || null;
+  config.raio = parseInt(document.getElementById('cfgRaio').value) || 200;
+  salvarConfiguracoes();
+  fecharModalLocal();
+}
+
+// --- UTILS & BACKUP ---
+function fazerBackup() {
+  const dados = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    dados[key] = localStorage.getItem(key);
+  }
+  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ponto_facil_backup_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+}
+
+function importarBackup() {
+  document.getElementById('inputImportarJson').click();
+}
+
+function processarArquivoImportado(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const dados = JSON.parse(evt.target.result);
+      Object.keys(dados).forEach(key => localStorage.setItem(key, dados[key]));
+      alert("Backup importado com sucesso!");
+      location.reload();
+    } catch (err) {
+      alert("Erro ao importar JSON. Arquivo inválido.");
     }
+  };
+  reader.readAsText(file);
+}
 
-    function salvarModal() {
-      if (!dataEdicaoAtual) return;
-
-      const payload = {
-        action: 'upsert',
-        data: {
-          data: dataEdicaoAtual,
-          entrada: document.getElementById('editEntrada').value.trim(),
-          saida_intervalo: document.getElementById('editSaidaInt').value.trim(),
-          volta_intervalo: document.getElementById('editVoltaInt').value.trim(),
-          saida_final: document.getElementById('editSaidaFin').value.trim()
-        }
-      };
-
-      fetch(SHEETDB_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (res.status === 'success') {
-          alert('Registro atualizado com sucesso!');
-          fecharModal();
-          carregarRelatorio();
-          if (dataEdicaoAtual === dataFormatadaExibicao) carregarPontoDeHoje();
-        } else {
-          alert('Erro ao atualizar registro.');
-        }
-      })
-      .catch(() => alert('Erro de conexão.'));
+function exportarCSV() {
+  let csv = "Data,Entrada,Saida Intervalo,Volta Intervalo,Saida Final\n";
+  Object.keys(localStorage).sort().forEach(key => {
+    if (key.startsWith('ponto_')) {
+      const dataIso = key.replace('ponto_', '');
+      const p = JSON.parse(localStorage.getItem(key));
+      csv += `${dataIso},${p.e || ''},${p.si || ''},${p.vi || ''},${p.sf || ''}\n`;
     }
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `relatorio_ponto_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+}
 
-    function deletarRegistro() {
-      if (!dataEdicaoAtual) return;
+function recalcularHistorico() {
+  carregarRelatorio();
+  alert("Histórico recalculado!");
+}
 
-      if (confirm(`Tem certeza que deseja DELETAR o registro do dia ${dataEdicaoAtual}?`)) {
-        const payload = {
-          action: 'delete',
-          data: { data: dataEdicaoAtual }
-        };
+function atualizarDoGithub() {
+  location.reload(true);
+}
 
-        fetch(SHEETDB_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(res => {
-          if (res.status === 'success') {
-            alert('Registro excluído com sucesso!');
-            const dataDeletada = dataEdicaoAtual;
-            fecharModal();
-            carregarRelatorio();
-            if (dataDeletada === dataFormatadaExibicao) {
-              document.getElementById('dispE').innerText = '--:--';
-              document.getElementById('dispSI').innerText = '--:--';
-              document.getElementById('dispVI').innerText = '--:--';
-              document.getElementById('dispSF').innerText = '--:--';
-              document.getElementById('lblProximoReg').innerText = "Entrada";
-            }
-          } else {
-            alert('Erro ao excluir registro.');
-          }
-        })
-        .catch(() => alert('Erro de conexão ao tentar deletar.'));
-      }
-    }
+function sincronizarTudo() {
+  alert("Dados sincronizados localmente.");
+}
 
-    function carregarRelatorio() {
-      const container = document.getElementById('listaCardsRelatorio');
-      const somenteFaltas = document.getElementById('chkFaltas').checked;
-      const filtroMesAno = document.getElementById('filtroMesAno').value.trim();
-
-      container.innerHTML = '<div style="text-align:center; padding:20px;">Carregando registros...</div>';
-
-      fetch(SHEETDB_URL)
-        .then(res => res.json())
-        .then(pontos => {
-          if (!Array.isArray(pontos) || pontos.length === 0) {
-            container.innerHTML = '<div style="text-align:center; padding:20px;">Nenhum registro encontrado.</div>';
-            return;
-          }
-
-          container.innerHTML = '';
-          let acumuladoMinutos = 0;
-
-          let pontosFiltrados = pontos.filter(p => {
-            if (!p.data) return false;
-            return p.data.endsWith(filtroMesAno) || p.data.includes('/' + filtroMesAno);
-          });
-
-          pontosFiltrados.sort((a, b) => parseDateString(b.data) - parseDateString(a.data));
-
-          if (pontosFiltrados.length === 0) {
-            container.innerHTML = `<div style="text-align:center; padding:20px;">Nenhum registro encontrado para ${filtroMesAno}.</div>`;
-            document.getElementById('totalHorasExtra').innerText = "00:00";
-            document.getElementById('totalValorExtra').innerText = "R$ 0,00";
-            return;
-          }
-
-          pontosFiltrados.forEach(p => {
-            const e = p.entrada || p.Entrada || '--:--';
-            const sI = p.saida_intervalo || p.saiAlm || p['Sai Almoço'] || '--:--';
-            const vI = p.volta_intervalo || p.voltAlm || p['Vol Almoço'] || '--:--';
-            const sF = p.saida_final || p.saidaFin || p.Fim || '--:--';
-
-            const isIncompleto = (e === '--:--' || sI === '--:--' || vI === '--:--' || sF === '--:--');
-
-            if (somenteFaltas && !isIncompleto) return;
-
-            const extra = calcularHorasExtras(p);
-            acumuladoMinutos += extra.minutosExtra;
-
-            const card = document.createElement('div');
-            card.className = 'day-card';
-            card.onclick = () => abrirModalEdicao(p.data, e, sI, vI, sF);
-            card.innerHTML = `
-              <span class="edit-hint">✏️ Editar</span>
-              <div class="day-row">📅 <strong>Data: ${p.data}</strong></div>
-              <div class="day-row">📥 Ent: ${e} | Sai Almoço: ${sI}</div>
-              <div class="day-row">📤 Vol Almoço: ${vI} | Fim: ${sF}</div>
-              <div class="day-row">⭐ Total Extra: ${extra.textoHoras} (${extra.valorFormatado})</div>
-            `;
-            container.appendChild(card);
-          });
-
-          document.getElementById('totalHorasExtra').innerText = minutesToTime(acumuladoMinutos);
-          const totalValor = (acumuladoMinutos / 60) * VALOR_HORA_EXTRA;
-          document.getElementById('totalValorExtra').innerText = totalValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        })
-        .catch(() => {
-          container.innerHTML = '<div style="text-align:center; padding:20px;">Erro ao carregar dados.</div>';
-        });
-    }
-
-    function carregarPontoDeHoje() {
-      fetch(SHEETDB_URL)
-        .then(res => res.json())
-        .then(pontos => {
-          if (!Array.isArray(pontos)) return;
-          const pontoHoje = pontos.find(p => p.data === dataFormatadaExibicao);
-          
-          if (pontoHoje) {
-            const e = pontoHoje.entrada || pontoHoje.Entrada || '';
-            const sI = pontoHoje.saida_intervalo || pontoHoje.saiAlm || pontoHoje['Sai Almoço'] || '';
-            const vI = pontoHoje.volta_intervalo || pontoHoje.voltAlm || pontoHoje['Vol Almoço'] || '';
-            const sF = pontoHoje.saida_final || pontoHoje.saidaFin || pontoHoje.Fim || '';
-
-            document.getElementById('dispE').innerText = e || '--:--';
-            document.getElementById('dispSI').innerText = sI || '--:--';
-            document.getElementById('dispVI').innerText = vI || '--:--';
-            document.getElementById('dispSF').innerText = sF || '--:--';
-
-            if (!e) document.getElementById('lblProximoReg').innerText = "Entrada";
-            else if (!sI && !sF) document.getElementById('lblProximoReg').innerText = "Saída Intervalo / Final";
-            else if (!vI && !sF) document.getElementById('lblProximoReg').innerText = "Volta Intervalo";
-            else if (!sF) document.getElementById('lblProximoReg').innerText = "Saída Final";
-            else document.getElementById('lblProximoReg').innerText = "Completo";
-          }
-        });
-    }
-
-    function baterPontoAutomatico() {
-      if (window.AndroidGPS && typeof window.AndroidGPS.solicitarGPS === 'function') {
-        window.AndroidGPS.solicitarGPS();
-      }
-
-      if (userLatAtual === null || userLngAtual === null) {
-        alert("⚠️ Aguarde a captura do sinal de GPS antes de registrar o ponto!");
-        return;
-      }
-
-      const distanciaAtual = calcularDistanciaEmMetros(userLatAtual, userLngAtual, empresaLat, empresaLng);
-
-      if (distanciaAtual > raioPermitidoMetros) {
-        alert(`❌ Registro Bloqueado!\n\nVocê está fora do perímetro da empresa.\nDistância atual: ${distanciaAtual}m\nLimite permitido: ${raioPermitidoMetros}m`);
-        return;
-      }
-
-      const agora = new Date();
-      const horaAtual = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
-
-      let e = document.getElementById('dispE').innerText;
-      let sI = document.getElementById('dispSI').innerText;
-      let vI = document.getElementById('dispVI').innerText;
-      let sF = document.getElementById('dispSF').innerText;
-
-      let campo = '';
-
-      if (e === '--:--') {
-        e = horaAtual;
-        document.getElementById('dispE').innerText = horaAtual;
-        document.getElementById('lblProximoReg').innerText = "Saída Intervalo / Final";
-        campo = 'entrada';
-      } 
-      else if (sI === '--:--' && sF === '--:--') {
-        const ehSaidaFinal = confirm("Esta marcação é a SAÍDA FINAL?\n\n- Clique em [OK] para SAÍDA FINAL\n- Clique em [Cancelar] para SAÍDA INTERVALO (Almoço)");
-
-        if (ehSaidaFinal) {
-          sF = horaAtual;
-          document.getElementById('dispSF').innerText = horaAtual;
-          document.getElementById('lblProximoReg').innerText = "Completo";
-          campo = 'saida_final';
-        } else {
-          sI = horaAtual;
-          document.getElementById('dispSI').innerText = horaAtual;
-          document.getElementById('lblProximoReg').innerText = "Volta Intervalo";
-          campo = 'saida_intervalo';
-        }
-      } 
-      else if (vI === '--:--' && sF === '--:--') {
-        vI = horaAtual;
-        document.getElementById('dispVI').innerText = horaAtual;
-        document.getElementById('lblProximoReg').innerText = "Saída Final";
-        campo = 'volta_intervalo';
-      } 
-      else if (sF === '--:--') {
-        sF = horaAtual;
-        document.getElementById('dispSF').innerText = horaAtual;
-        document.getElementById('lblProximoReg').innerText = "Completo";
-        campo = 'saida_final';
-      } else {
-        alert('Todas as marcações de hoje já foram preenchidas!');
-        return;
-      }
-
-      const payload = {
-        action: 'upsert',
-        data: {
-          data: dataFormatadaExibicao,
-          [campo]: horaAtual
-        }
-      };
-
-      fetch(SHEETDB_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (res.status === 'success') {
-          alert('Ponto registrado com sucesso!');
-        } else {
-          alert('Erro ao registrar ponto.');
-        }
-      })
-      .catch(() => alert('Erro de conexão.'));
-    }
-
-    function recalcularHistorico() {
-      toggleMenu();
-      carregarRelatorio();
-      alert("Histórico e horas extras recalculados!");
-    }
-
-    function sincronizarTudo() { 
-      toggleMenu();
-      carregarPontoDeHoje(); 
-      carregarRelatorio(); 
-      alert("Sincronizado com a nuvem!"); 
-    }
-
-    function sairApp() { 
-      toggleMenu();
-      if (confirm("Deseja fechar o aplicativo?")) window.close(); 
-    }
-
-    window.onclick = function(event) {
-      if (!event.target.matches('.menu-btn')) {
-        const dropdown = document.getElementById('dropdownMenu');
-        if (dropdown && dropdown.classList.contains('show')) dropdown.classList.remove('show');
-      }
-    }
-
-    iniciarGPS();
-    carregarPontoDeHoje();
+function sairApp() {
+  if (confirm("Deseja fechar o aplicativo?")) {
+    window.close();
+  }
+}
 </script>
-  </body>
+</body>
 </html>
