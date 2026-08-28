@@ -177,70 +177,78 @@
     }
 
     function renderTabela(dados, modoBuscaGlobal = false) {
-      listaExibida = dados;
-      const thead = document.getElementById('tabela-cabecalho');
-      const tbody = document.getElementById('tabela-corpo');
-      tbody.innerHTML = '';
+  listaExibida = dados;
+  const thead = document.getElementById('tabela-cabecalho');
+  const tbody = document.getElementById('tabela-corpo');
+  tbody.innerHTML = '';
 
-      if (modoBuscaGlobal) {
-        thead.innerHTML = `<th>Aba / Origem</th><th>Local / Molde</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
-      } else if (abaAtual === 'Transferências e Step Bay Step') {
-        thead.innerHTML = `<th>Cód. Qualifix</th><th>Cód. Arteb</th><th>Descrição</th><th>Mercado</th><th>Maq.</th><th>Troca Versão</th><th>Ações</th>`;
-      } else {
-        thead.innerHTML = `<th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
-      }
+  if (modoBuscaGlobal) {
+    thead.innerHTML = `<th>Aba / Origem</th><th>Local / Molde</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
+  } else if (abaAtual === 'Transferências e Step Bay Step') {
+    thead.innerHTML = `<th>Cód. Qualifix</th><th>Cód. Arteb</th><th>Descrição</th><th>Mercado</th><th>Maq.</th><th>Troca Versão</th><th>Ações</th>`;
+  } else {
+    thead.innerHTML = `<th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
+  }
 
-      if (!dados || dados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
-        return;
-      }
+  if (!dados || dados.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
+    return;
+  }
 
-      const fragment = document.createDocumentFragment();
+  const fragment = document.createDocumentFragment();
 
-      dados.forEach((item, index) => {
-        const tr = document.createElement('tr');
-        const abaOrigem = item._abaOrigem || abaAtual;
-        const nomeAbaExibicao = abaOrigem === 'ATUALIZADA' ? 'PLÁSTICO' : abaOrigem;
+  dados.forEach((item) => {
+    const tr = document.createElement('tr');
+    const abaOrigem = item._abaOrigem || abaAtual;
+    const nomeAbaExibicao = abaOrigem === 'ATUALIZADA' ? 'PLÁSTICO' : abaOrigem;
+    
+    // Converte o objeto do item para texto seguro no HTML
+    const itemJson = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
 
-        if (modoBuscaGlobal) {
-          const local = acharCampo(item, ['local', 'molde', 'num', 'nº', 'qualifix'], 0);
-          const codigo = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
-          const desc = acharCampo(item, ['desc', 'descricao'], 2);
+    if (modoBuscaGlobal) {
+      const local = acharCampo(item, ['local', 'molde', 'num', 'nº', 'qualifix'], 0);
+      const codigo = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
+      const desc = acharCampo(item, ['desc', 'descricao'], 2);
 
-          tr.innerHTML = `
-            <td><span class="badge-aba">${nomeAbaExibicao}</span></td>
-            <td><b>${local}</b></td>
-            <td>${codigo}</td>
-            <td>${desc}</td>
-            <td><button class="btn-edit" onclick="irParaItemEEditar('${abaOrigem}', ${index})">Ir / Editar</button></td>
-          `;
-        } else if (abaAtual === 'Transferências e Step Bay Step') {
-          const codQ = acharCampo(item, ['qualifix', 'col1'], 0);
-          const codA = acharCampo(item, ['arteb', 'col2'], 1);
-          const desc = acharCampo(item, ['desc', 'descricao'], 2);
-          const merc = acharCampo(item, ['mercado'], 3);
-          const maq = acharCampo(item, ['maq', 'maquina'], 4);
-          const troca = acharCampo(item, ['troca', 'versao'], 5);
+      tr.innerHTML = `
+        <td><span class="badge-aba">${nomeAbaExibicao}</span></td>
+        <td><b>${local}</b></td>
+        <td>${codigo}</td>
+        <td>${desc}</td>
+        <td><button class="btn-edit" onclick="irParaItemEEditar('${abaOrigem}', ${itemJson})">Ir / Editar</button></td>
+      `;
+    } else if (abaAtual === 'Transferências e Step Bay Step') {
+      const codQ = acharCampo(item, ['qualifix', 'col1'], 0);
+      const codA = acharCampo(item, ['arteb', 'col2'], 1);
+      const desc = acharCampo(item, ['desc', 'descricao'], 2);
+      const merc = acharCampo(item, ['mercado'], 3);
+      const maq = acharCampo(item, ['maq', 'maquina'], 4);
+      const troca = acharCampo(item, ['troca', 'versao'], 5);
 
-          tr.innerHTML = `
-            <td><b>${codQ}</b></td><td>${codA}</td><td>${desc}</td><td>${merc}</td><td>${maq}</td><td>${troca}</td>
-            <td><button class="btn-edit" onclick="prepararEdicao(${index})">Editar</button></td>
-          `;
-        } else {
-          const local = acharCampo(item, ['local', 'molde', 'num', 'nº'], 0);
-          const codigo = acharCampo(item, ['cod', 'codigo'], 1);
-          const desc = acharCampo(item, ['desc', 'descricao'], 2);
+      tr.innerHTML = `
+        <td><b>${codQ}</b></td><td>${codA}</td><td>${desc}</td><td>${merc}</td><td>${maq}</td><td>${troca}</td>
+        <td><button class="btn-edit" onclick='prepararEdicaoDireta(${itemJson})'>Editar</button></td>
+      `;
+    } else {
+      const local = acharCampo(item, ['local', 'molde', 'num', 'nº'], 0);
+      const codigo = acharCampo(item, ['cod', 'codigo'], 1);
+      const desc = acharCampo(item, ['desc', 'descricao'], 2);
 
-          tr.innerHTML = `
-            <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td>
-            <td><button class="btn-edit" onclick="prepararEdicao(${index})">Editar</button></td>
-          `;
-        }
-        fragment.appendChild(tr);
-      });
-
-      tbody.appendChild(fragment);
+      tr.innerHTML = `
+        <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td>
+        <td><button class="btn-edit" onclick='prepararEdicaoDireta(${itemJson})'>Editar</button></td>
+      `;
     }
+    fragment.appendChild(tr);
+  });
+
+  tbody.appendChild(fragment);
+}
+
+function irParaItemEEditar(abaDestino, item) {
+  trocarAba(abaDestino);
+  prepararEdicaoDireta(item);
+}
 
     function filtrarGeral() {
       clearTimeout(timerBusca);
