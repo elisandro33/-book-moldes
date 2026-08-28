@@ -197,13 +197,10 @@
 
       const fragment = document.createDocumentFragment();
 
-      dados.forEach((item) => {
+      dados.forEach((item, index) => {
         const tr = document.createElement('tr');
         const abaOrigem = item._abaOrigem || abaAtual;
         const nomeAbaExibicao = abaOrigem === 'ATUALIZADA' ? 'PLÁSTICO' : abaOrigem;
-
-        // Escapa aspas para poder passar o objeto completo com segurança no HTML
-        const itemJson = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
 
         if (modoBuscaGlobal) {
           const local = acharCampo(item, ['local', 'molde', 'num', 'nº', 'qualifix'], 0);
@@ -215,7 +212,7 @@
             <td><b>${local}</b></td>
             <td>${codigo}</td>
             <td>${desc}</td>
-            <td><button class="btn-edit" onclick='irParaItemEEditar("${abaOrigem}", ${itemJson})'>Ir / Editar</button></td>
+            <td><button class="btn-edit" onclick="cliqueEditar(${index})">Ir / Editar</button></td>
           `;
         } else if (abaAtual === 'Transferências e Step Bay Step') {
           const codQ = acharCampo(item, ['qualifix', 'col1'], 0);
@@ -227,7 +224,7 @@
 
           tr.innerHTML = `
             <td><b>${codQ}</b></td><td>${codA}</td><td>${desc}</td><td>${merc}</td><td>${maq}</td><td>${troca}</td>
-            <td><button class="btn-edit" onclick='prepararEdicaoDireta(${itemJson})'>Editar</button></td>
+            <td><button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button></td>
           `;
         } else {
           const local = acharCampo(item, ['local', 'molde', 'num', 'nº'], 0);
@@ -236,7 +233,7 @@
 
           tr.innerHTML = `
             <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td>
-            <td><button class="btn-edit" onclick='prepararEdicaoDireta(${itemJson})'>Editar</button></td>
+            <td><button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button></td>
           `;
         }
         fragment.appendChild(tr);
@@ -245,26 +242,19 @@
       tbody.appendChild(fragment);
     }
 
-    function filtrarGeral() {
-      clearTimeout(timerBusca);
-      timerBusca = setTimeout(() => {
-        const termo = document.getElementById('input-busca').value.trim().toLowerCase();
-        if (!termo) { renderTabelaAbaAtual(); return; }
+    function cliqueEditar(index) {
+      const item = listaExibida[index];
+      if (!item) return;
 
-        let resultados = [];
-        Object.keys(bancoCompleto).forEach(nomeAba => {
-          bancoCompleto[nomeAba].forEach(item => {
-            if (Object.values(item).join(' ').toLowerCase().includes(termo)) {
-              resultados.push({ ...item, _abaOrigem: nomeAba });
-            }
-          });
-        });
-        renderTabela(resultados, true);
-      }, 250);
-    }
+      const abaOrigem = item._abaOrigem || abaAtual;
+      if (abaOrigem !== abaAtual) {
+        abaAtual = abaOrigem;
+        document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
+        document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
+        document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
+        redefinirFormulario();
+      }
 
-    function irParaItemEEditar(abaDestino, item) {
-      trocarAba(abaDestino);
       prepararEdicaoDireta(item);
     }
 
@@ -280,7 +270,7 @@
         document.getElementById('input-col5').value = acharCampo(item, ['maq'], 4);
         document.getElementById('input-col6').value = acharCampo(item, ['troca'], 5);
         
-        document.getElementById('edit-codigo-orig').value = campoQ.valor;
+        document.getElementById('edit-codigo-orig').value = campoQ.valor !== '-' ? campoQ.valor : '';
         document.getElementById('edit-chave-coluna').value = campoQ.chave;
       } else {
         const campoCod = acharChaveEValor(item, ['cod', 'codigo'], 1);
@@ -303,6 +293,24 @@
       document.getElementById('btn-salvar').innerText = "Atualizar Registro";
       document.getElementById('btn-cancelar').style.display = "block";
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function filtrarGeral() {
+      clearTimeout(timerBusca);
+      timerBusca = setTimeout(() => {
+        const termo = document.getElementById('input-busca').value.trim().toLowerCase();
+        if (!termo) { renderTabelaAbaAtual(); return; }
+
+        let resultados = [];
+        Object.keys(bancoCompleto).forEach(nomeAba => {
+          bancoCompleto[nomeAba].forEach(item => {
+            if (Object.values(item).join(' ').toLowerCase().includes(termo)) {
+              resultados.push({ ...item, _abaOrigem: nomeAba });
+            }
+          });
+        });
+        renderTabela(resultados, true);
+      }, 250);
     }
 
     function salvarMolde() {
