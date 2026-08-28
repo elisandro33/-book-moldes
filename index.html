@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book de Moldes</title>
   <style>
@@ -19,6 +18,7 @@
     button { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer; }
     button:active { background: #1557b0; }
     .btn-reload { background: #34a853; margin-top: 5px; padding: 8px; font-size: 12px; }
+    .btn-cancel { background: #757575; margin-top: 5px; }
     table { width: 100%; border-collapse: collapse; margin-top: 5px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; white-space: nowrap; }
     th { background-color: #1a73e8; color: white; }
@@ -40,7 +40,18 @@
   <div id="status-msg" class="status">Iniciando...</div>
   <button class="btn-reload" onclick="carregarTodosDados()">🔄 Recarregar Dados</button>
 
-  <!-- Formulário -->
+  <!-- Form invisível de envio -->
+  <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="if(submitted){onFormSubmitted();}"></iframe>
+  
+  <form id="form-envio" target="hidden_iframe" method="POST" action="">
+    <input type="hidden" name="sheet" id="envio-sheet">
+    <input type="hidden" name="action" id="envio-action">
+    <input type="hidden" name="colunaBusca" id="envio-colunaBusca">
+    <input type="hidden" name="valorBusca" id="envio-valorBusca">
+    <input type="hidden" name="data" id="envio-data">
+  </form>
+
+  <!-- Formulário Visual -->
   <div class="card" id="card-formulario" style="margin-top: 10px;">
     <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
     <input type="hidden" id="edit-codigo-orig" value="">
@@ -49,6 +60,7 @@
     <div id="form-campos"></div>
     
     <button onclick="salvarMolde()" id="btn-salvar">Salvar Registro</button>
+    <button onclick="limparFormulario()" id="btn-cancelar" class="btn-cancel" style="display:none;">Cancelar Edição</button>
   </div>
 
   <!-- Consulta Global -->
@@ -68,21 +80,18 @@
   </div>
 
   <script>
-    const BASE_API = "https://script.google.com/macros/s/AKfycbwqiaHjLyiuumWjAiclxC4Fmw5Jq87aCoaprgTUKW0fRZXUNFkdi1yl19TgS0wiOWTk/exec";
+    // URL DO SEU WEB APP DO GOOGLE APPS SCRIPT
+    const BASE_API = "https://script.google.com/macros/s/AKfycbzyvhHmnIH2ZpOj3bo8doFLP9BoLif_9h4ZvpVv7yqun7vxBEFuHfyceJ4DvSvW-dJz/exec";
     
     let abaAtual = "ATUALIZADA";
-    let bancoCompleto = {
-      "ATUALIZADA": [],
-      "Moldes QLX": [],
-      "Transferências e Step Bay Step": []
-    };
+    let bancoCompleto = { "ATUALIZADA": [], "Moldes QLX": [], "Transferências e Step Bay Step": [] };
     let listaExibida = [];
     let timerBusca = null;
+    let submitted = false;
 
     function acharChaveEValor(item, palavrasChave, indicePadrao = -1) {
       if (!item) return { chave: '', valor: '-' };
       const keys = Object.keys(item);
-      
       for (let k of keys) {
         const keyLimpa = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
         for (let p of palavrasChave) {
@@ -92,11 +101,9 @@
           }
         }
       }
-      
       if (indicePadrao >= 0 && keys[indicePadrao] !== undefined) {
         return { chave: keys[indicePadrao], valor: item[keys[indicePadrao]] || '-' };
       }
-
       return { chave: keys[0] || '', valor: '-' };
     }
 
@@ -128,7 +135,6 @@
 
     function trocarAba(novaAba) {
       abaAtual = novaAba;
-
       document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
       document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
       document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
@@ -148,26 +154,18 @@
 
       try {
         for (let aba of abas) {
-          const resp = await fetch(`${BASE_API}?sheet=${encodeURIComponent(aba)}`, {
-            method: 'GET',
-            redirect: 'follow'
-          });
-
+          const resp = await fetch(`${BASE_API}?sheet=${encodeURIComponent(aba)}`, { method: 'GET', redirect: 'follow' });
           if (resp.ok) {
             const texto = await resp.text();
             bancoCompleto[aba] = JSON.parse(texto);
-          } else {
-            throw new Error("Erro na resposta");
           }
         }
-
         renderTabelaAbaAtual();
         const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
         statusDiv.innerText = `Sincronizado! Total: ${total} itens.`;
         statusDiv.style.color = "green";
       } catch (error) {
-        console.error(error);
-        statusDiv.innerText = "Erro ao conectar com o Google Sheets. Verifique o Script e o ID da planilha.";
+        statusDiv.innerText = "Erro ao carregar dados.";
         statusDiv.style.color = "red";
       }
     }
@@ -182,34 +180,14 @@
       listaExibida = dados;
       const thead = document.getElementById('tabela-cabecalho');
       const tbody = document.getElementById('tabela-corpo');
-      
       tbody.innerHTML = '';
 
       if (modoBuscaGlobal) {
-        thead.innerHTML = `
-          <th>Aba / Origem</th>
-          <th>Local / Molde</th>
-          <th>Código</th>
-          <th>Descrição</th>
-          <th>Ações</th>
-        `;
+        thead.innerHTML = `<th>Aba / Origem</th><th>Local / Molde</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
       } else if (abaAtual === 'Transferências e Step Bay Step') {
-        thead.innerHTML = `
-          <th>Cód. Qualifix</th>
-          <th>Cód. Arteb</th>
-          <th>Descrição</th>
-          <th>Mercado</th>
-          <th>Maq.</th>
-          <th>Troca Versão</th>
-          <th>Ações</th>
-        `;
+        thead.innerHTML = `<th>Cód. Qualifix</th><th>Cód. Arteb</th><th>Descrição</th><th>Mercado</th><th>Maq.</th><th>Troca Versão</th><th>Ações</th>`;
       } else {
-        thead.innerHTML = `
-          <th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th>
-          <th>Código</th>
-          <th>Descrição</th>
-          <th>Ações</th>
-        `;
+        thead.innerHTML = `<th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
       }
 
       if (!dados || dados.length === 0) {
@@ -245,12 +223,7 @@
           const troca = acharCampo(item, ['troca', 'versao'], 5);
 
           tr.innerHTML = `
-            <td><b>${codQ}</b></td>
-            <td>${codA}</td>
-            <td>${desc}</td>
-            <td>${merc}</td>
-            <td>${maq}</td>
-            <td>${troca}</td>
+            <td><b>${codQ}</b></td><td>${codA}</td><td>${desc}</td><td>${merc}</td><td>${maq}</td><td>${troca}</td>
             <td><button class="btn-edit" onclick="prepararEdicao(${index})">Editar</button></td>
           `;
         } else {
@@ -259,9 +232,7 @@
           const desc = acharCampo(item, ['desc', 'descricao'], 2);
 
           tr.innerHTML = `
-            <td><b>${local}</b></td>
-            <td>${codigo}</td>
-            <td>${desc}</td>
+            <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td>
             <td><button class="btn-edit" onclick="prepararEdicao(${index})">Editar</button></td>
           `;
         }
@@ -273,28 +244,18 @@
 
     function filtrarGeral() {
       clearTimeout(timerBusca);
-
       timerBusca = setTimeout(() => {
         const termo = document.getElementById('input-busca').value.trim().toLowerCase();
-
-        if (!termo) {
-          renderTabelaAbaAtual();
-          return;
-        }
+        if (!termo) { renderTabelaAbaAtual(); return; }
 
         let resultados = [];
-
         Object.keys(bancoCompleto).forEach(nomeAba => {
-          const itensDaAba = bancoCompleto[nomeAba];
-          
-          itensDaAba.forEach(item => {
-            const textoCompleto = Object.values(item).join(' ').toLowerCase();
-            if (textoCompleto.includes(termo)) {
+          bancoCompleto[nomeAba].forEach(item => {
+            if (Object.values(item).join(' ').toLowerCase().includes(termo)) {
               resultados.push({ ...item, _abaOrigem: nomeAba });
             }
           });
         });
-
         renderTabela(resultados, true);
       }, 250);
     }
@@ -302,9 +263,11 @@
     function irParaItemEEditar(abaDestino, indexNaListaExibida) {
       trocarAba(abaDestino);
       const item = listaExibida[indexNaListaExibida];
-      if (item) {
-        prepararEdicaoDireta(item);
-      }
+      if (item) prepararEdicaoDireta(item);
+    }
+
+    function prepararEdicao(index) {
+      prepararEdicaoDireta(listaExibida[index]);
     }
 
     function prepararEdicaoDireta(item) {
@@ -329,7 +292,7 @@
         document.getElementById('input-col2').value = campoCod.valor !== '-' ? campoCod.valor : '';
         document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2);
         
-        if (campoCod.valor !== '-') {
+        if (campoCod.valor !== '-' && campoCod.valor !== '') {
           document.getElementById('edit-codigo-orig').value = campoCod.valor;
           document.getElementById('edit-chave-coluna').value = campoCod.chave;
         } else {
@@ -340,14 +303,11 @@
 
       document.getElementById('form-title').innerText = "Editar Registro";
       document.getElementById('btn-salvar').innerText = "Atualizar Registro";
+      document.getElementById('btn-cancelar').style.display = "block";
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function prepararEdicao(index) {
-      prepararEdicaoDireta(listaExibida[index]);
-    }
-
-    async function salvarMolde() {
+    function salvarMolde() {
       const col1 = document.getElementById('input-col1').value.trim();
       const col2 = document.getElementById('input-col2').value.trim();
       const col3 = document.getElementById('input-col3').value.trim();
@@ -360,7 +320,7 @@
       }
 
       const statusDiv = document.getElementById('status-msg');
-      statusDiv.innerText = "Enviando dados para o Google Sheets...";
+      statusDiv.innerText = "Enviando dados para a planilha...";
       statusDiv.style.color = "blue";
 
       let payloadData = {};
@@ -385,32 +345,26 @@
         payloadData[keys[2] || "DESCRIÇÃO"] = col3;
       }
 
-      const bodyData = {
-        sheet: abaAtual,
-        action: codigoOrig ? "UPDATE" : "CREATE",
-        colunaBusca: chaveColuna || keys[0],
-        valorBusca: codigoOrig,
-        data: payloadData
-      };
+      // Preenche o formulário invisível para postar
+      const form = document.getElementById('form-envio');
+      form.action = BASE_API;
+      document.getElementById('envio-sheet').value = abaAtual;
+      document.getElementById('envio-action').value = codigoOrig ? "UPDATE" : "CREATE";
+      document.getElementById('envio-colunaBusca').value = chaveColuna || keys[0] || "";
+      document.getElementById('envio-valorBusca').value = codigoOrig || "";
+      document.getElementById('envio-data').value = JSON.stringify(payloadData);
 
-      try {
-        await fetch(BASE_API, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bodyData)
-        });
+      submitted = true;
+      form.submit();
+    }
 
-        statusDiv.innerText = "Salvo com sucesso!";
-        statusDiv.style.color = "green";
-        limparFormulario();
-        setTimeout(() => carregarTodosDados(), 1500);
-      } catch (error) {
-        console.error(error);
-        alert("Erro ao salvar os dados.");
-        statusDiv.innerText = "Falha ao salvar.";
-        statusDiv.style.color = "red";
-      }
+    function onFormSubmitted() {
+      const statusDiv = document.getElementById('status-msg');
+      statusDiv.innerText = "Registro salvo com sucesso!";
+      statusDiv.style.color = "green";
+      limparFormulario();
+      setTimeout(() => carregarTodosDados(), 1200);
+      submitted = false;
     }
 
     function limparFormulario() {
@@ -419,10 +373,11 @@
       document.getElementById('edit-chave-coluna').value = '';
       document.getElementById('form-title').innerText = "Adicionar Registro";
       document.getElementById('btn-salvar').innerText = "Salvar Registro";
+      document.getElementById('btn-cancelar').style.display = "none";
     }
 
     redefinirFormulario();
     carregarTodosDados();
   </script>
 </body>
-	</html>
+</html>
