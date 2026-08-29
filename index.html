@@ -336,78 +336,79 @@
     }
 
     async function salvarMolde() {
-      const col1 = document.getElementById('input-col1').value.trim();
-      const col2 = document.getElementById('input-col2').value.trim();
-      const col3 = document.getElementById('input-col3').value.trim();
-      const rowIndex = document.getElementById('edit-row-index').value;
+  const col1 = document.getElementById('input-col1').value.trim();
+  const col2 = document.getElementById('input-col2').value.trim();
+  const col3 = document.getElementById('input-col3').value.trim();
+  const rowIndex = document.getElementById('edit-row-index').value;
 
-      if (!col1 && !col2) {
-        alert('Preencha pelo menos um campo!');
-        return;
-      }
+  if (!col1 && !col2) {
+    alert('Preencha pelo menos um campo!');
+    return;
+  }
 
-      const statusDiv = document.getElementById('status-msg');
-      let payloadData = {};
+  const statusDiv = document.getElementById('status-msg');
+  
+  let col4 = "", col5 = "", col6 = "";
+  let payloadData = {};
 
-      if (abaAtual === 'Transferências e Step Bay Step') {
-        payloadData = {
-          "Código Qualifix": col1,
-          "Código Arteb": col2,
-          "Descrição": col3,
-          "Mercado": document.getElementById('input-col4').value.trim(),
-          "Maq.": document.getElementById('input-col5').value.trim(),
-          "Troca de Versão": document.getElementById('input-col6').value.trim()
-        };
-      } else if (abaAtual === 'Moldes QLX') {
-        payloadData = {
-          "Molde Nº": col1,
-          "CÓDIGO": col2,
-          "DESCRIÇÃO": col3
-        };
-      } else {
-        payloadData = {
-          "LOCAL": col1,
-          "CÓDIGO": col2,
-          "DESCRIÇÃO": col3
-        };
-      }
+  if (abaAtual === 'Transferências e Step Bay Step') {
+    col4 = document.getElementById('input-col4').value.trim();
+    col5 = document.getElementById('input-col5').value.trim();
+    col6 = document.getElementById('input-col6').value.trim();
+    payloadData = {
+      "Código Qualifix": col1, "Código Arteb": col2, "Descrição": col3,
+      "Mercado": col4, "Maq.": col5, "Troca de Versão": col6
+    };
+  } else if (abaAtual === 'Moldes QLX') {
+    payloadData = { "Molde Nº": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
+  } else {
+    payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
+  }
 
-      if (rowIndex) {
-        const idx = bancoCompleto[abaAtual].findIndex(i => String(i._rowIndex) === String(rowIndex));
-        if (idx !== -1) {
-          bancoCompleto[abaAtual][idx] = { ...bancoCompleto[abaAtual][idx], ...payloadData };
-        }
-      } else {
-        const novoIndex = bancoCompleto[abaAtual].length + 2;
-        payloadData['_rowIndex'] = novoIndex;
-        bancoCompleto[abaAtual].push(payloadData);
-      }
-
-      salvarNoLocalStorage();
-      renderTabelaAbaAtual();
-      limparFormulario();
-
-      statusDiv.innerText = "Enviando para a planilha...";
-      statusDiv.style.color = "#1a73e8";
-
-      const dataString = encodeURIComponent(JSON.stringify(payloadData));
-      const urlSalvar = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${encodeURIComponent(rowIndex)}&data=${dataString}`;
-
-      try {
-        const resposta = await enviarRequisicaoJSONP(urlSalvar);
-        if (resposta && resposta.status === "success") {
-          statusDiv.innerText = "✅ Salvo e sincronizado na planilha!";
-          statusDiv.style.color = "green";
-        } else {
-          statusDiv.innerText = "⚠️ Resposta da nuvem: " + (resposta.message || "Erro ao salvar");
-          statusDiv.style.color = "orange";
-        }
-      } catch (err) {
-        statusDiv.innerText = "⚠️ Salvo no navegador (Servidor não respondeu).";
-        statusDiv.style.color = "orange";
-      }
+  // Atualiza localmente na tela
+  if (rowIndex) {
+    const idx = bancoCompleto[abaAtual].findIndex(i => String(i._rowIndex) === String(rowIndex));
+    if (idx !== -1) {
+      bancoCompleto[abaAtual][idx] = { ...bancoCompleto[abaAtual][idx], ...payloadData };
     }
+  } else {
+    const novoIndex = bancoCompleto[abaAtual].length + 2;
+    payloadData['_rowIndex'] = novoIndex;
+    bancoCompleto[abaAtual].push(payloadData);
+  }
 
+  salvarNoLocalStorage();
+  renderTabelaAbaAtual();
+  limparFormulario();
+
+  statusDiv.innerText = "Sincronizando com a nuvem...";
+  statusDiv.style.color = "#1a73e8";
+
+  // Monta os parâmetros diretos sem precisar de JSON complexo na URL
+  const urlSalvar = `${BASE_API}?action=SAVE` +
+    `&sheet=${encodeURIComponent(abaAtual)}` +
+    `&rowIndex=${encodeURIComponent(rowIndex)}` +
+    `&c1=${encodeURIComponent(col1)}` +
+    `&c2=${encodeURIComponent(col2)}` +
+    `&c3=${encodeURIComponent(col3)}` +
+    `&c4=${encodeURIComponent(col4)}` +
+    `&c5=${encodeURIComponent(col5)}` +
+    `&c6=${encodeURIComponent(col6)}`;
+
+  try {
+    const resposta = await enviarRequisicaoJSONP(urlSalvar);
+    if (resposta && resposta.status === "success") {
+      statusDiv.innerText = "✅ Salvo e sincronizado na planilha!";
+      statusDiv.style.color = "green";
+    } else {
+      statusDiv.innerText = "⚠️ Resposta da nuvem: " + (resposta.message || "Erro desconhecido");
+      statusDiv.style.color = "orange";
+    }
+  } catch (err) {
+    statusDiv.innerText = "⚠️ Salvo no navegador (Servidor não respondeu).";
+    statusDiv.style.color = "orange";
+  }
+}
     function limparFormulario() {
       itemSendoEditado = null;
       document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
