@@ -44,6 +44,7 @@
   <!-- Formulário Visual -->
   <div class="card" id="card-formulario" style="margin-top: 10px;">
     <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
+    <input type="hidden" id="edit-id" value="">
     <input type="hidden" id="edit-row-index" value="">
     
     <div id="form-campos"></div>
@@ -76,26 +77,44 @@
     let listaExibida = [];
     let timerBusca = null;
 
-    function acharChaveEValor(item, palavrasChave, indicePadrao = -1) {
-      if (!item) return { chave: '', valor: '-' };
+    // Função utilitária para JSONP (contorna restrições CORS)
+    function enviarRequisicaoJSONP(url) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
+        window[callbackName] = function(data) {
+          delete window[callbackName];
+          document.body.removeChild(script);
+          resolve(data);
+        };
+
+        const script = document.createElement('script');
+        const sep = url.includes('?') ? '&' : '?';
+        script.src = url + sep + 'callback=' + callbackName;
+        script.onerror = function() {
+          delete window[callbackName];
+          document.body.removeChild(script);
+          reject(new Error('Erro de conexão com o script'));
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    function acharCampo(item, palavrasChave, indicePadrao = -1) {
+      if (!item) return '-';
       const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
       for (let k of keys) {
         const keyLimpa = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
         for (let p of palavrasChave) {
           if (keyLimpa.includes(p)) {
             const val = item[k] !== undefined && item[k] !== null && item[k] !== '' ? item[k] : '-';
-            return { chave: k, valor: val };
+            return val;
           }
         }
       }
       if (indicePadrao >= 0 && keys[indicePadrao] !== undefined) {
-        return { chave: keys[indicePadrao], valor: item[keys[indicePadrao]] || '-' };
+        return item[keys[indicePadrao]] || '-';
       }
-      return { chave: keys[0] || '', valor: '-' };
-    }
-
-    function acharCampo(item, palavrasChave, indicePadrao = -1) {
-      return acharChaveEValor(item, palavrasChave, indicePadrao).valor;
+      return '-';
     }
 
     function redefinirFormulario() {
@@ -141,10 +160,9 @@
 
       try {
         for (let aba of abas) {
-          const resp = await fetch(`${BASE_API}?action=READ&sheet=${encodeURIComponent(aba)}`);
-          if (resp.ok) {
-            const texto = await resp.text();
-            bancoCompleto[aba] = JSON.parse(texto);
+          const resData = await enviarRequisicaoJSONP(`${BASE_API}?action=READ&sheet=${encodeURIComponent(aba)}`);
+          if (Array.isArray(resData)) {
+            bancoCompleto[aba] = resData;
           }
         }
         renderTabelaAbaAtual();
@@ -265,7 +283,9 @@
         document.getElementById('input-col3').value = desc !== '-' ? desc : '';
       }
 
+      document.getElementById('edit-id').value = item.id || item.ID || '';
       document.getElementById('edit-row-index').value = item._rowIndex || '';
+
       document.getElementById('form-title').innerText = "Editar Registro";
       document.getElementById('btn-salvar').innerText = "Atualizar Registro";
       document.getElementById('btn-cancelar').style.display = "block";
@@ -300,6 +320,7 @@
       const col1 = document.getElementById('input-col1').value.trim();
       const col2 = document.getElementById('input-col2').value.trim();
       const col3 = document.getElementById('input-col3').value.trim();
+      const idReg = document.getElementById('edit-id').value;
       const rowIndex = document.getElementById('edit-row-index').value;
 
       if (!col1 && !col2) {
@@ -311,10 +332,12 @@
       const statusDiv = document.getElementById('status-msg');
       
       btnSalvar.disabled = true;
-      statusDiv.innerText = "Enviando dados para a planilha...";
+      statusDiv.innerText = "Salvando dados na planilha...";
       statusDiv.style.color = "blue";
 
       let payloadData = {};
+      if (idReg) payloadData["id"] = idReg;
+
       const listaDaAba = bancoCompleto[abaAtual] || [];
       const primeiroItem = listaDaAba[0] || {};
       const keys = Object.keys(primeiroItem).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
@@ -336,24 +359,21 @@
         payloadData[keys[2] || "DESCRIÇÃO"] = col3;
       }
 
-      const urlFinal = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${encodeURIComponent(rowIndex || "")}&data=${encodeURIComponent(JSON.stringify(payloadData))}`;
+      const urlFinal = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&id=${encodeURIComponent(idReg)}&rowIndex=${encodeURIComponent(rowIndex)}&data=${encodeURIComponent(JSON.stringify(payloadData))}`;
 
       try {
-        // Envia requisição com no-cors para evitar bloqueio no navegador
-        await fetch(urlFinal, { mode: 'no-cors' });
-        
-        statusDiv.innerText = "Enviado! Sincronizando tabela...";
-        statusDiv.style.color = "green";
-        
-        limparFormulario();
-
-        // Aguarda 1.5 segundos para o Google processar a escrita antes de recarregar
-        setTimeout(async () => {
+        const res = await enviarRequisicaoJSONP(urlFinal);
+        if (res && res.status === "success") {
+          statusDiv.innerText = "Registro salvo com sucesso!";
+          statusDiv.style.color = "green";
+          limparFormulario();
           await carregarTodosDados();
-        }, 1500);
-
+        } else {
+          statusDiv.innerText = "Erro ao salvar: " + (res.message || "");
+          statusDiv.style.color = "red";
+        }
       } catch (error) {
-        statusDiv.innerText = "Erro ao enviar.";
+        statusDiv.innerText = "Erro de conexão ao salvar.";
         statusDiv.style.color = "red";
       } finally {
         btnSalvar.disabled = false;
@@ -362,6 +382,7 @@
 
     function limparFormulario() {
       document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
+      document.getElementById('edit-id').value = '';
       document.getElementById('edit-row-index').value = '';
       document.getElementById('form-title').innerText = "Adicionar Registro";
       document.getElementById('btn-salvar').innerText = "Salvar Registro";
