@@ -92,7 +92,7 @@
         script.onerror = function() {
           delete window[callbackName];
           document.body.removeChild(script);
-          reject(new Error('Erro de conexão'));
+          reject(new Error('Erro de conexão com a planilha.'));
         };
         document.body.appendChild(script);
       });
@@ -315,83 +315,72 @@
       }, 250);
     }
 
-   async function salvarMolde() {
-  const col1 = document.getElementById('input-col1').value.trim();
-  const col2 = document.getElementById('input-col2').value.trim();
-  const col3 = document.getElementById('input-col3').value.trim();
-  const idReg = document.getElementById('edit-id').value;
-  const rowIndex = document.getElementById('edit-row-index').value;
+    async function salvarMolde() {
+      const col1 = document.getElementById('input-col1').value.trim();
+      const col2 = document.getElementById('input-col2').value.trim();
+      const col3 = document.getElementById('input-col3').value.trim();
+      const idReg = document.getElementById('edit-id').value;
+      const rowIndex = document.getElementById('edit-row-index').value;
 
-  if (!col1 && !col2) {
-    alert('Preencha pelo menos um campo!');
-    return;
-  }
+      if (!col1 && !col2) {
+        alert('Preencha pelo menos um campo!');
+        return;
+      }
 
-  const btnSalvar = document.getElementById('btn-salvar');
-  const statusDiv = document.getElementById('status-msg');
-  
-  btnSalvar.disabled = true;
-  statusDiv.innerText = "Enviando alteração...";
-  statusDiv.style.color = "blue";
+      const btnSalvar = document.getElementById('btn-salvar');
+      const statusDiv = document.getElementById('status-msg');
+      
+      btnSalvar.disabled = true;
+      statusDiv.innerText = "Gravando na planilha...";
+      statusDiv.style.color = "blue";
 
-  let payloadData = {};
-  if (idReg) payloadData["id"] = idReg;
+      let payloadData = {};
+      if (idReg) payloadData["id"] = idReg;
 
-  const listaDaAba = bancoCompleto[abaAtual] || [];
-  const primeiroItem = listaDaAba[0] || {};
-  const keys = Object.keys(primeiroItem).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
+      const listaDaAba = bancoCompleto[abaAtual] || [];
+      const primeiroItem = listaDaAba[0] || {};
+      const keys = Object.keys(primeiroItem).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
 
-  if (abaAtual === 'Transferências e Step Bay Step') {
-    payloadData[keys[0] || "CÓDIGO QUALIFIX"] = col1;
-    payloadData[keys[1] || "CÓDIGO ARTEB"] = col2;
-    payloadData[keys[2] || "DESCRIÇÃO"] = col3;
-    payloadData[keys[3] || "MERCADO"] = document.getElementById('input-col4').value.trim();
-    payloadData[keys[4] || "Maq."] = document.getElementById('input-col5').value.trim();
-    payloadData[keys[5] || "TROCA DE VERSÃO"] = document.getElementById('input-col6').value.trim();
-  } else if (abaAtual === 'Moldes QLX') {
-    payloadData[keys[0] || "molde número"] = col1;
-    payloadData[keys[1] || "código"] = col2;
-    payloadData[keys[2] || "descrição"] = col3;
-  } else {
-    payloadData[keys[0] || "LOCAL"] = col1;
-    payloadData[keys[1] || "CÓDIGO"] = col2;
-    payloadData[keys[2] || "DESCRIÇÃO"] = col3;
-  }
+      if (abaAtual === 'Transferências e Step Bay Step') {
+        payloadData[keys[0] || "CÓDIGO QUALIFIX"] = col1;
+        payloadData[keys[1] || "CÓDIGO ARTEB"] = col2;
+        payloadData[keys[2] || "DESCRIÇÃO"] = col3;
+        payloadData[keys[3] || "MERCADO"] = document.getElementById('input-col4').value.trim();
+        payloadData[keys[4] || "Maq."] = document.getElementById('input-col5').value.trim();
+        payloadData[keys[5] || "TROCA DE VERSÃO"] = document.getElementById('input-col6').value.trim();
+      } else if (abaAtual === 'Moldes QLX') {
+        payloadData[keys[0] || "molde número"] = col1;
+        payloadData[keys[1] || "código"] = col2;
+        payloadData[keys[2] || "descrição"] = col3;
+      } else {
+        payloadData[keys[0] || "LOCAL"] = col1;
+        payloadData[keys[1] || "CÓDIGO"] = col2;
+        payloadData[keys[2] || "DESCRIÇÃO"] = col3;
+      }
 
-  // Envio usando URLSearchParams para garantir entrega sem bloqueio de CORS
-  const formData = new URLSearchParams();
-  formData.append("action", "SAVE");
-  formData.append("sheet", abaAtual);
-  formData.append("id", idReg);
-  formData.append("rowIndex", rowIndex);
-  formData.append("data", JSON.stringify(payloadData));
+      // Monta a requisição JSONP garantida
+      const urlSalvar = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&id=${encodeURIComponent(idReg)}&rowIndex=${encodeURIComponent(rowIndex)}&data=${encodeURIComponent(JSON.stringify(payloadData))}`;
 
-  try {
-    await fetch(BASE_API, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: formData.toString()
-    });
+      try {
+        const resposta = await enviarRequisicaoJSONP(urlSalvar);
 
-    statusDiv.innerText = "Salvo com sucesso! Recarregando dados...";
-    statusDiv.style.color = "green";
-    limparFormulario();
+        if (resposta && resposta.status === 'success') {
+          statusDiv.innerText = "Salvo com sucesso! Recarregando dados...";
+          statusDiv.style.color = "green";
+          limparFormulario();
+          await carregarTodosDados();
+        } else {
+          statusDiv.innerText = "Erro ao salvar na planilha: " + (resposta.message || '');
+          statusDiv.style.color = "red";
+        }
 
-    // Aguarda 2 segundos e busca a planilha atualizada
-    setTimeout(async () => {
-      await carregarTodosDados();
-    }, 2000);
-
-  } catch (error) {
-    statusDiv.innerText = "Erro ao enviar dados.";
-    statusDiv.style.color = "red";
-  } finally {
-    btnSalvar.disabled = false;
-  }
-}
+      } catch (error) {
+        statusDiv.innerText = "Erro na requisição. Verifique a conexão.";
+        statusDiv.style.color = "red";
+      } finally {
+        btnSalvar.disabled = false;
+      }
+    }
 
     function limparFormulario() {
       document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
