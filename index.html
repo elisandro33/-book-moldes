@@ -92,7 +92,7 @@
         script.onerror = function() {
           delete window[callbackName];
           if (script.parentNode) document.body.removeChild(script);
-          reject(new Error('Erro de conexão com a planilha.'));
+          reject(new Error('Erro de conexão.'));
         };
         document.body.appendChild(script);
       });
@@ -152,7 +152,7 @@
 
     async function carregarTodosDados() {
       const statusDiv = document.getElementById('status-msg');
-      statusDiv.innerText = "Sincronizando com Google Sheets...";
+      statusDiv.innerText = "Sincronizando dados...";
       statusDiv.style.color = "#1a73e8";
 
       const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step"];
@@ -335,32 +335,12 @@
       statusDiv.style.color = "blue";
 
       let payloadData = {};
-      
-      // Mapeamento explícito das colunas baseado na aba
-      if (abaAtual === 'Transferências e Step Bay Step') {
-        payloadData["Código Qualifix"] = col1;
-        payloadData["Código Arteb"] = col2;
-        payloadData["Descrição"] = col3;
-        payloadData["Mercado"] = document.getElementById('input-col4').value.trim();
-        payloadData["Maq."] = document.getElementById('input-col5').value.trim();
-        payloadData["Troca de Versão"] = document.getElementById('input-col6').value.trim();
-      } else if (abaAtual === 'Moldes QLX') {
-        payloadData["Molde Nº"] = col1;
-        payloadData["Código"] = col2;
-        payloadData["Descrição"] = col3;
-      } else { // ATUALIZADA (PLÁSTICO)
-        payloadData["Local"] = col1;
-        payloadData["Código"] = col2;
-        payloadData["Descrição"] = col3;
-      }
-
-      // Se houver um item carregado com chaves da planilha, preserva os nomes exatos das colunas
       const listaDaAba = bancoCompleto[abaAtual] || [];
       const modeloItem = itemSendoEditado || listaDaAba[0];
+
       if (modeloItem) {
         const keys = Object.keys(modeloItem).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
         if (keys.length >= 3) {
-          payloadData = {};
           payloadData[keys[0]] = col1;
           payloadData[keys[1]] = col2;
           payloadData[keys[2]] = col3;
@@ -372,22 +352,40 @@
         }
       }
 
-      const dataJson = JSON.stringify(payloadData);
-      const urlSave = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${encodeURIComponent(rowIndex)}&data=${encodeURIComponent(dataJson)}`;
+      if (Object.keys(payloadData).length === 0) {
+        if (abaAtual === 'Transferências e Step Bay Step') {
+          payloadData = { "Código Qualifix": col1, "Código Arteb": col2, "Descrição": col3, "Mercado": document.getElementById('input-col4').value.trim(), "Maq.": document.getElementById('input-col5').value.trim(), "Troca de Versão": document.getElementById('input-col6').value.trim() };
+        } else if (abaAtual === 'Moldes QLX') {
+          payloadData = { "Molde Nº": col1, "Código": col2, "Descrição": col3 };
+        } else {
+          payloadData = { "Local": col1, "Código": col2, "Descrição": col3 };
+        }
+      }
+
+      const bodyData = new URLSearchParams();
+      bodyData.append("action", "SAVE");
+      bodyData.append("sheet", abaAtual);
+      bodyData.append("rowIndex", rowIndex);
+      bodyData.append("data", JSON.stringify(payloadData));
 
       try {
-        const resposta = await enviarRequisicaoJSONP(urlSave);
-        if (resposta && resposta.status === "success") {
-          statusDiv.innerText = "Salvo com sucesso! Recarregando dados...";
-          statusDiv.style.color = "green";
+        await fetch(BASE_API, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: bodyData.toString()
+        });
+
+        statusDiv.innerText = "Registro salvo! Recarregando...";
+        statusDiv.style.color = "green";
+        
+        setTimeout(async () => {
           limparFormulario();
           await carregarTodosDados();
-        } else {
-          statusDiv.innerText = "Erro ao salvar: " + (resposta ? resposta.message : "Erro desconhecido");
-          statusDiv.style.color = "red";
-        }
+        }, 1500);
+
       } catch (err) {
-        statusDiv.innerText = "Erro de conexão ao salvar.";
+        statusDiv.innerText = "Erro ao conectar e salvar.";
         statusDiv.style.color = "red";
       } finally {
         btnSalvar.disabled = false;
