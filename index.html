@@ -92,7 +92,7 @@
         script.onerror = function() {
           delete window[callbackName];
           if (script.parentNode) document.body.removeChild(script);
-          reject(new Error('Erro de conexão com o servidor.'));
+          reject(new Error('Erro de conexão com a planilha.'));
         };
         document.body.appendChild(script);
       });
@@ -335,22 +335,40 @@
       statusDiv.style.color = "blue";
 
       let payloadData = {};
-      const listaDaAba = bancoCompleto[abaAtual] || [];
-      const modeloItem = itemSendoEditado || listaDaAba[0] || {};
-      const keys = Object.keys(modeloItem).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
+      
+      // Mapeamento explícito das colunas baseado na aba
+      if (abaAtual === 'Transferências e Step Bay Step') {
+        payloadData["Código Qualifix"] = col1;
+        payloadData["Código Arteb"] = col2;
+        payloadData["Descrição"] = col3;
+        payloadData["Mercado"] = document.getElementById('input-col4').value.trim();
+        payloadData["Maq."] = document.getElementById('input-col5').value.trim();
+        payloadData["Troca de Versão"] = document.getElementById('input-col6').value.trim();
+      } else if (abaAtual === 'Moldes QLX') {
+        payloadData["Molde Nº"] = col1;
+        payloadData["Código"] = col2;
+        payloadData["Descrição"] = col3;
+      } else { // ATUALIZADA (PLÁSTICO)
+        payloadData["Local"] = col1;
+        payloadData["Código"] = col2;
+        payloadData["Descrição"] = col3;
+      }
 
-      if (keys.length > 0) {
-        if (abaAtual === 'Transferências e Step Bay Step') {
+      // Se houver um item carregado com chaves da planilha, preserva os nomes exatos das colunas
+      const listaDaAba = bancoCompleto[abaAtual] || [];
+      const modeloItem = itemSendoEditado || listaDaAba[0];
+      if (modeloItem) {
+        const keys = Object.keys(modeloItem).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
+        if (keys.length >= 3) {
+          payloadData = {};
           payloadData[keys[0]] = col1;
-          if (keys[1]) payloadData[keys[1]] = col2;
-          if (keys[2]) payloadData[keys[2]] = col3;
-          if (keys[3]) payloadData[keys[3]] = document.getElementById('input-col4').value.trim();
-          if (keys[4]) payloadData[keys[4]] = document.getElementById('input-col5').value.trim();
-          if (keys[5]) payloadData[keys[5]] = document.getElementById('input-col6').value.trim();
-        } else {
-          payloadData[keys[0]] = col1;
-          if (keys[1]) payloadData[keys[1]] = col2;
-          if (keys[2]) payloadData[keys[2]] = col3;
+          payloadData[keys[1]] = col2;
+          payloadData[keys[2]] = col3;
+          if (abaAtual === 'Transferências e Step Bay Step') {
+            if (keys[3]) payloadData[keys[3]] = document.getElementById('input-col4').value.trim();
+            if (keys[4]) payloadData[keys[4]] = document.getElementById('input-col5').value.trim();
+            if (keys[5]) payloadData[keys[5]] = document.getElementById('input-col6').value.trim();
+          }
         }
       }
 
@@ -365,7 +383,7 @@
           limparFormulario();
           await carregarTodosDados();
         } else {
-          statusDiv.innerText = "Erro ao salvar: " + (resposta.message || "Erro desconhecido");
+          statusDiv.innerText = "Erro ao salvar: " + (resposta ? resposta.message : "Erro desconhecido");
           statusDiv.style.color = "red";
         }
       } catch (err) {
