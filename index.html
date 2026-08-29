@@ -39,7 +39,7 @@
   </div>
 
   <div id="status-msg" class="status">Iniciando...</div>
-  <button class="btn-reload" onclick="carregarTodosDados(true)">🔄 Forçar Sincronização com Nuvem</button>
+  <button class="btn-reload" onclick="carregarTodosDados(true)">🔄 Recarregar Dados da Nuvem</button>
 
   <!-- Formulário Visual -->
   <div class="card" id="card-formulario" style="margin-top: 10px;">
@@ -77,13 +77,10 @@
     let listaExibida = [];
     let timerBusca = null;
 
-    // Carregar cache local imediatamente ao abrir a página
     function carregarDoLocalStorage() {
       const cache = localStorage.getItem('banco_book_moldes');
       if (cache) {
-        try {
-          bancoCompleto = JSON.parse(cache);
-        } catch(e) {}
+        try { bancoCompleto = JSON.parse(cache); } catch(e) {}
       }
     }
 
@@ -169,10 +166,10 @@
       
       if (!forcado && (bancoCompleto["ATUALIZADA"].length > 0 || bancoCompleto["Moldes QLX"].length > 0)) {
         renderTabelaAbaAtual();
-        statusDiv.innerText = "Carregado do cache local. Atualizando em segundo plano...";
-        statusDiv.style.color = "gray";
+        statusDiv.innerText = "Sincronizando com a nuvem...";
+        statusDiv.style.color = "#1a73e8";
       } else {
-        statusDiv.innerText = "Buscando dados da nuvem...";
+        statusDiv.innerText = "Carregando dados...";
         statusDiv.style.color = "#1a73e8";
       }
 
@@ -188,10 +185,10 @@
         salvarNoLocalStorage();
         renderTabelaAbaAtual();
         const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
-        statusDiv.innerText = `Sincronizado com a planilha! Total: ${total} itens.`;
+        statusDiv.innerText = `Pronto! Total: ${total} itens carregados.`;
         statusDiv.style.color = "green";
       } catch (error) {
-        statusDiv.innerText = "Modo Offline (Usando dados armazenados locais).";
+        statusDiv.innerText = "Modo Offline (Exibindo dados locais).";
         statusDiv.style.color = "orange";
       }
     }
@@ -378,15 +375,13 @@
         }
       }
 
-      // --- 1. ATUALIZAÇÃO IMEDIATA NO LOCALSTORAGE E TELA ---
+      // --- 1. ATUALIZA A MEMÓRIA E O LOCALSTORAGE NA HORA ---
       if (rowIndex) {
-        // Atualiza item existente
         const idx = bancoCompleto[abaAtual].findIndex(i => String(i._rowIndex) === String(rowIndex));
         if (idx !== -1) {
           bancoCompleto[abaAtual][idx] = { ...bancoCompleto[abaAtual][idx], ...payloadData };
         }
       } else {
-        // Adiciona novo item localmente
         const novoIndex = bancoCompleto[abaAtual].length + 2;
         payloadData['_rowIndex'] = novoIndex;
         bancoCompleto[abaAtual].push(payloadData);
@@ -396,31 +391,24 @@
       renderTabelaAbaAtual();
       limparFormulario();
 
-      statusDiv.innerText = "Salvo localmente! Sincronizando com a nuvem...";
+      statusDiv.innerText = "Atualizado! Gravando na planilha...";
       statusDiv.style.color = "#1a73e8";
 
-      // --- 2. ENVIO EM SEGUNDO PLANO PARA O GOOGLE SHEETS ---
-      const bodyData = new URLSearchParams();
-      bodyData.append("action", "SAVE");
-      bodyData.append("sheet", abaAtual);
-      bodyData.append("rowIndex", rowIndex);
-      bodyData.append("data", JSON.stringify(payloadData));
-
+      // --- 2. COMUNICAÇÃO DIRETA COM A URL DO APPS SCRIPT ---
+      const urlEnvio = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${encodeURIComponent(rowIndex)}`;
+      
       try {
-        fetch(BASE_API, {
+        await fetch(urlEnvio, {
           method: "POST",
           mode: "no-cors",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: bodyData.toString()
-        }).then(() => {
-          statusDiv.innerText = "Sincronizado com sucesso na planilha!";
-          statusDiv.style.color = "green";
-        }).catch(() => {
-          statusDiv.innerText = "Salvo localmente! (Pendente de sinc. com a nuvem)";
-          statusDiv.style.color = "orange";
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify(payloadData)
         });
+
+        statusDiv.innerText = "Salvo e sincronizado na planilha com sucesso!";
+        statusDiv.style.color = "green";
       } catch (err) {
-        statusDiv.innerText = "Salvo localmente! (Pendente de sinc. com a nuvem)";
+        statusDiv.innerText = "Salvo na tela, mas pendente de envio para nuvem.";
         statusDiv.style.color = "orange";
       }
     }
@@ -434,7 +422,6 @@
       document.getElementById('btn-cancelar').style.display = "none";
     }
 
-    // Inicialização
     carregarDoLocalStorage();
     redefinirFormulario();
     carregarTodosDados();
