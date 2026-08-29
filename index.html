@@ -335,6 +335,343 @@
       }, 250);
     }
 
+   <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book de Moldes</title>
+  <style>
+    * { box-sizing: border-box; font-family: sans-serif; }
+    body { margin: 0; padding: 12px; background-color: #f4f6f8; color: #333; }
+    h2 { margin-top: 0; text-align: center; color: #1a73e8; font-size: 20px; }
+    .card { background: white; padding: 12px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    
+    .tabs-container { display: flex; gap: 6px; margin-bottom: 12px; }
+    .tab-btn { flex: 1; padding: 8px 4px; border: 2px solid #1a73e8; background: white; color: #1a73e8; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; font-size: 12px; }
+    .tab-btn.active { background: #1a73e8; color: white; }
+
+    input { width: 100%; padding: 10px; margin: 5px 0 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; }
+    button { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer; }
+    button:active { background: #1557b0; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-reload { background: #34a853; margin-top: 5px; padding: 8px; font-size: 12px; }
+    .btn-cancel { background: #757575; margin-top: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; white-space: nowrap; }
+    th { background-color: #1a73e8; color: white; }
+    .btn-edit { background: #f39c12; padding: 6px 10px; border-radius: 4px; border: none; color: white; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .status { text-align: center; font-size: 13px; margin-bottom: 10px; font-weight: bold; color: #555; }
+    .badge-aba { background: #e8f0fe; color: #1a73e8; padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-block; }
+  </style>
+</head>
+<body>
+
+  <h2>📦 Book de Moldes</h2>
+
+  <div class="tabs-container">
+    <button id="tab-atualizada" class="tab-btn active" onclick="trocarAba('ATUALIZADA')">PLÁSTICO</button>
+    <button id="tab-qlx" class="tab-btn" onclick="trocarAba('Moldes QLX')">Moldes QLX</button>
+    <button id="tab-step" class="tab-btn" onclick="trocarAba('Transferências e Step Bay Step')">Step Bay Step</button>
+  </div>
+
+  <div id="status-msg" class="status">Iniciando...</div>
+  <button class="btn-reload" onclick="carregarTodosDados(true)">🔄 Recarregar Dados da Nuvem</button>
+
+  <!-- Formulário Visual -->
+  <div class="card" id="card-formulario" style="margin-top: 10px;">
+    <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
+    <input type="hidden" id="edit-row-index" value="">
+    
+    <div id="form-campos"></div>
+    
+    <button onclick="salvarMolde()" id="btn-salvar">Salvar Registro</button>
+    <button onclick="limparFormulario()" id="btn-cancelar" class="btn-cancel" style="display:none;">Cancelar Edição</button>
+  </div>
+
+  <!-- Consulta Global -->
+  <div class="card">
+    <h3 style="margin-top:0; font-size:16px;">🔍 Consulta Geral</h3>
+    <input type="text" id="input-busca" placeholder="Digite Código, Local ou Descrição..." onkeyup="filtrarGeral()">
+  </div>
+
+  <!-- Tabela -->
+  <div class="card" style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr id="tabela-cabecalho"></tr>
+      </thead>
+      <tbody id="tabela-corpo"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const BASE_API = "https://script.google.com/macros/s/AKfycbzyvhHmnIH2ZpOj3bo8doFLP9BoLif_9h4ZvpVv7yqun7vxBEFuHfyceJ4DvSvW-dJz/exec";
+    
+    let abaAtual = "ATUALIZADA";
+    let bancoCompleto = { "ATUALIZADA": [], "Moldes QLX": [], "Transferências e Step Bay Step": [] };
+    let itemSendoEditado = null;
+    let listaExibida = [];
+    let timerBusca = null;
+
+    function carregarDoLocalStorage() {
+      const cache = localStorage.getItem('banco_book_moldes');
+      if (cache) {
+        try { bancoCompleto = JSON.parse(cache); } catch(e) {}
+      }
+    }
+
+    function salvarNoLocalStorage() {
+      localStorage.setItem('banco_book_moldes', JSON.stringify(bancoCompleto));
+    }
+
+    function enviarRequisicaoJSONP(url) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
+        window[callbackName] = function(data) {
+          delete window[callbackName];
+          if (script && script.parentNode) script.parentNode.removeChild(script);
+          resolve(data);
+        };
+
+        const script = document.createElement('script');
+        const sep = url.includes('?') ? '&' : '?';
+        script.src = url + sep + 'callback=' + callbackName;
+        script.onerror = function() {
+          delete window[callbackName];
+          if (script && script.parentNode) script.parentNode.removeChild(script);
+          reject(new Error('Erro de conexão.'));
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    function acharCampo(item, palavrasChave, indicePadrao = -1) {
+      if (!item) return '-';
+      const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
+      for (let k of keys) {
+        const keyLimpa = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        for (let p of palavrasChave) {
+          if (keyLimpa.includes(p)) {
+            const val = item[k] !== undefined && item[k] !== null && item[k] !== '' ? item[k] : '-';
+            return val;
+          }
+        }
+      }
+      if (indicePadrao >= 0 && keys[indicePadrao] !== undefined) {
+        return item[keys[indicePadrao]] || '-';
+      }
+      return '-';
+    }
+
+    function redefinirFormulario() {
+      const container = document.getElementById('form-campos');
+      container.innerHTML = '';
+
+      if (abaAtual === 'Transferências e Step Bay Step') {
+        container.innerHTML = `
+          <input type="text" id="input-col1" placeholder="Código Qualifix">
+          <input type="text" id="input-col2" placeholder="Código Arteb">
+          <input type="text" id="input-col3" placeholder="Descrição">
+          <input type="text" id="input-col4" placeholder="Mercado">
+          <input type="text" id="input-col5" placeholder="Maq.">
+          <input type="text" id="input-col6" placeholder="Troca de Versão">
+        `;
+      } else {
+        container.innerHTML = `
+          <input type="text" id="input-col1" placeholder="${abaAtual === 'Moldes QLX' ? 'Molde Nº (ex: 101)' : 'Local (ex: A1)'}">
+          <input type="text" id="input-col2" placeholder="Código">
+          <input type="text" id="input-col3" placeholder="Descrição">
+        `;
+      }
+    }
+
+    function trocarAba(novaAba) {
+      abaAtual = novaAba;
+      document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
+      document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
+      document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
+      
+      document.getElementById('input-busca').value = '';
+      redefinirFormulario();
+      limparFormulario();
+      renderTabelaAbaAtual();
+    }
+
+    async function carregarTodosDados(forcado = false) {
+      const statusDiv = document.getElementById('status-msg');
+      
+      if (!forcado && (bancoCompleto["ATUALIZADA"].length > 0 || bancoCompleto["Moldes QLX"].length > 0)) {
+        renderTabelaAbaAtual();
+        statusDiv.innerText = "Carregado localmente. Sincronizando nuvem...";
+        statusDiv.style.color = "#1a73e8";
+      } else {
+        statusDiv.innerText = "Carregando dados da nuvem...";
+        statusDiv.style.color = "#1a73e8";
+      }
+
+      const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step"];
+
+      try {
+        for (let aba of abas) {
+          const resData = await enviarRequisicaoJSONP(`${BASE_API}?sheet=${encodeURIComponent(aba)}`);
+          if (Array.isArray(resData)) {
+            bancoCompleto[aba] = resData;
+          }
+        }
+        salvarNoLocalStorage();
+        renderTabelaAbaAtual();
+        const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
+        statusDiv.innerText = `Pronto! Total: ${total} itens sincronizados.`;
+        statusDiv.style.color = "green";
+      } catch (error) {
+        statusDiv.innerText = "Modo Offline (Exibindo dados locais).";
+        statusDiv.style.color = "orange";
+      }
+    }
+
+    function renderTabelaAbaAtual() {
+      const dados = bancoCompleto[abaAtual] || [];
+      const dadosComAba = dados.map(item => ({ ...item, _abaOrigem: abaAtual }));
+      renderTabela(dadosComAba, false);
+    }
+
+    function renderTabela(dados, modoBuscaGlobal = false) {
+      listaExibida = dados;
+      const thead = document.getElementById('tabela-cabecalho');
+      const tbody = document.getElementById('tabela-corpo');
+      tbody.innerHTML = '';
+
+      if (modoBuscaGlobal) {
+        thead.innerHTML = `<th>Aba / Origem</th><th>Local / Molde</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
+      } else if (abaAtual === 'Transferências e Step Bay Step') {
+        thead.innerHTML = `<th>Cód. Qualifix</th><th>Cód. Arteb</th><th>Descrição</th><th>Mercado</th><th>Maq.</th><th>Troca Versão</th><th>Ações</th>`;
+      } else {
+        thead.innerHTML = `<th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
+      }
+
+      if (!dados || dados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+
+      dados.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        const abaOrigem = item._abaOrigem || abaAtual;
+        const nomeAbaExibicao = abaOrigem === 'ATUALIZADA' ? 'PLÁSTICO' : abaOrigem;
+
+        if (modoBuscaGlobal) {
+          const local = acharCampo(item, ['local', 'molde', 'num', 'nº', 'qualifix'], 0);
+          const codigo = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
+          const desc = acharCampo(item, ['desc', 'descricao'], 2);
+
+          tr.innerHTML = `
+            <td><span class="badge-aba">${nomeAbaExibicao}</span></td>
+            <td><b>${local}</b></td>
+            <td>${codigo}</td>
+            <td>${desc}</td>
+            <td><button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button></td>
+          `;
+        } else if (abaAtual === 'Transferências e Step Bay Step') {
+          const codQ = acharCampo(item, ['qualifix', 'col1'], 0);
+          const codA = acharCampo(item, ['arteb', 'col2'], 1);
+          const desc = acharCampo(item, ['desc', 'descricao'], 2);
+          const merc = acharCampo(item, ['mercado'], 3);
+          const maq = acharCampo(item, ['maq', 'maquina'], 4);
+          const troca = acharCampo(item, ['troca', 'versao'], 5);
+
+          tr.innerHTML = `
+            <td><b>${codQ}</b></td><td>${codA}</td><td>${desc}</td><td>${merc}</td><td>${maq}</td><td>${troca}</td>
+            <td><button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button></td>
+          `;
+        } else {
+          const local = acharCampo(item, ['local', 'molde', 'num', 'nº'], 0);
+          const codigo = acharCampo(item, ['cod', 'codigo'], 1);
+          const desc = acharCampo(item, ['desc', 'descricao'], 2);
+
+          tr.innerHTML = `
+            <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td>
+            <td><button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button></td>
+          `;
+        }
+        fragment.appendChild(tr);
+      });
+
+      tbody.appendChild(fragment);
+    }
+
+    function cliqueEditar(index) {
+      const item = listaExibida[index];
+      if (!item) return;
+
+      const abaOrigem = item._abaOrigem || abaAtual;
+      if (abaOrigem !== abaAtual) {
+        abaAtual = abaOrigem;
+        document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
+        document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
+        document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
+        redefinirFormulario();
+      }
+
+      prepararEdicaoDireta(item);
+    }
+
+    function prepararEdicaoDireta(item) {
+      if (!item) return;
+      itemSendoEditado = item;
+
+      if (abaAtual === 'Transferências e Step Bay Step') {
+        document.getElementById('input-col1').value = acharCampo(item, ['qualifix'], 0) !== '-' ? acharCampo(item, ['qualifix'], 0) : '';
+        document.getElementById('input-col2').value = acharCampo(item, ['arteb'], 1) !== '-' ? acharCampo(item, ['arteb'], 1) : '';
+        document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2) !== '-' ? acharCampo(item, ['desc'], 2) : '';
+        document.getElementById('input-col4').value = acharCampo(item, ['mercado'], 3) !== '-' ? acharCampo(item, ['mercado'], 3) : '';
+        document.getElementById('input-col5').value = acharCampo(item, ['maq'], 4) !== '-' ? acharCampo(item, ['maq'], 4) : '';
+        document.getElementById('input-col6').value = acharCampo(item, ['troca'], 5) !== '-' ? acharCampo(item, ['troca'], 5) : '';
+      } else {
+        const local = acharCampo(item, ['local', 'molde', 'num'], 0);
+        const cod = acharCampo(item, ['cod', 'codigo'], 1);
+        const desc = acharCampo(item, ['desc'], 2);
+
+        document.getElementById('input-col1').value = local !== '-' ? local : '';
+        document.getElementById('input-col2').value = cod !== '-' ? cod : '';
+        document.getElementById('input-col3').value = desc !== '-' ? desc : '';
+      }
+
+      const rIndex = item._rowIndex || '';
+      document.getElementById('edit-row-index').value = rIndex;
+
+      document.getElementById('form-title').innerText = "Editar Registro (Linha " + (rIndex || 'NOVA') + ")";
+      document.getElementById('btn-salvar').innerText = "Atualizar Registro";
+      document.getElementById('btn-cancelar').style.display = "block";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function filtrarGeral() {
+      clearTimeout(timerBusca);
+      timerBusca = setTimeout(() => {
+        const termo = document.getElementById('input-busca').value.trim().toLowerCase();
+        if (!termo) { renderTabelaAbaAtual(); return; }
+
+        let resultados = [];
+        Object.keys(bancoCompleto).forEach(nomeAba => {
+          bancoCompleto[nomeAba].forEach(item => {
+            const valores = Object.keys(item)
+              .filter(k => k !== '_rowIndex')
+              .map(k => item[k])
+              .join(' ')
+              .toLowerCase();
+
+            if (valores.includes(termo)) {
+              resultados.push({ ...item, _abaOrigem: nomeAba });
+            }
+          });
+        });
+        renderTabela(resultados, true);
+      }, 250);
+    }
+
     async function salvarMolde() {
       const col1 = document.getElementById('input-col1').value.trim();
       const col2 = document.getElementById('input-col2').value.trim();
@@ -349,7 +686,6 @@
       const statusDiv = document.getElementById('status-msg');
       let payloadData = {};
 
-      // Mapeamento EXATO do nome das colunas da sua planilha
       if (abaAtual === 'Transferências e Step Bay Step') {
         payloadData = {
           "Código Qualifix": col1,
@@ -366,7 +702,6 @@
           "DESCRIÇÃO": col3
         };
       } else {
-        // Aba "ATUALIZADA"
         payloadData = {
           "LOCAL": col1,
           "CÓDIGO": col2,
@@ -374,7 +709,7 @@
         };
       }
 
-      // 1. ATUALIZA A TELA E O LOCALSTORAGE NA HORA
+      // Atualização em tela
       if (rowIndex) {
         const idx = bancoCompleto[abaAtual].findIndex(i => String(i._rowIndex) === String(rowIndex));
         if (idx !== -1) {
@@ -386,6 +721,47 @@
         bancoCompleto[abaAtual].push(payloadData);
       }
 
+      salvarNoLocalStorage();
+      renderTabelaAbaAtual();
+      limparFormulario();
+
+      statusDiv.innerText = "Enviando para a planilha...";
+      statusDiv.style.color = "#1a73e8";
+
+      // Transmissão com JSONP para evitar bloqueios CORS
+      const dataString = encodeURIComponent(JSON.stringify(payloadData));
+      const urlSalvar = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${encodeURIComponent(rowIndex)}&data=${dataString}`;
+
+      try {
+        const resposta = await enviarRequisicaoJSONP(urlSalvar);
+        if (resposta && resposta.status === "success") {
+          statusDiv.innerText = "✅ Salvo e sincronizado na planilha!";
+          statusDiv.style.color = "green";
+        } else {
+          statusDiv.innerText = "⚠️ Resposta da nuvem: " + (resposta.message || "Erro ao salvar");
+          statusDiv.style.color = "orange";
+        }
+      } catch (err) {
+        statusDiv.innerText = "⚠️ Salvo no navegador (Servidor não respondeu).";
+        statusDiv.style.color = "orange";
+      }
+    }
+
+    function limparFormulario() {
+      itemSendoEditado = null;
+      document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
+      document.getElementById('edit-row-index').value = '';
+      document.getElementById('form-title').innerText = "Adicionar Registro";
+      document.getElementById('btn-salvar').innerText = "Salvar Registro";
+      document.getElementById('btn-cancelar').style.display = "none";
+    }
+
+    carregarDoLocalStorage();
+    redefinirFormulario();
+    carregarTodosDados();
+  </script>
+</body>
+</html>
       salvarNoLocalStorage();
       renderTabelaAbaAtual();
       limparFormulario();
