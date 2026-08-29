@@ -54,7 +54,7 @@
 
   <!-- Consulta Global -->
   <div class="card">
-    <h3 style="margin-top:0; font-size:16px;">🔍 Consulta Geral (Busca em Todas as Abas)</h3>
+    <h3 style="margin-top:0; font-size:16px;">🔍 Consulta Geral</h3>
     <input type="text" id="input-busca" placeholder="Digite Código, Local ou Descrição..." onkeyup="filtrarGeral()">
   </div>
 
@@ -141,7 +141,7 @@
 
       try {
         for (let aba of abas) {
-          const resp = await fetch(`${BASE_API}?action=READ&sheet=${encodeURIComponent(aba)}`, { method: 'GET', redirect: 'follow' });
+          const resp = await fetch(`${BASE_API}?action=READ&sheet=${encodeURIComponent(aba)}`);
           if (resp.ok) {
             const texto = await resp.text();
             bancoCompleto[aba] = JSON.parse(texto);
@@ -199,7 +199,7 @@
             <td><b>${local}</b></td>
             <td>${codigo}</td>
             <td>${desc}</td>
-            <td><button class="btn-edit" onclick="cliqueEditar(${index})">Ir / Editar</button></td>
+            <td><button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button></td>
           `;
         } else if (abaAtual === 'Transferências e Step Bay Step') {
           const codQ = acharCampo(item, ['qualifix', 'col1'], 0);
@@ -265,9 +265,7 @@
         document.getElementById('input-col3').value = desc !== '-' ? desc : '';
       }
 
-      // Salva o índice real da linha no Sheets
       document.getElementById('edit-row-index').value = item._rowIndex || '';
-
       document.getElementById('form-title').innerText = "Editar Registro";
       document.getElementById('btn-salvar').innerText = "Atualizar Registro";
       document.getElementById('btn-cancelar').style.display = "block";
@@ -305,7 +303,7 @@
       const rowIndex = document.getElementById('edit-row-index').value;
 
       if (!col1 && !col2) {
-        alert('Preencha pelo menos um dos campos de identificação!');
+        alert('Preencha pelo menos um campo!');
         return;
       }
 
@@ -313,7 +311,7 @@
       const statusDiv = document.getElementById('status-msg');
       
       btnSalvar.disabled = true;
-      statusDiv.innerText = "Salvando na planilha...";
+      statusDiv.innerText = "Enviando dados para a planilha...";
       statusDiv.style.color = "blue";
 
       let payloadData = {};
@@ -338,24 +336,24 @@
         payloadData[keys[2] || "DESCRIÇÃO"] = col3;
       }
 
-      // Monta a URL GET direta que contorna qualquer trava de segurança
       const urlFinal = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${encodeURIComponent(rowIndex || "")}&data=${encodeURIComponent(JSON.stringify(payloadData))}`;
 
       try {
-        const resp = await fetch(urlFinal, { method: 'GET', redirect: 'follow' });
-        const resJson = await resp.json();
+        // Envia requisição com no-cors para evitar bloqueio no navegador
+        await fetch(urlFinal, { mode: 'no-cors' });
+        
+        statusDiv.innerText = "Enviado! Sincronizando tabela...";
+        statusDiv.style.color = "green";
+        
+        limparFormulario();
 
-        if (resJson.status === "success") {
-          statusDiv.innerText = "Registro salvo com sucesso!";
-          statusDiv.style.color = "green";
-          limparFormulario();
+        // Aguarda 1.5 segundos para o Google processar a escrita antes de recarregar
+        setTimeout(async () => {
           await carregarTodosDados();
-        } else {
-          statusDiv.innerText = "Erro ao salvar na planilha: " + (resJson.message || "");
-          statusDiv.style.color = "red";
-        }
+        }, 1500);
+
       } catch (error) {
-        statusDiv.innerText = "Erro ao conectar com a planilha.";
+        statusDiv.innerText = "Erro ao enviar.";
         statusDiv.style.color = "red";
       } finally {
         btnSalvar.disabled = false;
