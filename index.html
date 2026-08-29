@@ -17,6 +17,7 @@
     input { width: 100%; padding: 10px; margin: 5px 0 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; }
     button { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer; }
     button:active { background: #1557b0; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
     .btn-reload { background: #34a853; margin-top: 5px; padding: 8px; font-size: 12px; }
     .btn-cancel { background: #757575; margin-top: 5px; }
     table { width: 100%; border-collapse: collapse; margin-top: 5px; }
@@ -39,17 +40,6 @@
 
   <div id="status-msg" class="status">Iniciando...</div>
   <button class="btn-reload" onclick="carregarTodosDados()">🔄 Recarregar Dados</button>
-
-  <!-- Form invisível de envio para evitar restrições do CORS -->
-  <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="if(submitted){onFormSubmitted();}"></iframe>
-  
-  <form id="form-envio" target="hidden_iframe" method="POST" action="">
-    <input type="hidden" name="sheet" id="envio-sheet">
-    <input type="hidden" name="action" id="envio-action">
-    <input type="hidden" name="colunaBusca" id="envio-colunaBusca">
-    <input type="hidden" name="valorBusca" id="envio-valorBusca">
-    <input type="hidden" name="data" id="envio-data">
-  </form>
 
   <!-- Formulário Visual -->
   <div class="card" id="card-formulario" style="margin-top: 10px;">
@@ -80,14 +70,12 @@
   </div>
 
   <script>
-    // URL DO SEU WEB APP DO GOOGLE APPS SCRIPT
     const BASE_API = "https://script.google.com/macros/s/AKfycbzyvhHmnIH2ZpOj3bo8doFLP9BoLif_9h4ZvpVv7yqun7vxBEFuHfyceJ4DvSvW-dJz/exec";
     
     let abaAtual = "ATUALIZADA";
     let bancoCompleto = { "ATUALIZADA": [], "Moldes QLX": [], "Transferências e Step Bay Step": [] };
     let listaExibida = [];
     let timerBusca = null;
-    let submitted = false;
 
     function acharChaveEValor(item, palavrasChave, indicePadrao = -1) {
       if (!item) return { chave: '', valor: '-' };
@@ -313,7 +301,7 @@
       }, 250);
     }
 
-    function salvarMolde() {
+    async function salvarMolde() {
       const col1 = document.getElementById('input-col1').value.trim();
       const col2 = document.getElementById('input-col2').value.trim();
       const col3 = document.getElementById('input-col3').value.trim();
@@ -325,7 +313,10 @@
         return;
       }
 
+      const btnSalvar = document.getElementById('btn-salvar');
       const statusDiv = document.getElementById('status-msg');
+      
+      btnSalvar.disabled = true;
       statusDiv.innerText = "Enviando dados para a planilha...";
       statusDiv.style.color = "blue";
 
@@ -351,26 +342,36 @@
         payloadData[keys[2] || "DESCRIÇÃO"] = col3;
       }
 
-      // Preenche o formulário invisível para enviar os dados
-      const form = document.getElementById('form-envio');
-      form.action = BASE_API;
-      document.getElementById('envio-sheet').value = abaAtual;
-      document.getElementById('envio-action').value = codigoOrig ? "UPDATE" : "CREATE";
-      document.getElementById('envio-colunaBusca').value = chaveColuna || keys[0] || "";
-      document.getElementById('envio-valorBusca').value = codigoOrig || "";
-      document.getElementById('envio-data').value = JSON.stringify(payloadData);
+      const bodyData = new URLSearchParams();
+      bodyData.append('sheet', abaAtual);
+      bodyData.append('action', codigoOrig ? "UPDATE" : "CREATE");
+      bodyData.append('colunaBusca', chaveColuna || keys[0] || "");
+      bodyData.append('valorBusca', codigoOrig || "");
+      bodyData.append('data', JSON.stringify(payloadData));
 
-      submitted = true;
-      form.submit();
-    }
+      try {
+        await fetch(BASE_API, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: bodyData.toString()
+        });
 
-    function onFormSubmitted() {
-      const statusDiv = document.getElementById('status-msg');
-      statusDiv.innerText = "Registro salvo com sucesso!";
-      statusDiv.style.color = "green";
-      limparFormulario();
-      setTimeout(() => carregarTodosDados(), 1200);
-      submitted = false;
+        statusDiv.innerText = "Registro salvo com sucesso! Atualizando...";
+        statusDiv.style.color = "green";
+        limparFormulario();
+        
+        // Aguarda 1.5s para o Apps Script processar e sincroniza
+        setTimeout(async () => {
+          await carregarTodosDados();
+          btnSalvar.disabled = false;
+        }, 1500);
+
+      } catch (error) {
+        statusDiv.innerText = "Erro ao conectar com a planilha.";
+        statusDiv.style.color = "red";
+        btnSalvar.disabled = false;
+      }
     }
 
     function limparFormulario() {
