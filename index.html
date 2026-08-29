@@ -83,7 +83,7 @@
         const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
         window[callbackName] = function(data) {
           delete window[callbackName];
-          document.body.removeChild(script);
+          if (script.parentNode) document.body.removeChild(script);
           resolve(data);
         };
 
@@ -92,7 +92,7 @@
         script.src = url + sep + 'callback=' + callbackName;
         script.onerror = function() {
           delete window[callbackName];
-          document.body.removeChild(script);
+          if (script.parentNode) document.body.removeChild(script);
           reject(new Error('Erro de conexão com a planilha.'));
         };
         document.body.appendChild(script);
@@ -286,7 +286,7 @@
 
       const regId = item.id || item.ID || item.Id || '';
       const rIndex = item._rowIndex || '';
-      
+
       document.getElementById('edit-id').value = regId;
       document.getElementById('edit-row-index').value = rIndex;
 
@@ -336,7 +336,7 @@
       const statusDiv = document.getElementById('status-msg');
       
       btnSalvar.disabled = true;
-      statusDiv.innerText = "Gravando na planilha...";
+      statusDiv.innerText = "Atualizando na planilha...";
       statusDiv.style.color = "blue";
 
       let payloadData = {};
@@ -361,34 +361,29 @@
 
       if (idReg) payloadData["id"] = idReg;
 
-      // Monta formulário FormData
-      const formData = new FormData();
-      formData.append('action', 'SAVE');
-      formData.append('sheet', abaAtual);
-      formData.append('id', idReg);
-      formData.append('rowIndex', rowIndex);
-      formData.append('data', JSON.stringify(payloadData));
+      const queryParams = new URLSearchParams({
+        action: 'SAVE',
+        sheet: abaAtual,
+        id: idReg,
+        rowIndex: rowIndex,
+        data: JSON.stringify(payloadData)
+      });
 
       try {
-        // Envio via fetch mode no-cors (infalível para Google Script)
-        await fetch(BASE_API, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: formData
-        });
-
-        statusDiv.innerText = "Salvo com sucesso! Atualizando tabela...";
-        statusDiv.style.color = "green";
-
-        setTimeout(async () => {
+        const res = await enviarRequisicaoJSONP(`${BASE_API}?${queryParams.toString()}`);
+        if (res && res.status === 'success') {
+          statusDiv.innerText = "Atualizado com sucesso!";
+          statusDiv.style.color = "green";
           limparFormulario();
           await carregarTodosDados();
-          btnSalvar.disabled = false;
-        }, 1200);
-
+        } else {
+          statusDiv.innerText = "Erro ao salvar: " + (res.message || 'Erro desconhecido');
+          statusDiv.style.color = "red";
+        }
       } catch (err) {
-        statusDiv.innerText = "Erro ao enviar requisição.";
+        statusDiv.innerText = "Erro na comunicação com a planilha.";
         statusDiv.style.color = "red";
+      } finally {
         btnSalvar.disabled = false;
       }
     }
