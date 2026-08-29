@@ -141,7 +141,7 @@
 
       try {
         for (let aba of abas) {
-          const resp = await fetch(`${BASE_API}?sheet=${encodeURIComponent(aba)}`, { method: 'GET', redirect: 'follow' });
+          const resp = await fetch(`${BASE_API}?action=READ&sheet=${encodeURIComponent(aba)}`, { method: 'GET', redirect: 'follow' });
           if (resp.ok) {
             const texto = await resp.text();
             bancoCompleto[aba] = JSON.parse(texto);
@@ -265,7 +265,7 @@
         document.getElementById('input-col3').value = desc !== '-' ? desc : '';
       }
 
-      // Guarda o número da linha real da planilha
+      // Salva o índice real da linha no Sheets
       document.getElementById('edit-row-index').value = item._rowIndex || '';
 
       document.getElementById('form-title').innerText = "Editar Registro";
@@ -305,7 +305,7 @@
       const rowIndex = document.getElementById('edit-row-index').value;
 
       if (!col1 && !col2) {
-        alert('Preencha pelo menos um dos campos de identificação (Local/Molde ou Código)!');
+        alert('Preencha pelo menos um dos campos de identificação!');
         return;
       }
 
@@ -313,7 +313,7 @@
       const statusDiv = document.getElementById('status-msg');
       
       btnSalvar.disabled = true;
-      statusDiv.innerText = "Enviando dados para a planilha...";
+      statusDiv.innerText = "Salvando na planilha...";
       statusDiv.style.color = "blue";
 
       let payloadData = {};
@@ -338,33 +338,26 @@
         payloadData[keys[2] || "DESCRIÇÃO"] = col3;
       }
 
-      const bodyData = new URLSearchParams();
-      bodyData.append('sheet', abaAtual);
-      bodyData.append('action', rowIndex ? "UPDATE" : "CREATE");
-      bodyData.append('rowIndex', rowIndex || "");
-      bodyData.append('data', JSON.stringify(payloadData));
+      // Monta a URL GET direta que contorna qualquer trava de segurança
+      const urlFinal = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${encodeURIComponent(rowIndex || "")}&data=${encodeURIComponent(JSON.stringify(payloadData))}`;
 
       try {
-        await fetch(BASE_API, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: bodyData.toString()
-        });
+        const resp = await fetch(urlFinal, { method: 'GET', redirect: 'follow' });
+        const resJson = await resp.json();
 
-        statusDiv.innerText = "Registro salvo com sucesso! Sincronizando...";
-        statusDiv.style.color = "green";
-        limparFormulario();
-        
-        // Sincroniza após 1.5s
-        setTimeout(async () => {
+        if (resJson.status === "success") {
+          statusDiv.innerText = "Registro salvo com sucesso!";
+          statusDiv.style.color = "green";
+          limparFormulario();
           await carregarTodosDados();
-          btnSalvar.disabled = false;
-        }, 1500);
-
+        } else {
+          statusDiv.innerText = "Erro ao salvar na planilha: " + (resJson.message || "");
+          statusDiv.style.color = "red";
+        }
       } catch (error) {
-        statusDiv.innerText = "Erro de conexão ao salvar na planilha.";
+        statusDiv.innerText = "Erro ao conectar com a planilha.";
         statusDiv.style.color = "red";
+      } finally {
         btnSalvar.disabled = false;
       }
     }
