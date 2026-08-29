@@ -41,16 +41,6 @@
   <div id="status-msg" class="status">Iniciando...</div>
   <button class="btn-reload" onclick="carregarTodosDados()">🔄 Recarregar Dados</button>
 
-  <!-- Form Oculto para Envio sem Bloqueio de URL/CORS -->
-  <iframe name="iframe-envio" id="iframe-envio" style="display:none;"></iframe>
-  <form id="form-post-oculto" target="iframe-envio" method="POST" style="display:none;">
-    <input type="hidden" name="action" value="SAVE">
-    <input type="hidden" name="sheet" id="post-sheet" value="">
-    <input type="hidden" name="id" id="post-id" value="">
-    <input type="hidden" name="rowIndex" id="post-rowIndex" value="">
-    <input type="hidden" name="data" id="post-data" value="">
-  </form>
-
   <!-- Formulário Visual -->
   <div class="card" id="card-formulario" style="margin-top: 10px;">
     <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
@@ -87,18 +77,6 @@
     let itemSendoEditado = null;
     let listaExibida = [];
     let timerBusca = null;
-
-    // Ouve resposta do iFrame sem problemas de CORS
-    window.addEventListener('message', function(e) {
-      if (typeof e.data === 'string' && e.data.startsWith('SUCCESS:')) {
-        const statusDiv = document.getElementById('status-msg');
-        statusDiv.innerText = e.data.replace('SUCCESS:', '');
-        statusDiv.style.color = "green";
-        limparFormulario();
-        carregarTodosDados();
-        document.getElementById('btn-salvar').disabled = false;
-      }
-    });
 
     function enviarRequisicaoJSONP(url) {
       return new Promise((resolve, reject) => {
@@ -307,10 +285,12 @@
       }
 
       const regId = item.id || item.ID || item.Id || '';
+      const rIndex = item._rowIndex || '';
+      
       document.getElementById('edit-id').value = regId;
-      document.getElementById('edit-row-index').value = item._rowIndex || '';
+      document.getElementById('edit-row-index').value = rIndex;
 
-      document.getElementById('form-title').innerText = "Editar Registro (Linha " + (item._rowIndex || '?') + ")";
+      document.getElementById('form-title').innerText = "Editar Registro (Linha " + (rIndex || 'NOVA') + ")";
       document.getElementById('btn-salvar').innerText = "Atualizar Registro";
       document.getElementById('btn-cancelar').style.display = "block";
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -340,7 +320,7 @@
       }, 250);
     }
 
-    function salvarMolde() {
+    async function salvarMolde() {
       const col1 = document.getElementById('input-col1').value.trim();
       const col2 = document.getElementById('input-col2').value.trim();
       const col3 = document.getElementById('input-col3').value.trim();
@@ -356,7 +336,7 @@
       const statusDiv = document.getElementById('status-msg');
       
       btnSalvar.disabled = true;
-      statusDiv.innerText = "Atualizando na planilha...";
+      statusDiv.innerText = "Gravando na planilha...";
       statusDiv.style.color = "blue";
 
       let payloadData = {};
@@ -381,16 +361,36 @@
 
       if (idReg) payloadData["id"] = idReg;
 
-      // Configura o formulário POST oculto
-      const formOculto = document.getElementById('form-post-oculto');
-      formOculto.action = BASE_API;
-      document.getElementById('post-sheet').value = abaAtual;
-      document.getElementById('post-id').value = idReg;
-      document.getElementById('post-rowIndex').value = rowIndex;
-      document.getElementById('post-data').value = JSON.stringify(payloadData);
+      // Monta formulário FormData
+      const formData = new FormData();
+      formData.append('action', 'SAVE');
+      formData.append('sheet', abaAtual);
+      formData.append('id', idReg);
+      formData.append('rowIndex', rowIndex);
+      formData.append('data', JSON.stringify(payloadData));
 
-      // Submete o formulário via iframe
-      formOculto.submit();
+      try {
+        // Envio via fetch mode no-cors (infalível para Google Script)
+        await fetch(BASE_API, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: formData
+        });
+
+        statusDiv.innerText = "Salvo com sucesso! Atualizando tabela...";
+        statusDiv.style.color = "green";
+
+        setTimeout(async () => {
+          limparFormulario();
+          await carregarTodosDados();
+          btnSalvar.disabled = false;
+        }, 1200);
+
+      } catch (err) {
+        statusDiv.innerText = "Erro ao enviar requisição.";
+        statusDiv.style.color = "red";
+        btnSalvar.disabled = false;
+      }
     }
 
     function limparFormulario() {
