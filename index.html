@@ -93,7 +93,7 @@
         const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
         window[callbackName] = function(data) {
           delete window[callbackName];
-          if (script.parentNode) document.body.removeChild(script);
+          if (script && script.parentNode) script.parentNode.removeChild(script);
           resolve(data);
         };
 
@@ -102,7 +102,7 @@
         script.src = url + sep + 'callback=' + callbackName;
         script.onerror = function() {
           delete window[callbackName];
-          if (script.parentNode) document.body.removeChild(script);
+          if (script && script.parentNode) script.parentNode.removeChild(script);
           reject(new Error('Erro de conexão.'));
         };
         document.body.appendChild(script);
@@ -166,10 +166,10 @@
       
       if (!forcado && (bancoCompleto["ATUALIZADA"].length > 0 || bancoCompleto["Moldes QLX"].length > 0)) {
         renderTabelaAbaAtual();
-        statusDiv.innerText = "Sincronizando com a nuvem...";
+        statusDiv.innerText = "Carregado localmente. Sincronizando nuvem...";
         statusDiv.style.color = "#1a73e8";
       } else {
-        statusDiv.innerText = "Carregando dados...";
+        statusDiv.innerText = "Carregando dados da nuvem...";
         statusDiv.style.color = "#1a73e8";
       }
 
@@ -185,7 +185,7 @@
         salvarNoLocalStorage();
         renderTabelaAbaAtual();
         const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
-        statusDiv.innerText = `Pronto! Total: ${total} itens carregados.`;
+        statusDiv.innerText = `Pronto! Total: ${total} itens sincronizados.`;
         statusDiv.style.color = "green";
       } catch (error) {
         statusDiv.innerText = "Modo Offline (Exibindo dados locais).";
@@ -348,34 +348,33 @@
 
       const statusDiv = document.getElementById('status-msg');
       let payloadData = {};
-      const listaDaAba = bancoCompleto[abaAtual] || [];
-      const modeloItem = itemSendoEditado || listaDaAba[0];
 
-      if (modeloItem) {
-        const keys = Object.keys(modeloItem).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
-        if (keys.length >= 3) {
-          payloadData[keys[0]] = col1;
-          payloadData[keys[1]] = col2;
-          payloadData[keys[2]] = col3;
-          if (abaAtual === 'Transferências e Step Bay Step') {
-            if (keys[3]) payloadData[keys[3]] = document.getElementById('input-col4').value.trim();
-            if (keys[4]) payloadData[keys[4]] = document.getElementById('input-col5').value.trim();
-            if (keys[5]) payloadData[keys[5]] = document.getElementById('input-col6').value.trim();
-          }
-        }
+      // Mapeamento EXATO do nome das colunas da sua planilha
+      if (abaAtual === 'Transferências e Step Bay Step') {
+        payloadData = {
+          "Código Qualifix": col1,
+          "Código Arteb": col2,
+          "Descrição": col3,
+          "Mercado": document.getElementById('input-col4').value.trim(),
+          "Maq.": document.getElementById('input-col5').value.trim(),
+          "Troca de Versão": document.getElementById('input-col6').value.trim()
+        };
+      } else if (abaAtual === 'Moldes QLX') {
+        payloadData = {
+          "Molde Nº": col1,
+          "CÓDIGO": col2,
+          "DESCRIÇÃO": col3
+        };
+      } else {
+        // Aba "ATUALIZADA"
+        payloadData = {
+          "LOCAL": col1,
+          "CÓDIGO": col2,
+          "DESCRIÇÃO": col3
+        };
       }
 
-      if (Object.keys(payloadData).length === 0) {
-        if (abaAtual === 'Transferências e Step Bay Step') {
-          payloadData = { "Código Qualifix": col1, "Código Arteb": col2, "Descrição": col3, "Mercado": document.getElementById('input-col4').value.trim(), "Maq.": document.getElementById('input-col5').value.trim(), "Troca de Versão": document.getElementById('input-col6').value.trim() };
-        } else if (abaAtual === 'Moldes QLX') {
-          payloadData = { "Molde Nº": col1, "Código": col2, "Descrição": col3 };
-        } else {
-          payloadData = { "Local": col1, "Código": col2, "Descrição": col3 };
-        }
-      }
-
-      // --- 1. ATUALIZA A MEMÓRIA E O LOCALSTORAGE NA HORA ---
+      // 1. ATUALIZA A TELA E O LOCALSTORAGE NA HORA
       if (rowIndex) {
         const idx = bancoCompleto[abaAtual].findIndex(i => String(i._rowIndex) === String(rowIndex));
         if (idx !== -1) {
@@ -391,24 +390,24 @@
       renderTabelaAbaAtual();
       limparFormulario();
 
-      statusDiv.innerText = "Atualizado! Gravando na planilha...";
+      statusDiv.innerText = "Salvo na tela! Enviando para a planilha...";
       statusDiv.style.color = "#1a73e8";
 
-      // --- 2. COMUNICAÇÃO DIRETA COM A URL DO APPS SCRIPT ---
-      const urlEnvio = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${encodeURIComponent(rowIndex)}`;
-      
-      try {
-        await fetch(urlEnvio, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify(payloadData)
-        });
+      // 2. SALVA NA PLANILHA VIA JSONP (Garante funcionamento sem bloqueios)
+      const dataEncoded = encodeURIComponent(JSON.stringify(payloadData));
+      const urlSalvar = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${encodeURIComponent(rowIndex)}&data=${dataEncoded}`;
 
-        statusDiv.innerText = "Salvo e sincronizado na planilha com sucesso!";
-        statusDiv.style.color = "green";
+      try {
+        const resposta = await enviarRequisicaoJSONP(urlSalvar);
+        if (resposta && resposta.status === "success") {
+          statusDiv.innerText = "✅ Atualizado com sucesso na planilha!";
+          statusDiv.style.color = "green";
+        } else {
+          statusDiv.innerText = "⚠️ Salvo localmente, mas houve um aviso da nuvem.";
+          statusDiv.style.color = "orange";
+        }
       } catch (err) {
-        statusDiv.innerText = "Salvo na tela, mas pendente de envio para nuvem.";
+        statusDiv.innerText = "⚠️ Salvo no navegador! (Erro ao conectar com a planilha)";
         statusDiv.style.color = "orange";
       }
     }
