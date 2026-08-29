@@ -365,7 +365,7 @@
     payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
   }
 
-  // Atualiza localmente na tela
+  // Atualiza localmente no navegador em tempo real
   if (rowIndex) {
     const idx = bancoCompleto[abaAtual].findIndex(i => String(i._rowIndex) === String(rowIndex));
     if (idx !== -1) {
@@ -381,31 +381,34 @@
   renderTabelaAbaAtual();
   limparFormulario();
 
-  statusDiv.innerText = "Sincronizando com a nuvem...";
+  statusDiv.innerText = "Enviando dados para a planilha...";
   statusDiv.style.color = "#1a73e8";
 
-  // Monta os parâmetros diretos sem precisar de JSON complexo na URL
-  const urlSalvar = `${BASE_API}?action=SAVE` +
-    `&sheet=${encodeURIComponent(abaAtual)}` +
-    `&rowIndex=${encodeURIComponent(rowIndex)}` +
-    `&c1=${encodeURIComponent(col1)}` +
-    `&c2=${encodeURIComponent(col2)}` +
-    `&c3=${encodeURIComponent(col3)}` +
-    `&c4=${encodeURIComponent(col4)}` +
-    `&c5=${encodeURIComponent(col5)}` +
-    `&c6=${encodeURIComponent(col6)}`;
+  // Envio via POST (Resolve restrições de tamanho de URL)
+  const corpoEnvio = {
+    action: "SAVE",
+    sheet: abaAtual,
+    rowIndex: rowIndex,
+    c1: col1,
+    c2: col2,
+    c3: col3,
+    c4: col4,
+    c5: col5,
+    c6: col6
+  };
 
   try {
-    const resposta = await enviarRequisicaoJSONP(urlSalvar);
-    if (resposta && resposta.status === "success") {
-      statusDiv.innerText = "✅ Salvo e sincronizado na planilha!";
-      statusDiv.style.color = "green";
-    } else {
-      statusDiv.innerText = "⚠️ Resposta da nuvem: " + (resposta.message || "Erro desconhecido");
-      statusDiv.style.color = "orange";
-    }
+    await fetch(BASE_API, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(corpoEnvio)
+    });
+
+    statusDiv.innerText = "✅ Salvo e enviado para a nuvem!";
+    statusDiv.style.color = "green";
   } catch (err) {
-    statusDiv.innerText = "⚠️ Salvo no navegador (Servidor não respondeu).";
+    statusDiv.innerText = "⚠️ Salvo offline (Erro de rede).";
     statusDiv.style.color = "orange";
   }
 }
