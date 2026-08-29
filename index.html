@@ -41,15 +41,6 @@
   <div id="status-msg" class="status">Iniciando...</div>
   <button class="btn-reload" onclick="carregarTodosDados()">🔄 Recarregar Dados</button>
 
-  <!-- Form Oculto para envio seguro POST -->
-  <iframe name="iframe-post" id="iframe-post" style="display:none;"></iframe>
-  <form id="form-post-oculto" action="https://script.google.com/macros/s/AKfycbzyvhHmnIH2ZpOj3bo8doFLP9BoLif_9h4ZvpVv7yqun7vxBEFuHfyceJ4DvSvW-dJz/exec" method="POST" target="iframe-post" style="display:none;">
-    <input type="hidden" name="action" value="SAVE">
-    <input type="hidden" name="sheet" id="post-sheet" value="">
-    <input type="hidden" name="rowIndex" id="post-row-index" value="">
-    <input type="hidden" name="data" id="post-data" value="">
-  </form>
-
   <!-- Formulário Visual -->
   <div class="card" id="card-formulario" style="margin-top: 10px;">
     <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
@@ -101,7 +92,7 @@
         script.onerror = function() {
           delete window[callbackName];
           if (script.parentNode) document.body.removeChild(script);
-          reject(new Error('Erro de conexão com a planilha.'));
+          reject(new Error('Erro de conexão com o servidor.'));
         };
         document.body.appendChild(script);
       });
@@ -325,7 +316,7 @@
       }, 250);
     }
 
-    function salvarMolde() {
+    async function salvarMolde() {
       const col1 = document.getElementById('input-col1').value.trim();
       const col2 = document.getElementById('input-col2').value.trim();
       const col3 = document.getElementById('input-col3').value.trim();
@@ -363,22 +354,26 @@
         }
       }
 
-      // Preenche form oculto
-      document.getElementById('post-sheet').value = abaAtual;
-      document.getElementById('post-row-index').value = rowIndex;
-      document.getElementById('post-data').value = JSON.stringify(payloadData);
+      const dataJson = JSON.stringify(payloadData);
+      const urlSave = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${encodeURIComponent(rowIndex)}&data=${encodeURIComponent(dataJson)}`;
 
-      // Dispara envio POST nativo
-      document.getElementById('form-post-oculto').submit();
-
-      // Confirmação com temporizador
-      setTimeout(async () => {
-        statusDiv.innerText = "Salvo com sucesso! Atualizando...";
-        statusDiv.style.color = "green";
-        limparFormulario();
-        await carregarTodosDados();
+      try {
+        const resposta = await enviarRequisicaoJSONP(urlSave);
+        if (resposta && resposta.status === "success") {
+          statusDiv.innerText = "Salvo com sucesso! Recarregando dados...";
+          statusDiv.style.color = "green";
+          limparFormulario();
+          await carregarTodosDados();
+        } else {
+          statusDiv.innerText = "Erro ao salvar: " + (resposta.message || "Erro desconhecido");
+          statusDiv.style.color = "red";
+        }
+      } catch (err) {
+        statusDiv.innerText = "Erro de conexão ao salvar.";
+        statusDiv.style.color = "red";
+      } finally {
         btnSalvar.disabled = false;
-      }, 1500);
+      }
     }
 
     function limparFormulario() {
