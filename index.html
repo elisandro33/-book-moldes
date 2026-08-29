@@ -44,8 +44,7 @@
   <!-- Formulário Visual -->
   <div class="card" id="card-formulario" style="margin-top: 10px;">
     <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
-    <input type="hidden" id="edit-codigo-orig" value="">
-    <input type="hidden" id="edit-chave-coluna" value="">
+    <input type="hidden" id="edit-row-index" value="">
     
     <div id="form-campos"></div>
     
@@ -79,7 +78,7 @@
 
     function acharChaveEValor(item, palavrasChave, indicePadrao = -1) {
       if (!item) return { chave: '', valor: '-' };
-      const keys = Object.keys(item);
+      const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
       for (let k of keys) {
         const keyLimpa = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
         for (let p of palavrasChave) {
@@ -250,32 +249,24 @@
       if (!item) return;
 
       if (abaAtual === 'Transferências e Step Bay Step') {
-        const campoQ = acharChaveEValor(item, ['qualifix'], 0);
-        document.getElementById('input-col1').value = campoQ.valor !== '-' ? campoQ.valor : '';
-        document.getElementById('input-col2').value = acharCampo(item, ['arteb'], 1);
-        document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2);
-        document.getElementById('input-col4').value = acharCampo(item, ['mercado'], 3);
-        document.getElementById('input-col5').value = acharCampo(item, ['maq'], 4);
-        document.getElementById('input-col6').value = acharCampo(item, ['troca'], 5);
-        
-        document.getElementById('edit-codigo-orig').value = campoQ.valor !== '-' ? campoQ.valor : '';
-        document.getElementById('edit-chave-coluna').value = campoQ.chave;
+        document.getElementById('input-col1').value = acharCampo(item, ['qualifix'], 0) !== '-' ? acharCampo(item, ['qualifix'], 0) : '';
+        document.getElementById('input-col2').value = acharCampo(item, ['arteb'], 1) !== '-' ? acharCampo(item, ['arteb'], 1) : '';
+        document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2) !== '-' ? acharCampo(item, ['desc'], 2) : '';
+        document.getElementById('input-col4').value = acharCampo(item, ['mercado'], 3) !== '-' ? acharCampo(item, ['mercado'], 3) : '';
+        document.getElementById('input-col5').value = acharCampo(item, ['maq'], 4) !== '-' ? acharCampo(item, ['maq'], 4) : '';
+        document.getElementById('input-col6').value = acharCampo(item, ['troca'], 5) !== '-' ? acharCampo(item, ['troca'], 5) : '';
       } else {
-        const campoCod = acharChaveEValor(item, ['cod', 'codigo'], 1);
-        const campoLocal = acharChaveEValor(item, ['local', 'molde', 'num'], 0);
+        const local = acharCampo(item, ['local', 'molde', 'num'], 0);
+        const cod = acharCampo(item, ['cod', 'codigo'], 1);
+        const desc = acharCampo(item, ['desc'], 2);
 
-        document.getElementById('input-col1').value = campoLocal.valor !== '-' ? campoLocal.valor : '';
-        document.getElementById('input-col2').value = campoCod.valor !== '-' ? campoCod.valor : '';
-        document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2);
-        
-        if (campoCod.valor !== '-' && campoCod.valor !== '') {
-          document.getElementById('edit-codigo-orig').value = campoCod.valor;
-          document.getElementById('edit-chave-coluna').value = campoCod.chave;
-        } else {
-          document.getElementById('edit-codigo-orig').value = campoLocal.valor;
-          document.getElementById('edit-chave-coluna').value = campoLocal.chave;
-        }
+        document.getElementById('input-col1').value = local !== '-' ? local : '';
+        document.getElementById('input-col2').value = cod !== '-' ? cod : '';
+        document.getElementById('input-col3').value = desc !== '-' ? desc : '';
       }
+
+      // Guarda o número da linha real da planilha
+      document.getElementById('edit-row-index').value = item._rowIndex || '';
 
       document.getElementById('form-title').innerText = "Editar Registro";
       document.getElementById('btn-salvar').innerText = "Atualizar Registro";
@@ -292,7 +283,13 @@
         let resultados = [];
         Object.keys(bancoCompleto).forEach(nomeAba => {
           bancoCompleto[nomeAba].forEach(item => {
-            if (Object.values(item).join(' ').toLowerCase().includes(termo)) {
+            const valores = Object.keys(item)
+              .filter(k => k !== '_rowIndex')
+              .map(k => item[k])
+              .join(' ')
+              .toLowerCase();
+
+            if (valores.includes(termo)) {
               resultados.push({ ...item, _abaOrigem: nomeAba });
             }
           });
@@ -305,11 +302,10 @@
       const col1 = document.getElementById('input-col1').value.trim();
       const col2 = document.getElementById('input-col2').value.trim();
       const col3 = document.getElementById('input-col3').value.trim();
-      const codigoOrig = document.getElementById('edit-codigo-orig').value;
-      const chaveColuna = document.getElementById('edit-chave-coluna').value;
+      const rowIndex = document.getElementById('edit-row-index').value;
 
       if (!col1 && !col2) {
-        alert('Preencha os campos principais!');
+        alert('Preencha pelo menos um dos campos de identificação (Local/Molde ou Código)!');
         return;
       }
 
@@ -323,7 +319,7 @@
       let payloadData = {};
       const listaDaAba = bancoCompleto[abaAtual] || [];
       const primeiroItem = listaDaAba[0] || {};
-      const keys = Object.keys(primeiroItem);
+      const keys = Object.keys(primeiroItem).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
 
       if (abaAtual === 'Transferências e Step Bay Step') {
         payloadData[keys[0] || "CÓDIGO QUALIFIX"] = col1;
@@ -344,9 +340,8 @@
 
       const bodyData = new URLSearchParams();
       bodyData.append('sheet', abaAtual);
-      bodyData.append('action', codigoOrig ? "UPDATE" : "CREATE");
-      bodyData.append('colunaBusca', chaveColuna || keys[0] || "");
-      bodyData.append('valorBusca', codigoOrig || "");
+      bodyData.append('action', rowIndex ? "UPDATE" : "CREATE");
+      bodyData.append('rowIndex', rowIndex || "");
       bodyData.append('data', JSON.stringify(payloadData));
 
       try {
@@ -357,18 +352,18 @@
           body: bodyData.toString()
         });
 
-        statusDiv.innerText = "Registro salvo com sucesso! Atualizando...";
+        statusDiv.innerText = "Registro salvo com sucesso! Sincronizando...";
         statusDiv.style.color = "green";
         limparFormulario();
         
-        // Aguarda 1.5s para o Apps Script processar e sincroniza
+        // Sincroniza após 1.5s
         setTimeout(async () => {
           await carregarTodosDados();
           btnSalvar.disabled = false;
         }, 1500);
 
       } catch (error) {
-        statusDiv.innerText = "Erro ao conectar com a planilha.";
+        statusDiv.innerText = "Erro de conexão ao salvar na planilha.";
         statusDiv.style.color = "red";
         btnSalvar.disabled = false;
       }
@@ -376,8 +371,7 @@
 
     function limparFormulario() {
       document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
-      document.getElementById('edit-codigo-orig').value = '';
-      document.getElementById('edit-chave-coluna').value = '';
+      document.getElementById('edit-row-index').value = '';
       document.getElementById('form-title').innerText = "Adicionar Registro";
       document.getElementById('btn-salvar').innerText = "Salvar Registro";
       document.getElementById('btn-cancelar').style.display = "none";
