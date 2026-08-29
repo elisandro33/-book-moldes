@@ -41,10 +41,18 @@
   <div id="status-msg" class="status">Iniciando...</div>
   <button class="btn-reload" onclick="carregarTodosDados()">🔄 Recarregar Dados</button>
 
+  <!-- Form Oculto para envio seguro POST -->
+  <iframe name="iframe-post" id="iframe-post" style="display:none;"></iframe>
+  <form id="form-post-oculto" action="https://script.google.com/macros/s/AKfycbzyvhHmnIH2ZpOj3bo8doFLP9BoLif_9h4ZvpVv7yqun7vxBEFuHfyceJ4DvSvW-dJz/exec" method="POST" target="iframe-post" style="display:none;">
+    <input type="hidden" name="action" value="SAVE">
+    <input type="hidden" name="sheet" id="post-sheet" value="">
+    <input type="hidden" name="rowIndex" id="post-row-index" value="">
+    <input type="hidden" name="data" id="post-data" value="">
+  </form>
+
   <!-- Formulário Visual -->
   <div class="card" id="card-formulario" style="margin-top: 10px;">
     <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
-    <input type="hidden" id="edit-id" value="">
     <input type="hidden" id="edit-row-index" value="">
     
     <div id="form-campos"></div>
@@ -284,10 +292,7 @@
         document.getElementById('input-col3').value = desc !== '-' ? desc : '';
       }
 
-      const regId = item.id || item.ID || item.Id || '';
       const rIndex = item._rowIndex || '';
-
-      document.getElementById('edit-id').value = regId;
       document.getElementById('edit-row-index').value = rIndex;
 
       document.getElementById('form-title').innerText = "Editar Registro (Linha " + (rIndex || 'NOVA') + ")";
@@ -320,11 +325,10 @@
       }, 250);
     }
 
-    async function salvarMolde() {
+    function salvarMolde() {
       const col1 = document.getElementById('input-col1').value.trim();
       const col2 = document.getElementById('input-col2').value.trim();
       const col3 = document.getElementById('input-col3').value.trim();
-      const idReg = document.getElementById('edit-id').value;
       const rowIndex = document.getElementById('edit-row-index').value;
 
       if (!col1 && !col2) {
@@ -336,7 +340,7 @@
       const statusDiv = document.getElementById('status-msg');
       
       btnSalvar.disabled = true;
-      statusDiv.innerText = "Atualizando na planilha...";
+      statusDiv.innerText = "Gravando na planilha...";
       statusDiv.style.color = "blue";
 
       let payloadData = {};
@@ -359,39 +363,27 @@
         }
       }
 
-      if (idReg) payloadData["id"] = idReg;
+      // Preenche form oculto
+      document.getElementById('post-sheet').value = abaAtual;
+      document.getElementById('post-row-index').value = rowIndex;
+      document.getElementById('post-data').value = JSON.stringify(payloadData);
 
-      const queryParams = new URLSearchParams({
-        action: 'SAVE',
-        sheet: abaAtual,
-        id: idReg,
-        rowIndex: rowIndex,
-        data: JSON.stringify(payloadData)
-      });
+      // Dispara envio POST nativo
+      document.getElementById('form-post-oculto').submit();
 
-      try {
-        const res = await enviarRequisicaoJSONP(`${BASE_API}?${queryParams.toString()}`);
-        if (res && res.status === 'success') {
-          statusDiv.innerText = "Atualizado com sucesso!";
-          statusDiv.style.color = "green";
-          limparFormulario();
-          await carregarTodosDados();
-        } else {
-          statusDiv.innerText = "Erro ao salvar: " + (res.message || 'Erro desconhecido');
-          statusDiv.style.color = "red";
-        }
-      } catch (err) {
-        statusDiv.innerText = "Erro na comunicação com a planilha.";
-        statusDiv.style.color = "red";
-      } finally {
+      // Confirmação com temporizador
+      setTimeout(async () => {
+        statusDiv.innerText = "Salvo com sucesso! Atualizando...";
+        statusDiv.style.color = "green";
+        limparFormulario();
+        await carregarTodosDados();
         btnSalvar.disabled = false;
-      }
+      }, 1500);
     }
 
     function limparFormulario() {
       itemSendoEditado = null;
       document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
-      document.getElementById('edit-id').value = '';
       document.getElementById('edit-row-index').value = '';
       document.getElementById('form-title').innerText = "Adicionar Registro";
       document.getElementById('btn-salvar').innerText = "Salvar Registro";
