@@ -41,6 +41,16 @@
   <div id="status-msg" class="status">Iniciando...</div>
   <button class="btn-reload" onclick="carregarTodosDados()">🔄 Recarregar Dados</button>
 
+  <!-- Form Oculto para Envio sem Bloqueio de URL/CORS -->
+  <iframe name="iframe-envio" id="iframe-envio" style="display:none;"></iframe>
+  <form id="form-post-oculto" target="iframe-envio" method="POST" style="display:none;">
+    <input type="hidden" name="action" value="SAVE">
+    <input type="hidden" name="sheet" id="post-sheet" value="">
+    <input type="hidden" name="id" id="post-id" value="">
+    <input type="hidden" name="rowIndex" id="post-rowIndex" value="">
+    <input type="hidden" name="data" id="post-data" value="">
+  </form>
+
   <!-- Formulário Visual -->
   <div class="card" id="card-formulario" style="margin-top: 10px;">
     <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
@@ -77,6 +87,18 @@
     let itemSendoEditado = null;
     let listaExibida = [];
     let timerBusca = null;
+
+    // Ouve resposta do iFrame sem problemas de CORS
+    window.addEventListener('message', function(e) {
+      if (typeof e.data === 'string' && e.data.startsWith('SUCCESS:')) {
+        const statusDiv = document.getElementById('status-msg');
+        statusDiv.innerText = e.data.replace('SUCCESS:', '');
+        statusDiv.style.color = "green";
+        limparFormulario();
+        carregarTodosDados();
+        document.getElementById('btn-salvar').disabled = false;
+      }
+    });
 
     function enviarRequisicaoJSONP(url) {
       return new Promise((resolve, reject) => {
@@ -318,7 +340,7 @@
       }, 250);
     }
 
-    async function salvarMolde() {
+    function salvarMolde() {
       const col1 = document.getElementById('input-col1').value.trim();
       const col2 = document.getElementById('input-col2').value.trim();
       const col3 = document.getElementById('input-col3').value.trim();
@@ -338,8 +360,6 @@
       statusDiv.style.color = "blue";
 
       let payloadData = {};
-
-      // Mapeia usando as chaves exatamente como vieram da planilha
       const listaDaAba = bancoCompleto[abaAtual] || [];
       const modeloItem = itemSendoEditado || listaDaAba[0] || {};
       const keys = Object.keys(modeloItem).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
@@ -361,28 +381,16 @@
 
       if (idReg) payloadData["id"] = idReg;
 
-      // Monta a requisição JSONP
-      const urlSalvar = `${BASE_API}?action=SAVE&sheet=${encodeURIComponent(abaAtual)}&id=${encodeURIComponent(idReg)}&rowIndex=${encodeURIComponent(rowIndex)}&data=${encodeURIComponent(JSON.stringify(payloadData))}`;
+      // Configura o formulário POST oculto
+      const formOculto = document.getElementById('form-post-oculto');
+      formOculto.action = BASE_API;
+      document.getElementById('post-sheet').value = abaAtual;
+      document.getElementById('post-id').value = idReg;
+      document.getElementById('post-rowIndex').value = rowIndex;
+      document.getElementById('post-data').value = JSON.stringify(payloadData);
 
-      try {
-        const resposta = await enviarRequisicaoJSONP(urlSalvar);
-
-        if (resposta && resposta.status === 'success') {
-          statusDiv.innerText = resposta.message || "Atualizado com sucesso!";
-          statusDiv.style.color = "green";
-          limparFormulario();
-          await carregarTodosDados();
-        } else {
-          statusDiv.innerText = "Erro ao atualizar: " + (resposta.message || '');
-          statusDiv.style.color = "red";
-        }
-
-      } catch (error) {
-        statusDiv.innerText = "Erro na requisição. Verifique a conexão.";
-        statusDiv.style.color = "red";
-      } finally {
-        btnSalvar.disabled = false;
-      }
+      // Submete o formulário via iframe
+      formOculto.submit();
     }
 
     function limparFormulario() {
