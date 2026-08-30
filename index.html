@@ -3,489 +3,583 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Book de Moldes</title>
+  <title>Book de Moldes - Dashboard</title>
   <style>
-    * { box-sizing: border-box; font-family: sans-serif; }
-    body { margin: 0; padding: 12px; background-color: #f4f6f8; color: #333; }
-    h2 { margin-top: 0; text-align: center; color: #1a73e8; font-size: 20px; }
-    .card { background: white; padding: 12px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    
-    .tabs-container { display: flex; gap: 6px; margin-bottom: 12px; }
-    .tab-btn { flex: 1; padding: 8px 4px; border: 2px solid #1a73e8; background: white; color: #1a73e8; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; font-size: 12px; }
-    .tab-btn.active { background: #1a73e8; color: white; }
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
 
-    .btn-delete { background: #ea4335; padding: 6px 10px; border-radius: 4px; border: none; color: white; font-size: 12px; font-weight: bold; cursor: pointer; }
-.btn-delete:active { background: #c5221f; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 
-    input { width: 100%; padding: 10px; margin: 5px 0 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; }
-    button { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer; }
-    button:active { background: #1557b0; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .btn-reload { background: #34a853; margin-top: 5px; padding: 8px; font-size: 12px; }
-    .btn-cancel { background: #757575; margin-top: 5px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; white-space: nowrap; }
-    th { background-color: #1a73e8; color: white; }
-    .btn-edit { background: #f39c12; padding: 6px 10px; border-radius: 4px; border: none; color: white; font-size: 12px; font-weight: bold; cursor: pointer; }
-    .status { text-align: center; font-size: 13px; margin-bottom: 10px; font-weight: bold; color: #555; }
-    .badge-aba { background: #e8f0fe; color: #1a73e8; padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-block; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 24px; }
+
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    /* Header */
+    .header-dashboard { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+    .header-title h1 { font-size: 24px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+    .header-title p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+    /* Cards KPIs Topo */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--card-bg); border-radius: 12px; padding: 16px 20px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .kpi-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-value { font-size: 26px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+
+    /* Navegação por Abas */
+    .nav-tabs { display: flex; gap: 8px; background: #e2e8f0; padding: 4px; border-radius: 10px; margin-bottom: 24px; width: fit-content; flex-wrap: wrap; }
+    .tab-btn { border: none; background: transparent; padding: 8px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+    .tab-btn.active { background: var(--card-bg); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+    /* Seções e Cards */
+    .dashboard-card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 24px; }
+    .card-header { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
+
+    /* Form Controles */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    input[type="text"] { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; outline: none; transition: border 0.2s; background: #fff; }
+    input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+    /* Botões */
+    .btn-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-reload { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+    .btn-reload:hover { background: #e2e8f0; }
+    .btn-cancel { background: #cbd5e1; color: #334155; }
+    .btn-cancel:hover { background: #94a3b8; color: #fff; }
+
+    .btn-edit { background: var(--warning); padding: 6px 12px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-delete { background: var(--danger); padding: 6px 12px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+    /* Tabela */
+    .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-color); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+    th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); color: var(--text-main); white-space: nowrap; }
+    tr:hover { background-color: #f8fafc; }
+
+    /* Elementos auxiliares */
+    .status { text-align: left; font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text-muted); }
+    .badge-aba { background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; display: inline-block; }
   </style>
 </head>
 <body>
 
-  <h2>📦 Book de Moldes</h2>
+<div class="container">
+  <!-- Topbar / Cabeçalho Executivo -->
+  <div class="header-dashboard">
+    <div class="header-title">
+      <h1>📦 Book de Moldes</h1>
+      <p>Painel de Controle e Gestão de Registros</p>
+    </div>
+    <button class="btn btn-reload" onclick="carregarTodosDados(true)">
+      🔄 Recarregar Dados da Nuvem
+    </button>
+  </div>
 
-  <div class="tabs-container">
+  <!-- Cards KPI -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-title">Total Geral no Banco</div>
+      <div class="kpi-value" id="kpi-total">0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">Itens na Aba Selecionada</div>
+      <div class="kpi-value" id="kpi-aba-count">0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">Aba Ativa</div>
+      <div class="kpi-value" id="kpi-aba-nome" style="font-size: 20px;">PLÁSTICO</div>
+    </div>
+  </div>
+
+  <!-- Abas de Navegação -->
+  <div class="nav-tabs">
     <button id="tab-atualizada" class="tab-btn active" onclick="trocarAba('ATUALIZADA')">PLÁSTICO</button>
     <button id="tab-qlx" class="tab-btn" onclick="trocarAba('Moldes QLX')">Moldes QLX</button>
     <button id="tab-step" class="tab-btn" onclick="trocarAba('Transferências e Step Bay Step')">Step Bay Step</button>
   </div>
 
   <div id="status-msg" class="status">Iniciando...</div>
-  <button class="btn-reload" onclick="carregarTodosDados(true)">🔄 Recarregar Dados da Nuvem</button>
 
-  <!-- Formulário Visual -->
-  <div class="card" id="card-formulario" style="margin-top: 10px;">
-    <h3 id="form-title" style="margin-top:0; font-size:16px;">Adicionar Registro</h3>
+  <!-- Formulário em Card -->
+  <div class="dashboard-card" id="card-formulario">
+    <div class="card-header">
+      <span id="form-title">Adicionar Registro</span>
+    </div>
     <input type="hidden" id="edit-row-index" value="">
     
-    <div id="form-campos"></div>
+    <div id="form-campos" class="form-grid"></div>
     
-    <button onclick="salvarMolde()" id="btn-salvar">Salvar Registro</button>
-    <button onclick="limparFormulario()" id="btn-cancelar" class="btn-cancel" style="display:none;">Cancelar Edição</button>
+    <div class="btn-actions">
+      <button onclick="salvarMolde()" id="btn-salvar" class="btn btn-primary">💾 Salvar Registro</button>
+      <button onclick="limparFormulario()" id="btn-cancelar" class="btn btn-cancel" style="display:none;">Cancelar Edição</button>
+    </div>
   </div>
 
-  <!-- Consulta Global -->
-  <div class="card">
-    <h3 style="margin-top:0; font-size:16px;">🔍 Consulta Geral</h3>
-    <input type="text" id="input-busca" placeholder="Digite Código, Local ou Descrição..." onkeyup="filtrarGeral()">
+  <!-- Filtro / Busca Geral -->
+  <div class="dashboard-card">
+    <div class="card-header">
+      🔍 Consulta Geral
+    </div>
+    <input type="text" id="input-busca" placeholder="Digite Código, Local ou Descrição para filtrar..." onkeyup="filtrarGeral()">
   </div>
 
-  <!-- Tabela -->
-  <div class="card" style="overflow-x:auto;">
-    <table>
-      <thead>
-        <tr id="tabela-cabecalho"></tr>
-      </thead>
-      <tbody id="tabela-corpo"></tbody>
-    </table>
+  <!-- Tabela com Resultados -->
+  <div class="dashboard-card">
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr id="tabela-cabecalho"></tr>
+        </thead>
+        <tbody id="tabela-corpo"></tbody>
+      </table>
+    </div>
   </div>
+</div>
 
-  <script>
-    const BASE_API = "https://script.google.com/macros/s/AKfycbw8MMTSjzqWRGvOTMABL_4CsPiMHsQBCsFvgypA2Ha_h03TXlGd1O3WOkbG-eXV_8DaEA/exec";
-    
-    let abaAtual = "ATUALIZADA";
-    let bancoCompleto = { "ATUALIZADA": [], "Moldes QLX": [], "Transferências e Step Bay Step": [] };
-    let itemSendoEditado = null;
-    let listaExibida = [];
-    let timerBusca = null;
+<script>
+  const BASE_API = "https://script.google.com/macros/s/AKfycbw8MMTSjzqWRGvOTMABL_4CsPiMHsQBCsFvgypA2Ha_h03TXlGd1O3WOkbG-eXV_8DaEA/exec";
+  
+  let abaAtual = "ATUALIZADA";
+  let bancoCompleto = { "ATUALIZADA": [], "Moldes QLX": [], "Transferências e Step Bay Step": [] };
+  let itemSendoEditado = null;
+  let listaExibida = [];
+  let timerBusca = null;
 
-    function carregarDoLocalStorage() {
-      const cache = localStorage.getItem('banco_book_moldes');
-      if (cache) {
-        try { bancoCompleto = JSON.parse(cache); } catch(e) {}
-      }
+  function carregarDoLocalStorage() {
+    const cache = localStorage.getItem('banco_book_moldes');
+    if (cache) {
+      try { bancoCompleto = JSON.parse(cache); } catch(e) {}
     }
+  }
 
-    function salvarNoLocalStorage() {
-      localStorage.setItem('banco_book_moldes', JSON.stringify(bancoCompleto));
-    }
+  function salvarNoLocalStorage() {
+    localStorage.setItem('banco_book_moldes', JSON.stringify(bancoCompleto));
+  }
 
-    function enviarRequisicaoJSONP(url) {
-      return new Promise((resolve, reject) => {
-        const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
-        window[callbackName] = function(data) {
-          delete window[callbackName];
-          if (script && script.parentNode) script.parentNode.removeChild(script);
-          resolve(data);
-        };
+  function atualizarKPIs() {
+    const totalPlastico = (bancoCompleto["ATUALIZADA"] || []).length;
+    const totalQLX = (bancoCompleto["Moldes QLX"] || []).length;
+    const totalStep = (bancoCompleto["Transferências e Step Bay Step"] || []).length;
+    const totalGeral = totalPlastico + totalQLX + totalStep;
 
-        const script = document.createElement('script');
-        const sep = url.includes('?') ? '&' : '?';
-        script.src = url + sep + 'callback=' + callbackName;
-        script.onerror = function() {
-          delete window[callbackName];
-          if (script && script.parentNode) script.parentNode.removeChild(script);
-          reject(new Error('Erro de conexão.'));
-        };
-        document.body.appendChild(script);
-      });
-    }
+    const countAbaAtual = (bancoCompleto[abaAtual] || []).length;
+    const nomeExibicao = abaAtual === 'ATUALIZADA' ? 'PLÁSTICO' : abaAtual;
 
-    function acharCampo(item, palavrasChave, indicePadrao = -1) {
-      if (!item) return '-';
-      const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
-      for (let k of keys) {
-        const keyLimpa = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-        for (let p of palavrasChave) {
-          if (keyLimpa.includes(p)) {
-            const val = item[k] !== undefined && item[k] !== null && item[k] !== '' ? item[k] : '-';
-            return val;
-          }
+    document.getElementById('kpi-total').innerText = totalGeral;
+    document.getElementById('kpi-aba-count').innerText = countAbaAtual;
+    document.getElementById('kpi-aba-nome').innerText = nomeExibicao;
+  }
+
+  function enviarRequisicaoJSONP(url) {
+    return new Promise((resolve, reject) => {
+      const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
+      window[callbackName] = function(data) {
+        delete window[callbackName];
+        if (script && script.parentNode) script.parentNode.removeChild(script);
+        resolve(data);
+      };
+
+      const script = document.createElement('script');
+      const sep = url.includes('?') ? '&' : '?';
+      script.src = url + sep + 'callback=' + callbackName;
+      script.onerror = function() {
+        delete window[callbackName];
+        if (script && script.parentNode) script.parentNode.removeChild(script);
+        reject(new Error('Erro de conexão.'));
+      };
+      document.body.appendChild(script);
+    });
+  }
+
+  function acharCampo(item, palavrasChave, indicePadrao = -1) {
+    if (!item) return '-';
+    const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
+    for (let k of keys) {
+      const keyLimpa = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+      for (let p of palavrasChave) {
+        if (keyLimpa.includes(p)) {
+          const val = item[k] !== undefined && item[k] !== null && item[k] !== '' ? item[k] : '-';
+          return val;
         }
       }
-      if (indicePadrao >= 0 && keys[indicePadrao] !== undefined) {
-        return item[keys[indicePadrao]] || '-';
-      }
-      return '-';
+    }
+    if (indicePadrao >= 0 && keys[indicePadrao] !== undefined) {
+      return item[keys[indicePadrao]] || '-';
+    }
+    return '-';
+  }
+
+  function redefinirFormulario() {
+    const container = document.getElementById('form-campos');
+    container.innerHTML = '';
+
+    if (abaAtual === 'Transferências e Step Bay Step') {
+      container.innerHTML = `
+        <input type="text" id="input-col1" placeholder="Código Qualifix">
+        <input type="text" id="input-col2" placeholder="Código Arteb">
+        <input type="text" id="input-col3" placeholder="Descrição">
+        <input type="text" id="input-col4" placeholder="Mercado">
+        <input type="text" id="input-col5" placeholder="Maq.">
+        <input type="text" id="input-col6" placeholder="Troca de Versão">
+      `;
+    } else {
+      container.innerHTML = `
+        <input type="text" id="input-col1" placeholder="${abaAtual === 'Moldes QLX' ? 'Molde Nº (ex: 101)' : 'Local (ex: A1)'}">
+        <input type="text" id="input-col2" placeholder="Código">
+        <input type="text" id="input-col3" placeholder="Descrição">
+      `;
+    }
+  }
+
+  function trocarAba(novaAba) {
+    abaAtual = novaAba;
+    document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
+    document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
+    document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
+    
+    document.getElementById('input-busca').value = '';
+    redefinirFormulario();
+    limparFormulario();
+    renderTabelaAbaAtual();
+    atualizarKPIs();
+  }
+
+  async function carregarTodosDados(forcado = false) {
+    const statusDiv = document.getElementById('status-msg');
+    
+    if (!forcado && (bancoCompleto["ATUALIZADA"].length > 0 || bancoCompleto["Moldes QLX"].length > 0)) {
+      renderTabelaAbaAtual();
+      atualizarKPIs();
+      statusDiv.innerText = "Carregado localmente. Sincronizando nuvem...";
+      statusDiv.style.color = "var(--primary)";
+    } else {
+      statusDiv.innerText = "Carregando dados da nuvem...";
+      statusDiv.style.color = "var(--primary)";
     }
 
-    function redefinirFormulario() {
-      const container = document.getElementById('form-campos');
-      container.innerHTML = '';
+    const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step"];
 
-      if (abaAtual === 'Transferências e Step Bay Step') {
-        container.innerHTML = `
-          <input type="text" id="input-col1" placeholder="Código Qualifix">
-          <input type="text" id="input-col2" placeholder="Código Arteb">
-          <input type="text" id="input-col3" placeholder="Descrição">
-          <input type="text" id="input-col4" placeholder="Mercado">
-          <input type="text" id="input-col5" placeholder="Maq.">
-          <input type="text" id="input-col6" placeholder="Troca de Versão">
+    try {
+      for (let aba of abas) {
+        const resData = await enviarRequisicaoJSONP(`${BASE_API}?sheet=${encodeURIComponent(aba)}`);
+        if (Array.isArray(resData)) {
+          bancoCompleto[aba] = resData;
+        }
+      }
+      salvarNoLocalStorage();
+      renderTabelaAbaAtual();
+      atualizarKPIs();
+      const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
+      statusDiv.innerText = `Pronto! Total: ${total} itens sincronizados.`;
+      statusDiv.style.color = "var(--success)";
+    } catch (error) {
+      statusDiv.innerText = "Modo Offline (Exibindo dados locais).";
+      statusDiv.style.color = "var(--warning)";
+    }
+  }
+
+  function renderTabelaAbaAtual() {
+    const dados = bancoCompleto[abaAtual] || [];
+    const dadosComAba = dados.map(item => ({ ...item, _abaOrigem: abaAtual }));
+    renderTabela(dadosComAba, false);
+  }
+
+  function renderTabela(dados, modoBuscaGlobal = false) {
+    listaExibida = dados;
+    const thead = document.getElementById('tabela-cabecalho');
+    const tbody = document.getElementById('tabela-corpo');
+    tbody.innerHTML = '';
+
+    if (modoBuscaGlobal) {
+      thead.innerHTML = `<th>Aba / Origem</th><th>Local / Molde</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
+    } else if (abaAtual === 'Transferências e Step Bay Step') {
+      thead.innerHTML = `<th>Cód. Qualifix</th><th>Cód. Arteb</th><th>Descrição</th><th>Mercado</th><th>Maq.</th><th>Troca Versão</th><th>Ações</th>`;
+    } else {
+      thead.innerHTML = `<th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
+    }
+
+    if (!dados || dados.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    dados.forEach((item, index) => {
+      const tr = document.createElement('tr');
+      const abaOrigem = item._abaOrigem || abaAtual;
+      const nomeAbaExibicao = abaOrigem === 'ATUALIZADA' ? 'PLÁSTICO' : abaOrigem;
+
+      const btnAcoes = `
+        <div style="display:flex; gap:6px;">
+          <button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button>
+          <button class="btn-delete" onclick="excluirMolde(${index})">Excluir</button>
+        </div>
+      `;
+
+      if (modoBuscaGlobal) {
+        const local = acharCampo(item, ['local', 'molde', 'num', 'nº', 'qualifix'], 0);
+        const codigo = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
+        const desc = acharCampo(item, ['desc', 'descricao'], 2);
+
+        tr.innerHTML = `
+          <td><span class="badge-aba">${nomeAbaExibicao}</span></td>
+          <td><b>${local}</b></td>
+          <td>${codigo}</td>
+          <td>${desc}</td>
+          <td>${btnAcoes}</td>
+        `;
+      } else if (abaAtual === 'Transferências e Step Bay Step') {
+        const codQ = acharCampo(item, ['qualifix', 'col1'], 0);
+        const codA = acharCampo(item, ['arteb', 'col2'], 1);
+        const desc = acharCampo(item, ['desc', 'descricao'], 2);
+        const merc = acharCampo(item, ['mercado'], 3);
+        const maq = acharCampo(item, ['maq', 'maquina'], 4);
+        const troca = acharCampo(item, ['troca', 'versao'], 5);
+
+        tr.innerHTML = `
+          <td><b>${codQ}</b></td><td>${codA}</td><td>${desc}</td><td>${merc}</td><td>${maq}</td><td>${troca}</td>
+          <td>${btnAcoes}</td>
         `;
       } else {
-        container.innerHTML = `
-          <input type="text" id="input-col1" placeholder="${abaAtual === 'Moldes QLX' ? 'Molde Nº (ex: 101)' : 'Local (ex: A1)'}">
-          <input type="text" id="input-col2" placeholder="Código">
-          <input type="text" id="input-col3" placeholder="Descrição">
+        const local = acharCampo(item, ['local', 'molde', 'num', 'nº'], 0);
+        const codigo = acharCampo(item, ['cod', 'codigo'], 1);
+        const desc = acharCampo(item, ['desc', 'descricao'], 2);
+
+        tr.innerHTML = `
+          <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td>
+          <td>${btnAcoes}</td>
         `;
       }
-    }
+      fragment.appendChild(tr);
+    });
 
-    function trocarAba(novaAba) {
-      abaAtual = novaAba;
+    tbody.appendChild(fragment);
+  }
+
+  function cliqueEditar(index) {
+    const item = listaExibida[index];
+    if (!item) return;
+
+    const abaOrigem = item._abaOrigem || abaAtual;
+    if (abaOrigem !== abaAtual) {
+      abaAtual = abaOrigem;
       document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
       document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
       document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
-      
-      document.getElementById('input-busca').value = '';
       redefinirFormulario();
-      limparFormulario();
-      renderTabelaAbaAtual();
     }
 
-    async function carregarTodosDados(forcado = false) {
-      const statusDiv = document.getElementById('status-msg');
-      
-      if (!forcado && (bancoCompleto["ATUALIZADA"].length > 0 || bancoCompleto["Moldes QLX"].length > 0)) {
-        renderTabelaAbaAtual();
-        statusDiv.innerText = "Carregado localmente. Sincronizando nuvem...";
-        statusDiv.style.color = "#1a73e8";
-      } else {
-        statusDiv.innerText = "Carregando dados da nuvem...";
-        statusDiv.style.color = "#1a73e8";
-      }
-
-      const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step"];
-
-      try {
-        for (let aba of abas) {
-          const resData = await enviarRequisicaoJSONP(`${BASE_API}?sheet=${encodeURIComponent(aba)}`);
-          if (Array.isArray(resData)) {
-            bancoCompleto[aba] = resData;
-          }
-        }
-        salvarNoLocalStorage();
-        renderTabelaAbaAtual();
-        const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
-        statusDiv.innerText = `Pronto! Total: ${total} itens sincronizados.`;
-        statusDiv.style.color = "green";
-      } catch (error) {
-        statusDiv.innerText = "Modo Offline (Exibindo dados locais).";
-        statusDiv.style.color = "orange";
-      }
-    }
-
-    function renderTabelaAbaAtual() {
-      const dados = bancoCompleto[abaAtual] || [];
-      const dadosComAba = dados.map(item => ({ ...item, _abaOrigem: abaAtual }));
-      renderTabela(dadosComAba, false);
-    }
-
-    function renderTabela(dados, modoBuscaGlobal = false) {
-  listaExibida = dados;
-  const thead = document.getElementById('tabela-cabecalho');
-  const tbody = document.getElementById('tabela-corpo');
-  tbody.innerHTML = '';
-
-  if (modoBuscaGlobal) {
-    thead.innerHTML = `<th>Aba / Origem</th><th>Local / Molde</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
-  } else if (abaAtual === 'Transferências e Step Bay Step') {
-    thead.innerHTML = `<th>Cód. Qualifix</th><th>Cód. Arteb</th><th>Descrição</th><th>Mercado</th><th>Maq.</th><th>Troca Versão</th><th>Ações</th>`;
-  } else {
-    thead.innerHTML = `<th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
+    prepararEdicaoDireta(item);
   }
 
-  if (!dados || dados.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
-    return;
-  }
+  function prepararEdicaoDireta(item) {
+    if (!item) return;
+    itemSendoEditado = item;
 
-  const fragment = document.createDocumentFragment();
-
-  dados.forEach((item, index) => {
-    const tr = document.createElement('tr');
-    const abaOrigem = item._abaOrigem || abaAtual;
-    const nomeAbaExibicao = abaOrigem === 'ATUALIZADA' ? 'PLÁSTICO' : abaOrigem;
-
-    const btnAcoes = `
-      <div style="display:flex; gap:4px;">
-        <button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button>
-        <button class="btn-delete" onclick="excluirMolde(${index})">Excluir</button>
-      </div>
-    `;
-
-    if (modoBuscaGlobal) {
-      const local = acharCampo(item, ['local', 'molde', 'num', 'nº', 'qualifix'], 0);
-      const codigo = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
-      const desc = acharCampo(item, ['desc', 'descricao'], 2);
-
-      tr.innerHTML = `
-        <td><span class="badge-aba">${nomeAbaExibicao}</span></td>
-        <td><b>${local}</b></td>
-        <td>${codigo}</td>
-        <td>${desc}</td>
-        <td>${btnAcoes}</td>
-      `;
-    } else if (abaAtual === 'Transferências e Step Bay Step') {
-      const codQ = acharCampo(item, ['qualifix', 'col1'], 0);
-      const codA = acharCampo(item, ['arteb', 'col2'], 1);
-      const desc = acharCampo(item, ['desc', 'descricao'], 2);
-      const merc = acharCampo(item, ['mercado'], 3);
-      const maq = acharCampo(item, ['maq', 'maquina'], 4);
-      const troca = acharCampo(item, ['troca', 'versao'], 5);
-
-      tr.innerHTML = `
-        <td><b>${codQ}</b></td><td>${codA}</td><td>${desc}</td><td>${merc}</td><td>${maq}</td><td>${troca}</td>
-        <td>${btnAcoes}</td>
-      `;
+    if (abaAtual === 'Transferências e Step Bay Step') {
+      document.getElementById('input-col1').value = acharCampo(item, ['qualifix'], 0) !== '-' ? acharCampo(item, ['qualifix'], 0) : '';
+      document.getElementById('input-col2').value = acharCampo(item, ['arteb'], 1) !== '-' ? acharCampo(item, ['arteb'], 1) : '';
+      document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2) !== '-' ? acharCampo(item, ['desc'], 2) : '';
+      document.getElementById('input-col4').value = acharCampo(item, ['mercado'], 3) !== '-' ? acharCampo(item, ['mercado'], 3) : '';
+      document.getElementById('input-col5').value = acharCampo(item, ['maq'], 4) !== '-' ? acharCampo(item, ['maq'], 4) : '';
+      document.getElementById('input-col6').value = acharCampo(item, ['troca'], 5) !== '-' ? acharCampo(item, ['troca'], 5) : '';
     } else {
-      const local = acharCampo(item, ['local', 'molde', 'num', 'nº'], 0);
-      const codigo = acharCampo(item, ['cod', 'codigo'], 1);
-      const desc = acharCampo(item, ['desc', 'descricao'], 2);
+      const local = acharCampo(item, ['local', 'molde', 'num'], 0);
+      const cod = acharCampo(item, ['cod', 'codigo'], 1);
+      const desc = acharCampo(item, ['desc'], 2);
 
-      tr.innerHTML = `
-        <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td>
-        <td>${btnAcoes}</td>
-      `;
-    }
-    fragment.appendChild(tr);
-  });
-
-  tbody.appendChild(fragment);
-}
-    function cliqueEditar(index) {
-      const item = listaExibida[index];
-      if (!item) return;
-
-      const abaOrigem = item._abaOrigem || abaAtual;
-      if (abaOrigem !== abaAtual) {
-        abaAtual = abaOrigem;
-        document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
-        document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
-        document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
-        redefinirFormulario();
-      }
-
-      prepararEdicaoDireta(item);
+      document.getElementById('input-col1').value = local !== '-' ? local : '';
+      document.getElementById('input-col2').value = cod !== '-' ? cod : '';
+      document.getElementById('input-col3').value = desc !== '-' ? desc : '';
     }
 
-    function prepararEdicaoDireta(item) {
-      if (!item) return;
-      itemSendoEditado = item;
+    const rIndex = item._rowIndex || '';
+    document.getElementById('edit-row-index').value = rIndex;
 
-      if (abaAtual === 'Transferências e Step Bay Step') {
-        document.getElementById('input-col1').value = acharCampo(item, ['qualifix'], 0) !== '-' ? acharCampo(item, ['qualifix'], 0) : '';
-        document.getElementById('input-col2').value = acharCampo(item, ['arteb'], 1) !== '-' ? acharCampo(item, ['arteb'], 1) : '';
-        document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2) !== '-' ? acharCampo(item, ['desc'], 2) : '';
-        document.getElementById('input-col4').value = acharCampo(item, ['mercado'], 3) !== '-' ? acharCampo(item, ['mercado'], 3) : '';
-        document.getElementById('input-col5').value = acharCampo(item, ['maq'], 4) !== '-' ? acharCampo(item, ['maq'], 4) : '';
-        document.getElementById('input-col6').value = acharCampo(item, ['troca'], 5) !== '-' ? acharCampo(item, ['troca'], 5) : '';
-      } else {
-        const local = acharCampo(item, ['local', 'molde', 'num'], 0);
-        const cod = acharCampo(item, ['cod', 'codigo'], 1);
-        const desc = acharCampo(item, ['desc'], 2);
+    document.getElementById('form-title').innerText = "Editar Registro (Linha " + (rIndex || 'NOVA') + ")";
+    document.getElementById('btn-salvar').innerText = "Atualizar Registro";
+    document.getElementById('btn-cancelar').style.display = "inline-flex";
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
-        document.getElementById('input-col1').value = local !== '-' ? local : '';
-        document.getElementById('input-col2').value = cod !== '-' ? cod : '';
-        document.getElementById('input-col3').value = desc !== '-' ? desc : '';
-      }
+  function filtrarGeral() {
+    clearTimeout(timerBusca);
+    timerBusca = setTimeout(() => {
+      const termo = document.getElementById('input-busca').value.trim().toLowerCase();
+      if (!termo) { renderTabelaAbaAtual(); return; }
 
-      const rIndex = item._rowIndex || '';
-      document.getElementById('edit-row-index').value = rIndex;
+      let resultados = [];
+      Object.keys(bancoCompleto).forEach(nomeAba => {
+        bancoCompleto[nomeAba].forEach(item => {
+          const valores = Object.keys(item)
+            .filter(k => k !== '_rowIndex')
+            .map(k => item[k])
+            .join(' ')
+            .toLowerCase();
 
-      document.getElementById('form-title').innerText = "Editar Registro (Linha " + (rIndex || 'NOVA') + ")";
-      document.getElementById('btn-salvar').innerText = "Atualizar Registro";
-      document.getElementById('btn-cancelar').style.display = "block";
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function filtrarGeral() {
-      clearTimeout(timerBusca);
-      timerBusca = setTimeout(() => {
-        const termo = document.getElementById('input-busca').value.trim().toLowerCase();
-        if (!termo) { renderTabelaAbaAtual(); return; }
-
-        let resultados = [];
-        Object.keys(bancoCompleto).forEach(nomeAba => {
-          bancoCompleto[nomeAba].forEach(item => {
-            const valores = Object.keys(item)
-              .filter(k => k !== '_rowIndex')
-              .map(k => item[k])
-              .join(' ')
-              .toLowerCase();
-
-            if (valores.includes(termo)) {
-              resultados.push({ ...item, _abaOrigem: nomeAba });
-            }
-          });
+          if (valores.includes(termo)) {
+            resultados.push({ ...item, _abaOrigem: nomeAba });
+          }
         });
-        renderTabela(resultados, true);
-      }, 250);
+      });
+      renderTabela(resultados, true);
+    }, 250);
+  }
+
+  async function salvarMolde() {
+    const col1 = document.getElementById('input-col1').value.trim();
+    const col2 = document.getElementById('input-col2').value.trim();
+    const col3 = document.getElementById('input-col3').value.trim();
+    const rowIndex = document.getElementById('edit-row-index').value;
+
+    if (!col1 && !col2) {
+      alert('Preencha pelo menos um campo!');
+      return;
     }
 
-    async function salvarMolde() {
-  const col1 = document.getElementById('input-col1').value.trim();
-  const col2 = document.getElementById('input-col2').value.trim();
-  const col3 = document.getElementById('input-col3').value.trim();
-  const rowIndex = document.getElementById('edit-row-index').value;
-
-  if (!col1 && !col2) {
-    alert('Preencha pelo menos um campo!');
-    return;
-  }
-
-  const statusDiv = document.getElementById('status-msg');
-  
-  let col4 = "", col5 = "", col6 = "";
-  let payloadData = {};
-
-  if (abaAtual === 'Transferências e Step Bay Step') {
-    col4 = document.getElementById('input-col4').value.trim();
-    col5 = document.getElementById('input-col5').value.trim();
-    col6 = document.getElementById('input-col6').value.trim();
-    payloadData = {
-      "Código Qualifix": col1, "Código Arteb": col2, "Descrição": col3,
-      "Mercado": col4, "Maq.": col5, "Troca de Versão": col6
-    };
-  } else if (abaAtual === 'Moldes QLX') {
-    payloadData = { "Molde Nº": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
-  } else {
-    payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
-  }
-
-  // Atualiza localmente no navegador em tempo real
-  if (rowIndex) {
-    const idx = bancoCompleto[abaAtual].findIndex(i => String(i._rowIndex) === String(rowIndex));
-    if (idx !== -1) {
-      bancoCompleto[abaAtual][idx] = { ...bancoCompleto[abaAtual][idx], ...payloadData };
-    }
-  } else {
-    const novoIndex = bancoCompleto[abaAtual].length + 2;
-    payloadData['_rowIndex'] = novoIndex;
-    bancoCompleto[abaAtual].push(payloadData);
-  }
-
-  salvarNoLocalStorage();
-  renderTabelaAbaAtual();
-  limparFormulario();
-
-  statusDiv.innerText = "Enviando dados para a planilha...";
-  statusDiv.style.color = "#1a73e8";
-
-  // Envio via POST (Resolve restrições de tamanho de URL)
-  const corpoEnvio = {
-    action: "SAVE",
-    sheet: abaAtual,
-    rowIndex: rowIndex,
-    c1: col1,
-    c2: col2,
-    c3: col3,
-    c4: col4,
-    c5: col5,
-    c6: col6
-  };
-
-  try {
-    await fetch(BASE_API, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(corpoEnvio)
-    });
-
-    statusDiv.innerText = "✅ Salvo e enviado para a nuvem!";
-    statusDiv.style.color = "green";
-  } catch (err) {
-    statusDiv.innerText = "⚠️ Salvo offline (Erro de rede).";
-    statusDiv.style.color = "orange";
-  }
-}
-
-    async function excluirMolde(index) {
-  const item = listaExibida[index];
-  if (!item) return;
-
-  const abaOrigem = item._abaOrigem || abaAtual;
-  const rowIndex = item._rowIndex;
-
-  if (!rowIndex) {
-    alert("Erro: Não foi possível identificar a linha a ser excluída na planilha.");
-    return;
-  }
-
-  const desc = acharCampo(item, ['desc', 'descricao', 'codigo', 'cod'], 2);
-  const confirmar = confirm(`Tem certeza que deseja EXCLUIR o registro "${desc}" (Linha ${rowIndex}) da aba "${abaOrigem}"?`);
-
-  if (!confirmar) return;
-
-  const statusDiv = document.getElementById('status-msg');
-
-  // Remove localmente no navegador
-  bancoCompleto[abaOrigem] = bancoCompleto[abaOrigem].filter(i => String(i._rowIndex) !== String(rowIndex));
-  salvarNoLocalStorage();
-  renderTabelaAbaAtual();
-
-  statusDiv.innerText = "Excluindo registro na planilha...";
-  statusDiv.style.color = "#ea4335";
-
-  // Envio do pedido de exclusão via POST
-  const corpoEnvio = {
-    action: "DELETE",
-    sheet: abaOrigem,
-    rowIndex: rowIndex
-  };
-
-  try {
-    await fetch(BASE_API, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(corpoEnvio)
-    });
-
-    statusDiv.innerText = "🗑️ Registro excluído com sucesso!";
-    statusDiv.style.color = "green";
+    const statusDiv = document.getElementById('status-msg');
     
-    // Atualiza os dados para reordenar os _rowIndex
-    carregarTodosDados(true);
-  } catch (err) {
-    statusDiv.innerText = "⚠️ Excluído localmente (Erro de rede ao excluir na nuvem).";
-    statusDiv.style.color = "orange";
-  }
-}
-    function limparFormulario() {
-      itemSendoEditado = null;
-      document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
-      document.getElementById('edit-row-index').value = '';
-      document.getElementById('form-title').innerText = "Adicionar Registro";
-      document.getElementById('btn-salvar').innerText = "Salvar Registro";
-      document.getElementById('btn-cancelar').style.display = "none";
+    let col4 = "", col5 = "", col6 = "";
+    let payloadData = {};
+
+    if (abaAtual === 'Transferências e Step Bay Step') {
+      col4 = document.getElementById('input-col4').value.trim();
+      col5 = document.getElementById('input-col5').value.trim();
+      col6 = document.getElementById('input-col6').value.trim();
+      payloadData = {
+        "Código Qualifix": col1, "Código Arteb": col2, "Descrição": col3,
+        "Mercado": col4, "Maq.": col5, "Troca de Versão": col6
+      };
+    } else if (abaAtual === 'Moldes QLX') {
+      payloadData = { "Molde Nº": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
+    } else {
+      payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
     }
 
-    carregarDoLocalStorage();
-    redefinirFormulario();
-    carregarTodosDados();
-  </script>
+    if (rowIndex) {
+      const idx = bancoCompleto[abaAtual].findIndex(i => String(i._rowIndex) === String(rowIndex));
+      if (idx !== -1) {
+        bancoCompleto[abaAtual][idx] = { ...bancoCompleto[abaAtual][idx], ...payloadData };
+      }
+    } else {
+      const novoIndex = bancoCompleto[abaAtual].length + 2;
+      payloadData['_rowIndex'] = novoIndex;
+      bancoCompleto[abaAtual].push(payloadData);
+    }
+
+    salvarNoLocalStorage();
+    renderTabelaAbaAtual();
+    atualizarKPIs();
+    limparFormulario();
+
+    statusDiv.innerText = "Enviando dados para a planilha...";
+    statusDiv.style.color = "var(--primary)";
+
+    const corpoEnvio = {
+      action: "SAVE",
+      sheet: abaAtual,
+      rowIndex: rowIndex,
+      c1: col1,
+      c2: col2,
+      c3: col3,
+      c4: col4,
+      c5: col5,
+      c6: col6
+    };
+
+    try {
+      await fetch(BASE_API, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(corpoEnvio)
+      });
+
+      statusDiv.innerText = "✅ Salvo e enviado para a nuvem!";
+      statusDiv.style.color = "var(--success)";
+    } catch (err) {
+      statusDiv.innerText = "⚠️ Salvo offline (Erro de rede).";
+      statusDiv.style.color = "var(--warning)";
+    }
+  }
+
+  async function excluirMolde(index) {
+    const item = listaExibida[index];
+    if (!item) return;
+
+    const abaOrigem = item._abaOrigem || abaAtual;
+    const rowIndex = item._rowIndex;
+
+    if (!rowIndex) {
+      alert("Erro: Não foi possível identificar a linha a ser excluída na planilha.");
+      return;
+    }
+
+    const desc = acharCampo(item, ['desc', 'descricao', 'codigo', 'cod'], 2);
+    const confirmar = confirm(`Tem certeza que deseja EXCLUIR o registro "${desc}" (Linha ${rowIndex}) da aba "${abaOrigem}"?`);
+
+    if (!confirmar) return;
+
+    const statusDiv = document.getElementById('status-msg');
+
+    bancoCompleto[abaOrigem] = bancoCompleto[abaOrigem].filter(i => String(i._rowIndex) !== String(rowIndex));
+    salvarNoLocalStorage();
+    renderTabelaAbaAtual();
+    atualizarKPIs();
+
+    statusDiv.innerText = "Excluindo registro na planilha...";
+    statusDiv.style.color = "var(--danger)";
+
+    const corpoEnvio = {
+      action: "DELETE",
+      sheet: abaOrigem,
+      rowIndex: rowIndex
+    };
+
+    try {
+      await fetch(BASE_API, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(corpoEnvio)
+      });
+
+      statusDiv.innerText = "🗑️ Registro excluído com sucesso!";
+      statusDiv.style.color = "var(--success)";
+      
+      carregarTodosDados(true);
+    } catch (err) {
+      statusDiv.innerText = "⚠️ Excluído localmente (Erro de rede ao excluir na nuvem).";
+      statusDiv.style.color = "var(--warning)";
+    }
+  }
+
+  function limparFormulario() {
+    itemSendoEditado = null;
+    document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
+    document.getElementById('edit-row-index').value = '';
+    document.getElementById('form-title').innerText = "Adicionar Registro";
+    document.getElementById('btn-salvar').innerText = "💾 Salvar Registro";
+    document.getElementById('btn-cancelar').style.display = "none";
+  }
+
+  carregarDoLocalStorage();
+  redefinirFormulario();
+  carregarTodosDados();
+</script>
 </body>
 </html>
