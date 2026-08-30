@@ -421,6 +421,59 @@
     statusDiv.style.color = "orange";
   }
 }
+
+    async function excluirMolde(index) {
+  const item = listaExibida[index];
+  if (!item) return;
+
+  const abaOrigem = item._abaOrigem || abaAtual;
+  const rowIndex = item._rowIndex;
+
+  if (!rowIndex) {
+    alert("Erro: Não foi possível identificar a linha a ser excluída na planilha.");
+    return;
+  }
+
+  const desc = acharCampo(item, ['desc', 'descricao', 'codigo', 'cod'], 2);
+  const confirmar = confirm(`Tem certeza que deseja EXCLUIR o registro "${desc}" (Linha ${rowIndex}) da aba "${abaOrigem}"?`);
+
+  if (!confirmar) return;
+
+  const statusDiv = document.getElementById('status-msg');
+
+  // Remove localmente no navegador
+  bancoCompleto[abaOrigem] = bancoCompleto[abaOrigem].filter(i => String(i._rowIndex) !== String(rowIndex));
+  salvarNoLocalStorage();
+  renderTabelaAbaAtual();
+
+  statusDiv.innerText = "Excluindo registro na planilha...";
+  statusDiv.style.color = "#ea4335";
+
+  // Envio do pedido de exclusão via POST
+  const corpoEnvio = {
+    action: "DELETE",
+    sheet: abaOrigem,
+    rowIndex: rowIndex
+  };
+
+  try {
+    await fetch(BASE_API, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(corpoEnvio)
+    });
+
+    statusDiv.innerText = "🗑️ Registro excluído com sucesso!";
+    statusDiv.style.color = "green";
+    
+    // Atualiza os dados para reordenar os _rowIndex
+    carregarTodosDados(true);
+  } catch (err) {
+    statusDiv.innerText = "⚠️ Excluído localmente (Erro de rede ao excluir na nuvem).";
+    statusDiv.style.color = "orange";
+  }
+}
     function limparFormulario() {
       itemSendoEditado = null;
       document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
