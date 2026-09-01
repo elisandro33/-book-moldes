@@ -175,6 +175,22 @@
   let listaExibida = [];
   let timerBusca = null;
 
+  // Trata e formata datas vindas do Google Sheets
+  function formatarPrazo(valor) {
+    if (!valor || valor === '-') return '-';
+    
+    if (typeof valor === 'string' && valor.includes('T') && valor.includes('Z')) {
+      const data = new Date(valor);
+      if (!isNaN(data.getTime())) {
+        const dia = String(data.getUTCDate()).padStart(2, '0');
+        const mes = String(data.getUTCMonth() + 1).padStart(2, '0');
+        const ano = data.getUTCFullYear();
+        return `${dia}/${mes}/${ano}`;
+      }
+    }
+    return valor;
+  }
+
   function carregarDoLocalStorage() {
     const cache = localStorage.getItem('banco_book_moldes');
     if (cache) {
@@ -433,7 +449,7 @@
         const local = acharCampo(item, ['local', 'molde', 'num', 'nº', 'qualifix'], 0);
         const codigo = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
         const desc = acharCampo(item, ['desc', 'descricao'], 2);
-        const prazoInfo = acharCampo(item, ['prazo', 'mercado'], 3);
+        const prazoInfo = formatarPrazo(acharCampo(item, ['prazo', 'mercado'], 3));
 
         tr.innerHTML = `
           <td><span class="badge-aba">${nomeAbaExibicao}</span></td>
@@ -459,10 +475,10 @@
         const local = acharCampo(item, ['local', 'molde', 'num'], 0);
         const codigo = acharCampo(item, ['cod', 'codigo'], 1);
         const desc = acharCampo(item, ['desc', 'descricao'], 2);
-        const prazo = acharCampo(item, ['prazo'], 3);
+        const prazoFormatado = formatarPrazo(acharCampo(item, ['prazo'], 3));
 
         tr.innerHTML = `
-          <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td><td><b style="color:var(--danger);">${prazo}</b></td>
+          <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td><td><b style="color:var(--danger);">${prazoFormatado}</b></td>
           <td>${btnAcoes}</td>
         `;
       } else {
@@ -510,7 +526,7 @@
       const local = acharCampo(item, ['local', 'molde', 'num'], 0);
       const cod = acharCampo(item, ['cod', 'codigo'], 1);
       const desc = acharCampo(item, ['desc'], 2);
-      const prazo = acharCampo(item, ['prazo'], 3);
+      const prazo = formatarPrazo(acharCampo(item, ['prazo'], 3));
 
       document.getElementById('input-col1').value = local !== '-' ? local : '';
       document.getElementById('input-col2').value = cod !== '-' ? cod : '';
@@ -542,12 +558,27 @@
 
     const abaOrigem = item._abaOrigem || abaAtual;
     const desc = acharCampo(item, ['desc', 'descricao', 'codigo', 'cod'], 2);
-    const nomeDestino = formatarNomeExibicao(abaDestino);
+    let nomeDestino = formatarNomeExibicao(abaDestino);
 
-    let prazoInfo = "";
+    let col1 = acharCampo(item, ['local', 'molde', 'qualifix'], 0);
+    let col2 = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
+    let col3 = acharCampo(item, ['desc', 'descricao'], 2);
+    let col4 = "";
+
+    // LÓGICA ESPECIAL PARA DEREGISTRAR LOCAL NAS TROCAS ENTRE PLÁSTICO E QLX
+    if ((abaOrigem === 'ATUALIZADA' && abaDestino === 'Moldes QLX') || (abaOrigem === 'Moldes QLX' && abaDestino === 'ATUALIZADA')) {
+      const retirarLocal = confirm(`Deseja remover o local/molde deste item?\n\n- Pressione OK para remover o local e mover para a aba "Sem Local".\n- Pressione CANCELAR para manter o local e transferir para "${nomeDestino}".`);
+      if (retirarLocal) {
+        col1 = ""; // Limpa o campo de local
+        abaDestino = "Sem Local";
+        nomeDestino = "Sem Local";
+      }
+    }
+
     if (abaDestino === 'ferramentaria') {
-      prazoInfo = prompt(`Informe o PRAZO para a Ferramentaria (opcional):`, "");
+      const prazoInfo = prompt(`Informe o PRAZO para a Ferramentaria (opcional):`, "");
       if (prazoInfo === null) return;
+      col4 = prazoInfo;
     }
 
     const acaoTexto = abaDestino === 'ferramentaria' ? 'transferir para Ferramentaria' : `transferir para ${nomeDestino}`;
@@ -555,11 +586,6 @@
     if (!confirm(`Deseja ${acaoTexto} o item "${desc}"?`)) {
       return;
     }
-
-    const col1 = acharCampo(item, ['local', 'molde', 'qualifix'], 0);
-    const col2 = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
-    const col3 = acharCampo(item, ['desc', 'descricao'], 2);
-    const col4 = abaDestino === 'ferramentaria' ? prazoInfo : "";
 
     const rIndexOrigem = item._rowIndex;
 
