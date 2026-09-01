@@ -226,6 +226,21 @@
     });
   }
 
+  async function enviarComandoNuvem(payload) {
+    try {
+      await fetch(BASE_API, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      console.warn("Envio com fetch falhou, utilizando Beacon secundário...", e);
+      const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain' });
+      navigator.sendBeacon(BASE_API, blob);
+    }
+  }
+
   function acharCampo(item, palavrasChave, indicePadrao = -1) {
     if (!item) return '-';
     const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
@@ -537,7 +552,7 @@
     let prazoInfo = "";
     if (abaDestino === 'ferramentaria') {
       prazoInfo = prompt(`Informe o PRAZO para a Ferramentaria (opcional):`, "");
-      if (prazoInfo === null) return; // Cancelou
+      if (prazoInfo === null) return;
     }
 
     const acaoTexto = abaDestino === 'ferramentaria' ? 'transferir para Ferramentaria' : `transferir para ${nomeDestino}`;
@@ -549,70 +564,34 @@
     const col1 = acharCampo(item, ['local', 'molde', 'qualifix'], 0);
     const col2 = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
     const col3 = acharCampo(item, ['desc', 'descricao'], 2);
-    
-    // Se for para a ferramentaria usamos o prazo informado no prompt; senão fica limpo
     const col4 = abaDestino === 'ferramentaria' ? prazoInfo : "";
 
     const rIndexOrigem = item._rowIndex;
-
-    // Remove da aba de origem localmente
-    bancoCompleto[abaOrigem] = bancoCompleto[abaOrigem].filter(i => String(i._rowIndex) !== String(rIndexOrigem));
-
-    // Prepara objeto preservando as colunas
-    let payload = {};
-    if (abaDestino === 'ferramentaria') {
-      payload = { "LOCAL": col1 === '-' ? '' : col1, "CÓDIGO": col2 === '-' ? '' : col2, "DESCRIÇÃO": col3 === '-' ? '' : col3, "PRAZO": col4 };
-    } else if (abaDestino === 'Moldes QLX') {
-      payload = { "Molde Nº": col1 === '-' ? '' : col1, "CÓDIGO": col2 === '-' ? '' : col2, "DESCRIÇÃO": col3 === '-' ? '' : col3 };
-    } else {
-      payload = { "LOCAL": col1 === '-' ? '' : col1, "CÓDIGO": col2 === '-' ? '' : col2, "DESCRIÇÃO": col3 === '-' ? '' : col3 };
-    }
-
-    payload['_rowIndex'] = bancoCompleto[abaDestino].length + 2;
-    bancoCompleto[abaDestino].push(payload);
-
-    salvarNoLocalStorage();
-    renderTabelaAbaAtual();
-    atualizarKPIs();
 
     const statusDiv = document.getElementById('status-msg');
     statusDiv.innerText = "Sincronizando transferência na nuvem...";
     statusDiv.style.color = "var(--primary)";
 
-    try {
-      // 1. Apaga da aba antiga na planilha
-      if (rIndexOrigem) {
-        await fetch(BASE_API, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: "DELETE", sheet: abaOrigem, rowIndex: rIndexOrigem })
-        });
-      }
-
-      // 2. Salva na nova aba na planilha
-      await fetch(BASE_API, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          action: "SAVE",
-          sheet: abaDestino,
-          rowIndex: "",
-          c1: col1 === '-' ? '' : col1,
-          c2: col2 === '-' ? '' : col2,
-          c3: col3 === '-' ? '' : col3,
-          c4: col4
-        })
-      });
-
-      statusDiv.innerText = `✅ Registro transferido para ${nomeDestino}!`;
-      statusDiv.style.color = "var(--success)";
-      carregarTodosDados(true);
-    } catch (e) {
-      statusDiv.innerText = "⚠️ Transferido localmente (Erro de conexão).";
-      statusDiv.style.color = "var(--warning)";
+    if (rIndexOrigem) {
+      await enviarComandoNuvem({ action: "DELETE", sheet: abaOrigem, rowIndex: rIndexOrigem });
     }
+
+    await enviarComandoNuvem({
+      action: "SAVE",
+      sheet: abaDestino,
+      rowIndex: "",
+      c1: col1 === '-' ? '' : col1,
+      c2: col2 === '-' ? '' : col2,
+      c3: col3 === '-' ? '' : col3,
+      c4: col4
+    });
+
+    statusDiv.innerText = `✅ Registro transferido para ${nomeDestino}! Sincronizando...`;
+    statusDiv.style.color = "var(--success)";
+
+    setTimeout(() => {
+      carregarTodosDados(true);
+    }, 1000);
   }
 
   function filtrarGeral() {
@@ -664,79 +643,23 @@
 
     const eTransferencia = rowIndex && (abaOrigemGuardada !== abaDestino);
 
-    if (eTransferencia) {
-      bancoCompleto[abaOrigemGuardada] = bancoCompleto[abaOrigemGuardada].filter(i => String(i._rowIndex) !== String(rowIndex));
-
-      let payloadData = {};
-      if (abaDestino === 'ferramentaria') {
-        payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3, "PRAZO": col4 };
-      } else if (abaDestino === 'Moldes QLX') {
-        payloadData = { "Molde Nº": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
-      } else {
-        payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
-      }
-      payloadData['_rowIndex'] = bancoCompleto[abaDestino].length + 2;
-      bancoCompleto[abaDestino].push(payloadData);
-    } else {
-      let payloadData = {};
-      if (abaDestino === 'ferramentaria') {
-        payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3, "PRAZO": col4 };
-      } else if (abaDestino === 'Moldes QLX') {
-        payloadData = { "Molde Nº": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
-      } else {
-        payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
-      }
-
-      if (rowIndex) {
-        const idx = bancoCompleto[abaDestino].findIndex(i => String(i._rowIndex) === String(rowIndex));
-        if (idx !== -1) {
-          bancoCompleto[abaDestino][idx] = { ...bancoCompleto[abaDestino][idx], ...payloadData };
-        }
-      } else {
-        payloadData['_rowIndex'] = bancoCompleto[abaDestino].length + 2;
-        bancoCompleto[abaDestino].push(payloadData);
-      }
-    }
-
-    salvarNoLocalStorage();
-    renderTabelaAbaAtual();
-    atualizarKPIs();
-    limparFormulario();
-
-    statusDiv.innerText = "Processando no servidor...";
+    statusDiv.innerText = "Salvando registro na nuvem...";
     statusDiv.style.color = "var(--primary)";
 
-    try {
-      if (eTransferencia) {
-        await fetch(BASE_API, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: "DELETE", sheet: abaOrigemGuardada, rowIndex: rowIndex })
-        });
-
-        await fetch(BASE_API, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: "SAVE", sheet: abaDestino, rowIndex: "", c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6 })
-        });
-      } else {
-        await fetch(BASE_API, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: "SAVE", sheet: abaDestino, rowIndex: rowIndex, c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6 })
-        });
-      }
-
-      statusDiv.innerText = "✅ Operação concluída com sucesso na nuvem!";
-      statusDiv.style.color = "var(--success)";
-      if (eTransferencia) carregarTodosDados(true);
-    } catch (err) {
-      statusDiv.innerText = "⚠️ Salvo offline (Erro de rede).";
-      statusDiv.style.color = "var(--warning)";
+    if (eTransferencia) {
+      await enviarComandoNuvem({ action: "DELETE", sheet: abaOrigemGuardada, rowIndex: rowIndex });
+      await enviarComandoNuvem({ action: "SAVE", sheet: abaDestino, rowIndex: "", c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6 });
+    } else {
+      await enviarComandoNuvem({ action: "SAVE", sheet: abaDestino, rowIndex: rowIndex, c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6 });
     }
+
+    limparFormulario();
+    statusDiv.innerText = "✅ Salvo com sucesso! Atualizando dados...";
+    statusDiv.style.color = "var(--success)";
+
+    setTimeout(() => {
+      carregarTodosDados(true);
+    }, 1000);
   }
 
   async function excluirMolde(index) {
@@ -757,37 +680,21 @@
     if (!confirmar) return;
 
     const statusDiv = document.getElementById('status-msg');
-
-    bancoCompleto[abaOrigem] = bancoCompleto[abaOrigem].filter(i => String(i._rowIndex) !== String(rowIndex));
-    salvarNoLocalStorage();
-    renderTabelaAbaAtual();
-    atualizarKPIs();
-
     statusDiv.innerText = "Excluindo registro na planilha...";
     statusDiv.style.color = "var(--danger)";
 
-    const corpoEnvio = {
+    await enviarComandoNuvem({
       action: "DELETE",
       sheet: abaOrigem,
       rowIndex: rowIndex
-    };
+    });
 
-    try {
-      await fetch(BASE_API, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(corpoEnvio)
-      });
+    statusDiv.innerText = "🗑️ Registro excluído! Atualizando...";
+    statusDiv.style.color = "var(--success)";
 
-      statusDiv.innerText = "🗑️ Registro excluído com sucesso!";
-      statusDiv.style.color = "var(--success)";
-      
+    setTimeout(() => {
       carregarTodosDados(true);
-    } catch (err) {
-      statusDiv.innerText = "⚠️ Excluído localmente (Erro de rede ao excluir na nuvem).";
-      statusDiv.style.color = "var(--warning)";
-    }
+    }, 1000);
   }
 
   function limparFormulario() {
