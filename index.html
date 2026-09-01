@@ -175,7 +175,7 @@
   let listaExibida = [];
   let timerBusca = null;
 
-  // Trata e formata datas vindas do Google Sheets
+  // Formata o prazo recebido
   function formatarPrazo(valor) {
     if (!valor || valor === '-') return '-';
     
@@ -189,6 +189,12 @@
       }
     }
     return valor;
+  }
+
+  // Garante que o texto retornado mantenha formato exato (preserva zeros e pontuações)
+  function normalizarTexto(valor) {
+    if (valor === undefined || valor === null || valor === '') return '-';
+    return String(valor).trim();
   }
 
   function carregarDoLocalStorage() {
@@ -245,7 +251,7 @@
   function enviarComandoNuvem(params) {
     return new Promise((resolve, reject) => {
       const query = Object.keys(params)
-        .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] || ''))
+        .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] !== undefined && params[k] !== null ? String(params[k]) : ''))
         .join('&');
       
       const url = `${BASE_API}?${query}`;
@@ -260,13 +266,12 @@
       const keyLimpa = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
       for (let p of palavrasChave) {
         if (keyLimpa.includes(p)) {
-          const val = item[k] !== undefined && item[k] !== null && item[k] !== '' ? item[k] : '-';
-          return val;
+          return normalizarTexto(item[k]);
         }
       }
     }
     if (indicePadrao >= 0 && keys[indicePadrao] !== undefined) {
-      return item[keys[indicePadrao]] || '-';
+      return normalizarTexto(item[keys[indicePadrao]]);
     }
     return '-';
   }
@@ -557,7 +562,7 @@
     if (!item) return;
 
     const abaOrigem = item._abaOrigem || abaAtual;
-    const desc = acharCampo(item, ['desc', 'descricao', 'codigo', 'cod'], 2);
+    const desc = acharCampo(item, ['desc', 'descricao'], 2);
     let nomeDestino = formatarNomeExibicao(abaDestino);
 
     let col1 = acharCampo(item, ['local', 'molde', 'qualifix'], 0);
@@ -565,11 +570,11 @@
     let col3 = acharCampo(item, ['desc', 'descricao'], 2);
     let col4 = "";
 
-    // LÓGICA ESPECIAL PARA DEREGISTRAR LOCAL NAS TROCAS ENTRE PLÁSTICO E QLX
+    // LÓGICA DE DEREGISTRAR LOCAL NAS TROCAS ENTRE PLÁSTICO E QLX
     if ((abaOrigem === 'ATUALIZADA' && abaDestino === 'Moldes QLX') || (abaOrigem === 'Moldes QLX' && abaDestino === 'ATUALIZADA')) {
       const retirarLocal = confirm(`Deseja remover o local/molde deste item?\n\n- Pressione OK para remover o local e mover para a aba "Sem Local".\n- Pressione CANCELAR para manter o local e transferir para "${nomeDestino}".`);
       if (retirarLocal) {
-        col1 = ""; // Limpa o campo de local
+        col1 = ""; 
         abaDestino = "Sem Local";
         nomeDestino = "Sem Local";
       }
@@ -632,7 +637,7 @@
         bancoCompleto[nomeAba].forEach(item => {
           const valores = Object.keys(item)
             .filter(k => k !== '_rowIndex')
-            .map(k => item[k])
+            .map(k => String(item[k]))
             .join(' ')
             .toLowerCase();
 
