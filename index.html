@@ -226,19 +226,15 @@
     });
   }
 
-  async function enviarComandoNuvem(payload) {
-    try {
-      await fetch(BASE_API, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      });
-    } catch (e) {
-      console.warn("Envio com fetch falhou, utilizando Beacon secundário...", e);
-      const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain' });
-      navigator.sendBeacon(BASE_API, blob);
-    }
+  function enviarComandoNuvem(params) {
+    return new Promise((resolve, reject) => {
+      const query = Object.keys(params)
+        .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] || ''))
+        .join('&');
+      
+      const url = `${BASE_API}?${query}`;
+      enviarRequisicaoJSONP(url).then(resolve).catch(reject);
+    });
   }
 
   function acharCampo(item, palavrasChave, indicePadrao = -1) {
@@ -403,7 +399,6 @@
       const abaOrigem = item._abaOrigem || abaAtual;
       const nomeAbaExibicao = formatarNomeExibicao(abaOrigem);
 
-      // Botões de Ação Dinâmicos por Aba
       let botoesTransferencia = '';
 
       if (abaOrigem === "ferramentaria") {
@@ -572,22 +567,28 @@
     statusDiv.innerText = "Sincronizando transferência na nuvem...";
     statusDiv.style.color = "var(--primary)";
 
-    if (rIndexOrigem) {
-      await enviarComandoNuvem({ action: "DELETE", sheet: abaOrigem, rowIndex: rIndexOrigem });
+    try {
+      await enviarComandoNuvem({
+        action: "SAVE",
+        sheet: abaDestino,
+        rowIndex: "",
+        c1: col1 === '-' ? '' : col1,
+        c2: col2 === '-' ? '' : col2,
+        c3: col3 === '-' ? '' : col3,
+        c4: col4
+      });
+
+      if (rIndexOrigem) {
+        await enviarComandoNuvem({ action: "DELETE", sheet: abaOrigem, rowIndex: rIndexOrigem });
+      }
+
+      statusDiv.innerText = `✅ Registro transferido para ${nomeDestino}! Sincronizando...`;
+      statusDiv.style.color = "var(--success)";
+    } catch (e) {
+      console.error(e);
+      statusDiv.innerText = "⚠️ Erro ao transferir registro.";
+      statusDiv.style.color = "var(--danger)";
     }
-
-    await enviarComandoNuvem({
-      action: "SAVE",
-      sheet: abaDestino,
-      rowIndex: "",
-      c1: col1 === '-' ? '' : col1,
-      c2: col2 === '-' ? '' : col2,
-      c3: col3 === '-' ? '' : col3,
-      c4: col4
-    });
-
-    statusDiv.innerText = `✅ Registro transferido para ${nomeDestino}! Sincronizando...`;
-    statusDiv.style.color = "var(--success)";
 
     setTimeout(() => {
       carregarTodosDados(true);
@@ -646,16 +647,22 @@
     statusDiv.innerText = "Salvando registro na nuvem...";
     statusDiv.style.color = "var(--primary)";
 
-    if (eTransferencia) {
-      await enviarComandoNuvem({ action: "DELETE", sheet: abaOrigemGuardada, rowIndex: rowIndex });
-      await enviarComandoNuvem({ action: "SAVE", sheet: abaDestino, rowIndex: "", c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6 });
-    } else {
-      await enviarComandoNuvem({ action: "SAVE", sheet: abaDestino, rowIndex: rowIndex, c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6 });
-    }
+    try {
+      if (eTransferencia) {
+        await enviarComandoNuvem({ action: "SAVE", sheet: abaDestino, rowIndex: "", c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6 });
+        await enviarComandoNuvem({ action: "DELETE", sheet: abaOrigemGuardada, rowIndex: rowIndex });
+      } else {
+        await enviarComandoNuvem({ action: "SAVE", sheet: abaDestino, rowIndex: rowIndex, c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6 });
+      }
 
-    limparFormulario();
-    statusDiv.innerText = "✅ Salvo com sucesso! Atualizando dados...";
-    statusDiv.style.color = "var(--success)";
+      limparFormulario();
+      statusDiv.innerText = "✅ Salvo com sucesso! Atualizando dados...";
+      statusDiv.style.color = "var(--success)";
+    } catch (e) {
+      console.error(e);
+      statusDiv.innerText = "⚠️ Erro ao salvar registro.";
+      statusDiv.style.color = "var(--danger)";
+    }
 
     setTimeout(() => {
       carregarTodosDados(true);
@@ -684,7 +691,6 @@
     statusDiv.style.color = "var(--danger)";
 
     try {
-      // Faz a requisição de exclusão usando a mesma técnica JSONP usada na leitura
       const urlDelete = `${BASE_API}?action=DELETE&sheet=${encodeURIComponent(abaOrigem)}&rowIndex=${rowIndex}`;
       await enviarRequisicaoJSONP(urlDelete);
 
@@ -699,6 +705,7 @@
       carregarTodosDados(true);
     }, 800);
   }
+
   function limparFormulario() {
     itemSendoEditado = null;
     document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
