@@ -683,20 +683,22 @@
     statusDiv.innerText = "Excluindo registro na planilha...";
     statusDiv.style.color = "var(--danger)";
 
-    await enviarComandoNuvem({
-      action: "DELETE",
-      sheet: abaOrigem,
-      rowIndex: rowIndex
-    });
+    try {
+      // Faz a requisição de exclusão usando a mesma técnica JSONP usada na leitura
+      const urlDelete = `${BASE_API}?action=DELETE&sheet=${encodeURIComponent(abaOrigem)}&rowIndex=${rowIndex}`;
+      await enviarRequisicaoJSONP(urlDelete);
 
-    statusDiv.innerText = "🗑️ Registro excluído! Atualizando...";
-    statusDiv.style.color = "var(--success)";
+      statusDiv.innerText = "🗑️ Registro excluído com sucesso! Atualizando...";
+      statusDiv.style.color = "var(--success)";
+    } catch (err) {
+      console.error("Erro ao excluir:", err);
+      statusDiv.innerText = "⚠️ Ocorreu um erro ao excluir, recarregando...";
+    }
 
     setTimeout(() => {
       carregarTodosDados(true);
-    }, 1000);
+    }, 800);
   }
-
   function limparFormulario() {
     itemSendoEditado = null;
     document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
