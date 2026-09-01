@@ -18,6 +18,8 @@
       --warning: #f59e0b;
       --purple: #8b5cf6;
       --purple-hover: #7c3aed;
+      --teal: #0d9488;
+      --teal-hover: #0f766e;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
@@ -48,8 +50,8 @@
 
     /* Form Controles */
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-    input[type="text"], select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; outline: none; transition: border 0.2s; background: #fff; }
-    input[type="text"]:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    input[type="text"], input[type="date"], select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; outline: none; transition: border 0.2s; background: #fff; }
+    input[type="text"]:focus, input[type="date"]:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 
     /* Botões */
     .btn-actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -64,6 +66,8 @@
     .btn-edit { background: var(--warning); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
     .btn-move { background: var(--purple); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
     .btn-move:hover { background: var(--purple-hover); }
+    .btn-move-alt { background: var(--teal); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-move-alt:hover { background: var(--teal-hover); }
     .btn-delete { background: var(--danger); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
 
     /* Tabela */
@@ -240,6 +244,19 @@
     return '-';
   }
 
+  function verificarExibirPrazo() {
+    const selectAba = document.getElementById('select-aba-destino');
+    const containerPrazo = document.getElementById('container-campo-prazo');
+    if (selectAba && containerPrazo) {
+      if (selectAba.value === 'ferramentaria') {
+        containerPrazo.style.display = 'block';
+      } else {
+        containerPrazo.style.display = 'none';
+        document.getElementById('input-col4').value = '';
+      }
+    }
+  }
+
   function redefinirFormulario() {
     const container = document.getElementById('form-campos');
     container.innerHTML = '';
@@ -247,7 +264,7 @@
     const selectAbaDestino = `
       <div>
         <label style="font-size: 12px; font-weight:600; color: var(--text-muted);">Aba Destino:</label>
-        <select id="select-aba-destino">
+        <select id="select-aba-destino" onchange="verificarExibirPrazo()">
           <option value="ATUALIZADA" ${abaAtual === 'ATUALIZADA' ? 'selected' : ''}>PLÁSTICO</option>
           <option value="Moldes QLX" ${abaAtual === 'Moldes QLX' ? 'selected' : ''}>Moldes QLX</option>
           <option value="Transferências e Step Bay Step" ${abaAtual === 'Transferências e Step Bay Step' ? 'selected' : ''}>Step Bay Step</option>
@@ -271,10 +288,15 @@
       let placeholderLocal = 'Local (ex: A1)';
       if (abaAtual === 'Moldes QLX') placeholderLocal = 'Molde Nº (ex: 101)';
 
+      const exibePrazoInicial = abaAtual === 'ferramentaria' ? 'block' : 'none';
+
       container.innerHTML = `
         <input type="text" id="input-col1" placeholder="${placeholderLocal}">
         <input type="text" id="input-col2" placeholder="Código">
         <input type="text" id="input-col3" placeholder="Descrição">
+        <div id="container-campo-prazo" style="display: ${exibePrazoInicial};">
+          <input type="text" id="input-col4" placeholder="Prazo (ex: 15/09/2026 ou 10 dias)">
+        </div>
         ${selectAbaDestino}
       `;
     }
@@ -345,9 +367,11 @@
     tbody.innerHTML = '';
 
     if (modoBuscaGlobal) {
-      thead.innerHTML = `<th>Aba / Origem</th><th>Local / Molde</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
+      thead.innerHTML = `<th>Aba / Origem</th><th>Local / Molde</th><th>Código</th><th>Descrição</th><th>Prazo / Info</th><th>Ações</th>`;
     } else if (abaAtual === 'Transferências e Step Bay Step') {
       thead.innerHTML = `<th>Cód. Qualifix</th><th>Cód. Arteb</th><th>Descrição</th><th>Mercado</th><th>Maq.</th><th>Troca Versão</th><th>Ações</th>`;
+    } else if (abaAtual === 'ferramentaria') {
+      thead.innerHTML = `<th>Local</th><th>Código</th><th>Descrição</th><th>Prazo</th><th>Ações</th>`;
     } else {
       thead.innerHTML = `<th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
     }
@@ -364,19 +388,33 @@
       const abaOrigem = item._abaOrigem || abaAtual;
       const nomeAbaExibicao = formatarNomeExibicao(abaOrigem);
 
-      // Definir aba padrão de transferência (Envio ou Liberação de Ferramentaria)
-      let abaDestinoMover = "ferramentaria";
-      let nomeBotaoMover = "🔧 P/ Ferramentaria";
+      // Botões de Ação Dinâmicos por Aba
+      let botoesTransferencia = '';
 
       if (abaOrigem === "ferramentaria") {
-        abaDestinoMover = "ATUALIZADA";
-        nomeBotaoMover = "➡️ Liberar (PLÁSTICO)";
+        botoesTransferencia = `
+          <button class="btn-move" onclick="transferirDireto(${index}, 'ATUALIZADA')">➡️ Liberar (PLÁSTICO)</button>
+        `;
+      } else if (abaOrigem === "ATUALIZADA") {
+        botoesTransferencia = `
+          <button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>
+          <button class="btn-move-alt" onclick="transferirDireto(${index}, 'Moldes QLX')">➡️ P/ QLX</button>
+        `;
+      } else if (abaOrigem === "Moldes QLX") {
+        botoesTransferencia = `
+          <button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>
+          <button class="btn-move-alt" onclick="transferirDireto(${index}, 'ATUALIZADA')">➡️ P/ PLÁSTICO</button>
+        `;
+      } else {
+        botoesTransferencia = `
+          <button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>
+        `;
       }
 
       const btnAcoes = `
-        <div style="display:flex; gap:6px;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button>
-          <button class="btn-move" onclick="transferirDireto(${index}, '${abaDestinoMover}')">${nomeBotaoMover}</button>
+          ${botoesTransferencia}
           <button class="btn-delete" onclick="excluirMolde(${index})">Excluir</button>
         </div>
       `;
@@ -385,12 +423,14 @@
         const local = acharCampo(item, ['local', 'molde', 'num', 'nº', 'qualifix'], 0);
         const codigo = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
         const desc = acharCampo(item, ['desc', 'descricao'], 2);
+        const prazoInfo = acharCampo(item, ['prazo', 'mercado'], 3);
 
         tr.innerHTML = `
           <td><span class="badge-aba">${nomeAbaExibicao}</span></td>
           <td><b>${local}</b></td>
           <td>${codigo}</td>
           <td>${desc}</td>
+          <td>${prazoInfo}</td>
           <td>${btnAcoes}</td>
         `;
       } else if (abaAtual === 'Transferências e Step Bay Step') {
@@ -405,8 +445,18 @@
           <td><b>${codQ}</b></td><td>${codA}</td><td>${desc}</td><td>${merc}</td><td>${maq}</td><td>${troca}</td>
           <td>${btnAcoes}</td>
         `;
+      } else if (abaAtual === 'ferramentaria') {
+        const local = acharCampo(item, ['local', 'molde', 'num'], 0);
+        const codigo = acharCampo(item, ['cod', 'codigo'], 1);
+        const desc = acharCampo(item, ['desc', 'descricao'], 2);
+        const prazo = acharCampo(item, ['prazo'], 3);
+
+        tr.innerHTML = `
+          <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td><td><b style="color:var(--danger);">${prazo}</b></td>
+          <td>${btnAcoes}</td>
+        `;
       } else {
-        const local = acharCampo(item, ['local', 'molde', 'num', 'nº'], 0);
+        const local = acharCampo(item, ['local', 'molde', 'num'], 0);
         const codigo = acharCampo(item, ['cod', 'codigo'], 1);
         const desc = acharCampo(item, ['desc', 'descricao'], 2);
 
@@ -450,10 +500,14 @@
       const local = acharCampo(item, ['local', 'molde', 'num'], 0);
       const cod = acharCampo(item, ['cod', 'codigo'], 1);
       const desc = acharCampo(item, ['desc'], 2);
+      const prazo = acharCampo(item, ['prazo'], 3);
 
       document.getElementById('input-col1').value = local !== '-' ? local : '';
       document.getElementById('input-col2').value = cod !== '-' ? cod : '';
       document.getElementById('input-col3').value = desc !== '-' ? desc : '';
+      if (document.getElementById('input-col4')) {
+        document.getElementById('input-col4').value = prazo !== '-' ? prazo : '';
+      }
     }
 
     const rIndex = item._rowIndex || '';
@@ -461,7 +515,10 @@
     document.getElementById('edit-aba-origem').value = abaOrigem;
 
     const selectAba = document.getElementById('select-aba-destino');
-    if (selectAba) selectAba.value = abaOrigem;
+    if (selectAba) {
+      selectAba.value = abaOrigem;
+      verificarExibirPrazo();
+    }
 
     document.getElementById('form-title').innerText = "Editar Registro (Linha " + (rIndex || 'NOVA') + ")";
     document.getElementById('btn-salvar').innerText = "💾 Salvar / Transferir Registro";
@@ -476,9 +533,14 @@
     const abaOrigem = item._abaOrigem || abaAtual;
     const desc = acharCampo(item, ['desc', 'descricao', 'codigo', 'cod'], 2);
     const nomeDestino = formatarNomeExibicao(abaDestino);
-    const nomeOrigem = formatarNomeExibicao(abaOrigem);
 
-    const acaoTexto = abaDestino === 'ferramentaria' ? 'transferir para Ferramentaria' : `liberar para ${nomeDestino}`;
+    let prazoInfo = "";
+    if (abaDestino === 'ferramentaria') {
+      prazoInfo = prompt(`Informe o PRAZO para a Ferramentaria (opcional):`, "");
+      if (prazoInfo === null) return; // Cancelou
+    }
+
+    const acaoTexto = abaDestino === 'ferramentaria' ? 'transferir para Ferramentaria' : `transferir para ${nomeDestino}`;
 
     if (!confirm(`Deseja ${acaoTexto} o item "${desc}"?`)) {
       return;
@@ -487,19 +549,19 @@
     const col1 = acharCampo(item, ['local', 'molde', 'qualifix'], 0);
     const col2 = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
     const col3 = acharCampo(item, ['desc', 'descricao'], 2);
-    const col4 = acharCampo(item, ['mercado'], 3);
-    const col5 = acharCampo(item, ['maq'], 4);
-    const col6 = acharCampo(item, ['troca'], 5);
+    
+    // Se for para a ferramentaria usamos o prazo informado no prompt; senão fica limpo
+    const col4 = abaDestino === 'ferramentaria' ? prazoInfo : "";
 
     const rIndexOrigem = item._rowIndex;
 
     // Remove da aba de origem localmente
     bancoCompleto[abaOrigem] = bancoCompleto[abaOrigem].filter(i => String(i._rowIndex) !== String(rIndexOrigem));
 
-    // Prepara objeto preservando as colunas LOCAL, CÓDIGO e DESCRIÇÃO
+    // Prepara objeto preservando as colunas
     let payload = {};
-    if (abaDestino === 'Transferências e Step Bay Step') {
-      payload = { "Código Qualifix": col1 === '-' ? '' : col1, "Código Arteb": col2 === '-' ? '' : col2, "Descrição": col3 === '-' ? '' : col3, "Mercado": col4 === '-' ? '' : col4, "Maq.": col5 === '-' ? '' : col5, "Troca de Versão": col6 === '-' ? '' : col6 };
+    if (abaDestino === 'ferramentaria') {
+      payload = { "LOCAL": col1 === '-' ? '' : col1, "CÓDIGO": col2 === '-' ? '' : col2, "DESCRIÇÃO": col3 === '-' ? '' : col3, "PRAZO": col4 };
     } else if (abaDestino === 'Moldes QLX') {
       payload = { "Molde Nº": col1 === '-' ? '' : col1, "CÓDIGO": col2 === '-' ? '' : col2, "DESCRIÇÃO": col3 === '-' ? '' : col3 };
     } else {
@@ -528,7 +590,7 @@
         });
       }
 
-      // 2. Salva na nova aba na planilha mantendo as colunas
+      // 2. Salva na nova aba na planilha
       await fetch(BASE_API, {
         method: 'POST',
         mode: 'no-cors',
@@ -540,9 +602,7 @@
           c1: col1 === '-' ? '' : col1,
           c2: col2 === '-' ? '' : col2,
           c3: col3 === '-' ? '' : col3,
-          c4: col4 === '-' ? '' : col4,
-          c5: col5 === '-' ? '' : col5,
-          c6: col6 === '-' ? '' : col6
+          c4: col4
         })
       });
 
@@ -583,6 +643,8 @@
     const col1 = document.getElementById('input-col1').value.trim();
     const col2 = document.getElementById('input-col2').value.trim();
     const col3 = document.getElementById('input-col3').value.trim();
+    const col4 = document.getElementById('input-col4') ? document.getElementById('input-col4').value.trim() : '';
+    
     const rowIndex = document.getElementById('edit-row-index').value;
     const abaOrigemGuardada = document.getElementById('edit-aba-origem').value || abaAtual;
     const abaDestino = document.getElementById('select-aba-destino') ? document.getElementById('select-aba-destino').value : abaAtual;
@@ -593,10 +655,9 @@
     }
 
     const statusDiv = document.getElementById('status-msg');
+    let col5 = "", col6 = "";
     
-    let col4 = "", col5 = "", col6 = "";
     if (abaAtual === 'Transferências e Step Bay Step') {
-      col4 = document.getElementById('input-col4') ? document.getElementById('input-col4').value.trim() : '';
       col5 = document.getElementById('input-col5') ? document.getElementById('input-col5').value.trim() : '';
       col6 = document.getElementById('input-col6') ? document.getElementById('input-col6').value.trim() : '';
     }
@@ -607,8 +668,8 @@
       bancoCompleto[abaOrigemGuardada] = bancoCompleto[abaOrigemGuardada].filter(i => String(i._rowIndex) !== String(rowIndex));
 
       let payloadData = {};
-      if (abaDestino === 'Transferências e Step Bay Step') {
-        payloadData = { "Código Qualifix": col1, "Código Arteb": col2, "Descrição": col3, "Mercado": col4, "Maq.": col5, "Troca de Versão": col6 };
+      if (abaDestino === 'ferramentaria') {
+        payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3, "PRAZO": col4 };
       } else if (abaDestino === 'Moldes QLX') {
         payloadData = { "Molde Nº": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
       } else {
@@ -618,8 +679,8 @@
       bancoCompleto[abaDestino].push(payloadData);
     } else {
       let payloadData = {};
-      if (abaDestino === 'Transferências e Step Bay Step') {
-        payloadData = { "Código Qualifix": col1, "Código Arteb": col2, "Descrição": col3, "Mercado": col4, "Maq.": col5, "Troca de Versão": col6 };
+      if (abaDestino === 'ferramentaria') {
+        payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3, "PRAZO": col4 };
       } else if (abaDestino === 'Moldes QLX') {
         payloadData = { "Molde Nº": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
       } else {
@@ -739,7 +800,10 @@
     document.getElementById('btn-cancelar').style.display = "none";
     
     const selectAba = document.getElementById('select-aba-destino');
-    if (selectAba) selectAba.value = abaAtual;
+    if (selectAba) {
+      selectAba.value = abaAtual;
+      verificarExibirPrazo();
+    }
   }
 
   carregarDoLocalStorage();
