@@ -113,6 +113,8 @@
     <button id="tab-atualizada" class="tab-btn active" onclick="trocarAba('ATUALIZADA')">PLÁSTICO</button>
     <button id="tab-qlx" class="tab-btn" onclick="trocarAba('Moldes QLX')">Moldes QLX</button>
     <button id="tab-step" class="tab-btn" onclick="trocarAba('Transferências e Step Bay Step')">Step Bay Step</button>
+    <button id="tab-semlocal" class="tab-btn" onclick="trocarAba('Sem Local')">Sem Local</button>
+    <button id="tab-ferramentaria" class="tab-btn" onclick="trocarAba('ferramentaria')">Ferramentaria</button>
   </div>
 
   <div id="status-msg" class="status">Iniciando...</div>
@@ -158,7 +160,13 @@
   const BASE_API = "https://script.google.com/macros/s/AKfycbw8MMTSjzqWRGvOTMABL_4CsPiMHsQBCsFvgypA2Ha_h03TXlGd1O3WOkbG-eXV_8DaEA/exec";
   
   let abaAtual = "ATUALIZADA";
-  let bancoCompleto = { "ATUALIZADA": [], "Moldes QLX": [], "Transferências e Step Bay Step": [] };
+  let bancoCompleto = { 
+    "ATUALIZADA": [], 
+    "Moldes QLX": [], 
+    "Transferências e Step Bay Step": [],
+    "Sem Local": [],
+    "ferramentaria": []
+  };
   let itemSendoEditado = null;
   let listaExibida = [];
   let timerBusca = null;
@@ -174,18 +182,23 @@
     localStorage.setItem('banco_book_moldes', JSON.stringify(bancoCompleto));
   }
 
+  function formatarNomeExibicao(nomeAba) {
+    if (nomeAba === 'ATUALIZADA') return 'PLÁSTICO';
+    if (nomeAba === 'ferramentaria') return 'FERRAMENTARIA';
+    return nomeAba;
+  }
+
   function atualizarKPIs() {
-    const totalPlastico = (bancoCompleto["ATUALIZADA"] || []).length;
-    const totalQLX = (bancoCompleto["Moldes QLX"] || []).length;
-    const totalStep = (bancoCompleto["Transferências e Step Bay Step"] || []).length;
-    const totalGeral = totalPlastico + totalQLX + totalStep;
+    let totalGeral = 0;
+    Object.keys(bancoCompleto).forEach(aba => {
+      totalGeral += (bancoCompleto[aba] || []).length;
+    });
 
     const countAbaAtual = (bancoCompleto[abaAtual] || []).length;
-    const nomeExibicao = abaAtual === 'ATUALIZADA' ? 'PLÁSTICO' : abaAtual;
 
     document.getElementById('kpi-total').innerText = totalGeral;
     document.getElementById('kpi-aba-count').innerText = countAbaAtual;
-    document.getElementById('kpi-aba-nome').innerText = nomeExibicao;
+    document.getElementById('kpi-aba-nome').innerText = formatarNomeExibicao(abaAtual);
   }
 
   function enviarRequisicaoJSONP(url) {
@@ -238,6 +251,8 @@
           <option value="ATUALIZADA" ${abaAtual === 'ATUALIZADA' ? 'selected' : ''}>PLÁSTICO</option>
           <option value="Moldes QLX" ${abaAtual === 'Moldes QLX' ? 'selected' : ''}>Moldes QLX</option>
           <option value="Transferências e Step Bay Step" ${abaAtual === 'Transferências e Step Bay Step' ? 'selected' : ''}>Step Bay Step</option>
+          <option value="Sem Local" ${abaAtual === 'Sem Local' ? 'selected' : ''}>Sem Local</option>
+          <option value="ferramentaria" ${abaAtual === 'ferramentaria' ? 'selected' : ''}>Ferramentaria</option>
         </select>
       </div>
     `;
@@ -253,8 +268,11 @@
         ${selectAbaDestino}
       `;
     } else {
+      let placeholderLocal = 'Local (ex: A1)';
+      if (abaAtual === 'Moldes QLX') placeholderLocal = 'Molde Nº (ex: 101)';
+
       container.innerHTML = `
-        <input type="text" id="input-col1" placeholder="${abaAtual === 'Moldes QLX' ? 'Molde Nº (ex: 101)' : 'Local (ex: A1)'}">
+        <input type="text" id="input-col1" placeholder="${placeholderLocal}">
         <input type="text" id="input-col2" placeholder="Código">
         <input type="text" id="input-col3" placeholder="Descrição">
         ${selectAbaDestino}
@@ -267,6 +285,8 @@
     document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
     document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
     document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
+    document.getElementById('tab-semlocal').classList.toggle('active', abaAtual === 'Sem Local');
+    document.getElementById('tab-ferramentaria').classList.toggle('active', abaAtual === 'ferramentaria');
     
     document.getElementById('input-busca').value = '';
     redefinirFormulario();
@@ -278,7 +298,7 @@
   async function carregarTodosDados(forcado = false) {
     const statusDiv = document.getElementById('status-msg');
     
-    if (!forcado && (bancoCompleto["ATUALIZADA"].length > 0 || bancoCompleto["Moldes QLX"].length > 0)) {
+    if (!forcado && Object.values(bancoCompleto).some(arr => arr.length > 0)) {
       renderTabelaAbaAtual();
       atualizarKPIs();
       statusDiv.innerText = "Carregado localmente. Sincronizando nuvem...";
@@ -288,7 +308,7 @@
       statusDiv.style.color = "var(--primary)";
     }
 
-    const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step"];
+    const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step", "Sem Local", "ferramentaria"];
 
     try {
       for (let aba of abas) {
@@ -300,7 +320,10 @@
       salvarNoLocalStorage();
       renderTabelaAbaAtual();
       atualizarKPIs();
-      const total = bancoCompleto["ATUALIZADA"].length + bancoCompleto["Moldes QLX"].length + bancoCompleto["Transferências e Step Bay Step"].length;
+      
+      let total = 0;
+      Object.keys(bancoCompleto).forEach(a => total += bancoCompleto[a].length);
+      
       statusDiv.innerText = `Pronto! Total: ${total} itens sincronizados.`;
       statusDiv.style.color = "var(--success)";
     } catch (error) {
@@ -339,18 +362,15 @@
     dados.forEach((item, index) => {
       const tr = document.createElement('tr');
       const abaOrigem = item._abaOrigem || abaAtual;
-      const nomeAbaExibicao = abaOrigem === 'ATUALIZADA' ? 'PLÁSTICO' : abaOrigem;
+      const nomeAbaExibicao = formatarNomeExibicao(abaOrigem);
 
-      // Definir aba oposta para transferência rápida
-      let abaDestinoMover = "Moldes QLX";
-      let nomeBotaoMover = "↔️ QLX";
+      // Definir aba padrão de transferência (Envio ou Liberação de Ferramentaria)
+      let abaDestinoMover = "ferramentaria";
+      let nomeBotaoMover = "🔧 P/ Ferramentaria";
 
-      if (abaOrigem === "Moldes QLX") {
+      if (abaOrigem === "ferramentaria") {
         abaDestinoMover = "ATUALIZADA";
-        nomeBotaoMover = "↔️ Plástico";
-      } else if (abaOrigem === "Transferências e Step Bay Step") {
-        abaDestinoMover = "ATUALIZADA";
-        nomeBotaoMover = "↔️ Plástico";
+        nomeBotaoMover = "➡️ Liberar (PLÁSTICO)";
       }
 
       const btnAcoes = `
@@ -407,11 +427,7 @@
 
     const abaOrigem = item._abaOrigem || abaAtual;
     if (abaOrigem !== abaAtual) {
-      abaAtual = abaOrigem;
-      document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
-      document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
-      document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
-      redefinirFormulario();
+      trocarAba(abaOrigem);
     }
 
     prepararEdicaoDireta(item);
@@ -459,9 +475,12 @@
 
     const abaOrigem = item._abaOrigem || abaAtual;
     const desc = acharCampo(item, ['desc', 'descricao', 'codigo', 'cod'], 2);
-    const nomeDestino = abaDestino === 'ATUALIZADA' ? 'PLÁSTICO' : abaDestino;
+    const nomeDestino = formatarNomeExibicao(abaDestino);
+    const nomeOrigem = formatarNomeExibicao(abaOrigem);
 
-    if (!confirm(`Deseja transferir o item "${desc}" de "${abaOrigem === 'ATUALIZADA' ? 'PLÁSTICO' : abaOrigem}" para "${nomeDestino}"?`)) {
+    const acaoTexto = abaDestino === 'ferramentaria' ? 'transferir para Ferramentaria' : `liberar para ${nomeDestino}`;
+
+    if (!confirm(`Deseja ${acaoTexto} o item "${desc}"?`)) {
       return;
     }
 
@@ -477,7 +496,7 @@
     // Remove da aba de origem localmente
     bancoCompleto[abaOrigem] = bancoCompleto[abaOrigem].filter(i => String(i._rowIndex) !== String(rIndexOrigem));
 
-    // Prepara objeto para a nova aba
+    // Prepara objeto preservando as colunas LOCAL, CÓDIGO e DESCRIÇÃO
     let payload = {};
     if (abaDestino === 'Transferências e Step Bay Step') {
       payload = { "Código Qualifix": col1 === '-' ? '' : col1, "Código Arteb": col2 === '-' ? '' : col2, "Descrição": col3 === '-' ? '' : col3, "Mercado": col4 === '-' ? '' : col4, "Maq.": col5 === '-' ? '' : col5, "Troca de Versão": col6 === '-' ? '' : col6 };
@@ -495,7 +514,7 @@
     atualizarKPIs();
 
     const statusDiv = document.getElementById('status-msg');
-    statusDiv.innerText = "Transferindo registro na nuvem...";
+    statusDiv.innerText = "Sincronizando transferência na nuvem...";
     statusDiv.style.color = "var(--primary)";
 
     try {
@@ -509,7 +528,7 @@
         });
       }
 
-      // 2. Salva na nova aba na planilha
+      // 2. Salva na nova aba na planilha mantendo as colunas
       await fetch(BASE_API, {
         method: 'POST',
         mode: 'no-cors',
@@ -527,7 +546,7 @@
         })
       });
 
-      statusDiv.innerText = `✅ Registro transferido com sucesso para ${nomeDestino}!`;
+      statusDiv.innerText = `✅ Registro transferido para ${nomeDestino}!`;
       statusDiv.style.color = "var(--success)";
       carregarTodosDados(true);
     } catch (e) {
@@ -585,7 +604,6 @@
     const eTransferencia = rowIndex && (abaOrigemGuardada !== abaDestino);
 
     if (eTransferencia) {
-      // Se mudou de aba na edição, apaga da antiga e coloca na nova
       bancoCompleto[abaOrigemGuardada] = bancoCompleto[abaOrigemGuardada].filter(i => String(i._rowIndex) !== String(rowIndex));
 
       let payloadData = {};
@@ -599,7 +617,6 @@
       payloadData['_rowIndex'] = bancoCompleto[abaDestino].length + 2;
       bancoCompleto[abaDestino].push(payloadData);
     } else {
-      // Edição simples ou Novo item
       let payloadData = {};
       if (abaDestino === 'Transferências e Step Bay Step') {
         payloadData = { "Código Qualifix": col1, "Código Arteb": col2, "Descrição": col3, "Mercado": col4, "Maq.": col5, "Troca de Versão": col6 };
@@ -630,7 +647,6 @@
 
     try {
       if (eTransferencia) {
-        // Apaga da antiga
         await fetch(BASE_API, {
           method: 'POST',
           mode: 'no-cors',
@@ -638,7 +654,6 @@
           body: JSON.stringify({ action: "DELETE", sheet: abaOrigemGuardada, rowIndex: rowIndex })
         });
 
-        // Salva na nova
         await fetch(BASE_API, {
           method: 'POST',
           mode: 'no-cors',
@@ -676,7 +691,7 @@
     }
 
     const desc = acharCampo(item, ['desc', 'descricao', 'codigo', 'cod'], 2);
-    const confirmar = confirm(`Tem certeza que deseja EXCLUIR o registro "${desc}" (Linha ${rowIndex}) da aba "${abaOrigem}"?`);
+    const confirmar = confirm(`Tem certeza que deseja EXCLUIR o registro "${desc}" (Linha ${rowIndex}) da aba "${formatarNomeExibicao(abaOrigem)}"?`);
 
     if (!confirmar) return;
 
