@@ -16,6 +16,8 @@
       --success: #10b981;
       --danger: #ef4444;
       --warning: #f59e0b;
+      --purple: #8b5cf6;
+      --purple-hover: #7c3aed;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
@@ -46,8 +48,8 @@
 
     /* Form Controles */
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-    input[type="text"] { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; outline: none; transition: border 0.2s; background: #fff; }
-    input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    input[type="text"], select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; outline: none; transition: border 0.2s; background: #fff; }
+    input[type="text"]:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 
     /* Botões */
     .btn-actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -59,8 +61,10 @@
     .btn-cancel { background: #cbd5e1; color: #334155; }
     .btn-cancel:hover { background: #94a3b8; color: #fff; }
 
-    .btn-edit { background: var(--warning); padding: 6px 12px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
-    .btn-delete { background: var(--danger); padding: 6px 12px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-edit { background: var(--warning); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-move { background: var(--purple); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-move:hover { background: var(--purple-hover); }
+    .btn-delete { background: var(--danger); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
 
     /* Tabela */
     .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-color); }
@@ -119,6 +123,7 @@
       <span id="form-title">Adicionar Registro</span>
     </div>
     <input type="hidden" id="edit-row-index" value="">
+    <input type="hidden" id="edit-aba-origem" value="">
     
     <div id="form-campos" class="form-grid"></div>
     
@@ -226,6 +231,17 @@
     const container = document.getElementById('form-campos');
     container.innerHTML = '';
 
+    const selectAbaDestino = `
+      <div>
+        <label style="font-size: 12px; font-weight:600; color: var(--text-muted);">Aba Destino:</label>
+        <select id="select-aba-destino">
+          <option value="ATUALIZADA" ${abaAtual === 'ATUALIZADA' ? 'selected' : ''}>PLÁSTICO</option>
+          <option value="Moldes QLX" ${abaAtual === 'Moldes QLX' ? 'selected' : ''}>Moldes QLX</option>
+          <option value="Transferências e Step Bay Step" ${abaAtual === 'Transferências e Step Bay Step' ? 'selected' : ''}>Step Bay Step</option>
+        </select>
+      </div>
+    `;
+
     if (abaAtual === 'Transferências e Step Bay Step') {
       container.innerHTML = `
         <input type="text" id="input-col1" placeholder="Código Qualifix">
@@ -234,12 +250,14 @@
         <input type="text" id="input-col4" placeholder="Mercado">
         <input type="text" id="input-col5" placeholder="Maq.">
         <input type="text" id="input-col6" placeholder="Troca de Versão">
+        ${selectAbaDestino}
       `;
     } else {
       container.innerHTML = `
         <input type="text" id="input-col1" placeholder="${abaAtual === 'Moldes QLX' ? 'Molde Nº (ex: 101)' : 'Local (ex: A1)'}">
         <input type="text" id="input-col2" placeholder="Código">
         <input type="text" id="input-col3" placeholder="Descrição">
+        ${selectAbaDestino}
       `;
     }
   }
@@ -323,9 +341,22 @@
       const abaOrigem = item._abaOrigem || abaAtual;
       const nomeAbaExibicao = abaOrigem === 'ATUALIZADA' ? 'PLÁSTICO' : abaOrigem;
 
+      // Definir aba oposta para transferência rápida
+      let abaDestinoMover = "Moldes QLX";
+      let nomeBotaoMover = "↔️ QLX";
+
+      if (abaOrigem === "Moldes QLX") {
+        abaDestinoMover = "ATUALIZADA";
+        nomeBotaoMover = "↔️ Plástico";
+      } else if (abaOrigem === "Transferências e Step Bay Step") {
+        abaDestinoMover = "ATUALIZADA";
+        nomeBotaoMover = "↔️ Plástico";
+      }
+
       const btnAcoes = `
         <div style="display:flex; gap:6px;">
           <button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button>
+          <button class="btn-move" onclick="transferirDireto(${index}, '${abaDestinoMover}')">${nomeBotaoMover}</button>
           <button class="btn-delete" onclick="excluirMolde(${index})">Excluir</button>
         </div>
       `;
@@ -390,6 +421,8 @@
     if (!item) return;
     itemSendoEditado = item;
 
+    const abaOrigem = item._abaOrigem || abaAtual;
+
     if (abaAtual === 'Transferências e Step Bay Step') {
       document.getElementById('input-col1').value = acharCampo(item, ['qualifix'], 0) !== '-' ? acharCampo(item, ['qualifix'], 0) : '';
       document.getElementById('input-col2').value = acharCampo(item, ['arteb'], 1) !== '-' ? acharCampo(item, ['arteb'], 1) : '';
@@ -409,11 +442,98 @@
 
     const rIndex = item._rowIndex || '';
     document.getElementById('edit-row-index').value = rIndex;
+    document.getElementById('edit-aba-origem').value = abaOrigem;
+
+    const selectAba = document.getElementById('select-aba-destino');
+    if (selectAba) selectAba.value = abaOrigem;
 
     document.getElementById('form-title').innerText = "Editar Registro (Linha " + (rIndex || 'NOVA') + ")";
-    document.getElementById('btn-salvar').innerText = "Atualizar Registro";
+    document.getElementById('btn-salvar').innerText = "💾 Salvar / Transferir Registro";
     document.getElementById('btn-cancelar').style.display = "inline-flex";
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function transferirDireto(index, abaDestino) {
+    const item = listaExibida[index];
+    if (!item) return;
+
+    const abaOrigem = item._abaOrigem || abaAtual;
+    const desc = acharCampo(item, ['desc', 'descricao', 'codigo', 'cod'], 2);
+    const nomeDestino = abaDestino === 'ATUALIZADA' ? 'PLÁSTICO' : abaDestino;
+
+    if (!confirm(`Deseja transferir o item "${desc}" de "${abaOrigem === 'ATUALIZADA' ? 'PLÁSTICO' : abaOrigem}" para "${nomeDestino}"?`)) {
+      return;
+    }
+
+    const col1 = acharCampo(item, ['local', 'molde', 'qualifix'], 0);
+    const col2 = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
+    const col3 = acharCampo(item, ['desc', 'descricao'], 2);
+    const col4 = acharCampo(item, ['mercado'], 3);
+    const col5 = acharCampo(item, ['maq'], 4);
+    const col6 = acharCampo(item, ['troca'], 5);
+
+    const rIndexOrigem = item._rowIndex;
+
+    // Remove da aba de origem localmente
+    bancoCompleto[abaOrigem] = bancoCompleto[abaOrigem].filter(i => String(i._rowIndex) !== String(rIndexOrigem));
+
+    // Prepara objeto para a nova aba
+    let payload = {};
+    if (abaDestino === 'Transferências e Step Bay Step') {
+      payload = { "Código Qualifix": col1 === '-' ? '' : col1, "Código Arteb": col2 === '-' ? '' : col2, "Descrição": col3 === '-' ? '' : col3, "Mercado": col4 === '-' ? '' : col4, "Maq.": col5 === '-' ? '' : col5, "Troca de Versão": col6 === '-' ? '' : col6 };
+    } else if (abaDestino === 'Moldes QLX') {
+      payload = { "Molde Nº": col1 === '-' ? '' : col1, "CÓDIGO": col2 === '-' ? '' : col2, "DESCRIÇÃO": col3 === '-' ? '' : col3 };
+    } else {
+      payload = { "LOCAL": col1 === '-' ? '' : col1, "CÓDIGO": col2 === '-' ? '' : col2, "DESCRIÇÃO": col3 === '-' ? '' : col3 };
+    }
+
+    payload['_rowIndex'] = bancoCompleto[abaDestino].length + 2;
+    bancoCompleto[abaDestino].push(payload);
+
+    salvarNoLocalStorage();
+    renderTabelaAbaAtual();
+    atualizarKPIs();
+
+    const statusDiv = document.getElementById('status-msg');
+    statusDiv.innerText = "Transferindo registro na nuvem...";
+    statusDiv.style.color = "var(--primary)";
+
+    try {
+      // 1. Apaga da aba antiga na planilha
+      if (rIndexOrigem) {
+        await fetch(BASE_API, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: "DELETE", sheet: abaOrigem, rowIndex: rIndexOrigem })
+        });
+      }
+
+      // 2. Salva na nova aba na planilha
+      await fetch(BASE_API, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: "SAVE",
+          sheet: abaDestino,
+          rowIndex: "",
+          c1: col1 === '-' ? '' : col1,
+          c2: col2 === '-' ? '' : col2,
+          c3: col3 === '-' ? '' : col3,
+          c4: col4 === '-' ? '' : col4,
+          c5: col5 === '-' ? '' : col5,
+          c6: col6 === '-' ? '' : col6
+        })
+      });
+
+      statusDiv.innerText = `✅ Registro transferido com sucesso para ${nomeDestino}!`;
+      statusDiv.style.color = "var(--success)";
+      carregarTodosDados(true);
+    } catch (e) {
+      statusDiv.innerText = "⚠️ Transferido localmente (Erro de conexão).";
+      statusDiv.style.color = "var(--warning)";
+    }
   }
 
   function filtrarGeral() {
@@ -445,6 +565,8 @@
     const col2 = document.getElementById('input-col2').value.trim();
     const col3 = document.getElementById('input-col3').value.trim();
     const rowIndex = document.getElementById('edit-row-index').value;
+    const abaOrigemGuardada = document.getElementById('edit-aba-origem').value || abaAtual;
+    const abaDestino = document.getElementById('select-aba-destino') ? document.getElementById('select-aba-destino').value : abaAtual;
 
     if (!col1 && !col2) {
       alert('Preencha pelo menos um campo!');
@@ -454,31 +576,48 @@
     const statusDiv = document.getElementById('status-msg');
     
     let col4 = "", col5 = "", col6 = "";
-    let payloadData = {};
-
     if (abaAtual === 'Transferências e Step Bay Step') {
-      col4 = document.getElementById('input-col4').value.trim();
-      col5 = document.getElementById('input-col5').value.trim();
-      col6 = document.getElementById('input-col6').value.trim();
-      payloadData = {
-        "Código Qualifix": col1, "Código Arteb": col2, "Descrição": col3,
-        "Mercado": col4, "Maq.": col5, "Troca de Versão": col6
-      };
-    } else if (abaAtual === 'Moldes QLX') {
-      payloadData = { "Molde Nº": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
-    } else {
-      payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
+      col4 = document.getElementById('input-col4') ? document.getElementById('input-col4').value.trim() : '';
+      col5 = document.getElementById('input-col5') ? document.getElementById('input-col5').value.trim() : '';
+      col6 = document.getElementById('input-col6') ? document.getElementById('input-col6').value.trim() : '';
     }
 
-    if (rowIndex) {
-      const idx = bancoCompleto[abaAtual].findIndex(i => String(i._rowIndex) === String(rowIndex));
-      if (idx !== -1) {
-        bancoCompleto[abaAtual][idx] = { ...bancoCompleto[abaAtual][idx], ...payloadData };
+    const eTransferencia = rowIndex && (abaOrigemGuardada !== abaDestino);
+
+    if (eTransferencia) {
+      // Se mudou de aba na edição, apaga da antiga e coloca na nova
+      bancoCompleto[abaOrigemGuardada] = bancoCompleto[abaOrigemGuardada].filter(i => String(i._rowIndex) !== String(rowIndex));
+
+      let payloadData = {};
+      if (abaDestino === 'Transferências e Step Bay Step') {
+        payloadData = { "Código Qualifix": col1, "Código Arteb": col2, "Descrição": col3, "Mercado": col4, "Maq.": col5, "Troca de Versão": col6 };
+      } else if (abaDestino === 'Moldes QLX') {
+        payloadData = { "Molde Nº": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
+      } else {
+        payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
       }
+      payloadData['_rowIndex'] = bancoCompleto[abaDestino].length + 2;
+      bancoCompleto[abaDestino].push(payloadData);
     } else {
-      const novoIndex = bancoCompleto[abaAtual].length + 2;
-      payloadData['_rowIndex'] = novoIndex;
-      bancoCompleto[abaAtual].push(payloadData);
+      // Edição simples ou Novo item
+      let payloadData = {};
+      if (abaDestino === 'Transferências e Step Bay Step') {
+        payloadData = { "Código Qualifix": col1, "Código Arteb": col2, "Descrição": col3, "Mercado": col4, "Maq.": col5, "Troca de Versão": col6 };
+      } else if (abaDestino === 'Moldes QLX') {
+        payloadData = { "Molde Nº": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
+      } else {
+        payloadData = { "LOCAL": col1, "CÓDIGO": col2, "DESCRIÇÃO": col3 };
+      }
+
+      if (rowIndex) {
+        const idx = bancoCompleto[abaDestino].findIndex(i => String(i._rowIndex) === String(rowIndex));
+        if (idx !== -1) {
+          bancoCompleto[abaDestino][idx] = { ...bancoCompleto[abaDestino][idx], ...payloadData };
+        }
+      } else {
+        payloadData['_rowIndex'] = bancoCompleto[abaDestino].length + 2;
+        bancoCompleto[abaDestino].push(payloadData);
+      }
     }
 
     salvarNoLocalStorage();
@@ -486,31 +625,38 @@
     atualizarKPIs();
     limparFormulario();
 
-    statusDiv.innerText = "Enviando dados para a planilha...";
+    statusDiv.innerText = "Processando no servidor...";
     statusDiv.style.color = "var(--primary)";
 
-    const corpoEnvio = {
-      action: "SAVE",
-      sheet: abaAtual,
-      rowIndex: rowIndex,
-      c1: col1,
-      c2: col2,
-      c3: col3,
-      c4: col4,
-      c5: col5,
-      c6: col6
-    };
-
     try {
-      await fetch(BASE_API, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(corpoEnvio)
-      });
+      if (eTransferencia) {
+        // Apaga da antiga
+        await fetch(BASE_API, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: "DELETE", sheet: abaOrigemGuardada, rowIndex: rowIndex })
+        });
 
-      statusDiv.innerText = "✅ Salvo e enviado para a nuvem!";
+        // Salva na nova
+        await fetch(BASE_API, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: "SAVE", sheet: abaDestino, rowIndex: "", c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6 })
+        });
+      } else {
+        await fetch(BASE_API, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: "SAVE", sheet: abaDestino, rowIndex: rowIndex, c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6 })
+        });
+      }
+
+      statusDiv.innerText = "✅ Operação concluída com sucesso na nuvem!";
       statusDiv.style.color = "var(--success)";
+      if (eTransferencia) carregarTodosDados(true);
     } catch (err) {
       statusDiv.innerText = "⚠️ Salvo offline (Erro de rede).";
       statusDiv.style.color = "var(--warning)";
@@ -572,9 +718,13 @@
     itemSendoEditado = null;
     document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
     document.getElementById('edit-row-index').value = '';
+    document.getElementById('edit-aba-origem').value = '';
     document.getElementById('form-title').innerText = "Adicionar Registro";
     document.getElementById('btn-salvar').innerText = "💾 Salvar Registro";
     document.getElementById('btn-cancelar').style.display = "none";
+    
+    const selectAba = document.getElementById('select-aba-destino');
+    if (selectAba) selectAba.value = abaAtual;
   }
 
   carregarDoLocalStorage();
