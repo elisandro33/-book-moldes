@@ -33,6 +33,10 @@
     .header-title h1 { font-size: 24px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
     .header-title p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
 
+    .user-control { display: flex; align-items: center; gap: 12px; background: #fff; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); }
+    .user-control label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .user-control select { width: auto; padding: 6px 10px; }
+
     /* Cards KPIs Topo */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .kpi-card { background: var(--card-bg); border-radius: 12px; padding: 16px 20px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -77,7 +81,6 @@
     td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); color: var(--text-main); white-space: nowrap; }
     tr:hover { background-color: #f8fafc; }
 
-    /* Elementos auxiliares */
     .status { text-align: left; font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text-muted); }
     .badge-aba { background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; display: inline-block; }
   </style>
@@ -85,15 +88,24 @@
 <body>
 
 <div class="container">
-  <!-- Topbar / Cabeçalho Executivo -->
   <div class="header-dashboard">
     <div class="header-title">
       <h1>📦 Book de Moldes</h1>
       <p>Painel de Controle e Gestão de Registros</p>
     </div>
-    <button class="btn btn-reload" onclick="carregarTodosDados(true)">
-      🔄 Recarregar Dados da Nuvem
-    </button>
+    
+    <div style="display:flex; gap:12px; align-items:center;">
+      <div class="user-control">
+        <label for="select-user-role">Nível Usuário:</label>
+        <select id="select-user-role" onchange="alterarNivelUsuario()">
+          <option value="nivel1">Nível 1 (Apenas Pesquisa)</option>
+          <option value="nivel2">Nível 2 (Movimentação)</option>
+          <option value="ferramentaria">Ferramentaria</option>
+          <option value="admin" selected>Administrador</option>
+        </select>
+      </div>
+      <button class="btn btn-reload" onclick="carregarTodosDados(true)">🔄 Recarregar</button>
+    </div>
   </div>
 
   <!-- Cards KPI -->
@@ -113,7 +125,7 @@
   </div>
 
   <!-- Abas de Navegação -->
-  <div class="nav-tabs">
+  <div class="nav-tabs" id="container-abas">
     <button id="tab-atualizada" class="tab-btn active" onclick="trocarAba('ATUALIZADA')">PLÁSTICO</button>
     <button id="tab-qlx" class="tab-btn" onclick="trocarAba('Moldes QLX')">Moldes QLX</button>
     <button id="tab-step" class="tab-btn" onclick="trocarAba('Transferências e Step Bay Step')">Step Bay Step</button>
@@ -141,9 +153,7 @@
 
   <!-- Filtro / Busca Geral -->
   <div class="dashboard-card">
-    <div class="card-header">
-      🔍 Consulta Geral
-    </div>
+    <div class="card-header">🔍 Consulta Geral</div>
     <input type="text" id="input-busca" placeholder="Digite Código, Local ou Descrição para filtrar..." onkeyup="filtrarGeral()">
   </div>
 
@@ -163,6 +173,7 @@
 <script>
   const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
   
+  let userRole = "admin"; // nivel1, nivel2, ferramentaria, admin
   let abaAtual = "ATUALIZADA";
   let bancoCompleto = { 
     "ATUALIZADA": [], 
@@ -175,10 +186,54 @@
   let listaExibida = [];
   let timerBusca = null;
 
-  // Formata o prazo recebido
+  function alterarNivelUsuario() {
+    userRole = document.getElementById('select-user-role').value;
+    
+    // Se for perfil ferramentaria, força para a aba Ferramentaria
+    if (userRole === "ferramentaria") {
+      abaAtual = "ferramentaria";
+    }
+    
+    aplicarPermissoesInterface();
+    redefinirFormulario();
+    renderTabelaAbaAtual();
+    atualizarKPIs();
+  }
+
+  function aplicarPermissoesInterface() {
+    const cardForm = document.getElementById('card-formulario');
+    const tabAtualizada = document.getElementById('tab-atualizada');
+    const tabQlx = document.getElementById('tab-qlx');
+    const tabStep = document.getElementById('tab-step');
+    const tabSemlocal = document.getElementById('tab-semlocal');
+    const tabFerramentaria = document.getElementById('tab-ferramentaria');
+
+    // Regra do Formulário
+    if (userRole === 'nivel1') {
+      cardForm.style.display = 'none';
+    } else {
+      cardForm.style.display = 'block';
+    }
+
+    // Regra do Perfil Ferramentaria
+    if (userRole === 'ferramentaria') {
+      tabAtualizada.style.display = 'none';
+      tabQlx.style.display = 'none';
+      tabStep.style.display = 'none';
+      tabSemlocal.style.display = 'none';
+      tabFerramentaria.style.display = 'inline-block';
+      trocarAba('ferramentaria');
+    } else {
+      tabAtualizada.style.display = 'inline-block';
+      tabQlx.style.display = 'inline-block';
+      tabStep.style.display = 'inline-block';
+      tabSemlocal.style.display = 'inline-block';
+      tabFerramentaria.style.display = 'inline-block';
+    }
+  }
+
   function formatarPrazo(valor) {
     if (!valor || valor === '-') return '-';
-    
     if (typeof valor === 'string' && valor.includes('T') && valor.includes('Z')) {
       const data = new Date(valor);
       if (!isNaN(data.getTime())) {
@@ -191,21 +246,9 @@
     return valor;
   }
 
-  // Garante que o texto retornado mantenha formato exato (preserva zeros e pontuações)
   function normalizarTexto(valor) {
     if (valor === undefined || valor === null || valor === '') return '-';
     return String(valor).trim();
-  }
-
-  function carregarDoLocalStorage() {
-    const cache = localStorage.getItem('banco_book_moldes');
-    if (cache) {
-      try { bancoCompleto = JSON.parse(cache); } catch(e) {}
-    }
-  }
-
-  function salvarNoLocalStorage() {
-    localStorage.setItem('banco_book_moldes', JSON.stringify(bancoCompleto));
   }
 
   function formatarNomeExibicao(nomeAba) {
@@ -250,6 +293,7 @@
 
   function enviarComandoNuvem(params) {
     return new Promise((resolve, reject) => {
+      params.role = userRole; // Envia a role para validação no backend
       const query = Object.keys(params)
         .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] !== undefined && params[k] !== null ? String(params[k]) : ''))
         .join('&');
@@ -293,15 +337,27 @@
     const container = document.getElementById('form-campos');
     container.innerHTML = '';
 
+    let opcoesAba = '';
+    if (userRole === 'ferramentaria') {
+      opcoesAba = `
+        <option value="ferramentaria" selected>Ferramentaria</option>
+        <option value="ATUALIZADA">PLÁSTICO</option>
+      `;
+    } else {
+      opcoesAba = `
+        <option value="ATUALIZADA" ${abaAtual === 'ATUALIZADA' ? 'selected' : ''}>PLÁSTICO</option>
+        <option value="Moldes QLX" ${abaAtual === 'Moldes QLX' ? 'selected' : ''}>Moldes QLX</option>
+        <option value="Transferências e Step Bay Step" ${abaAtual === 'Transferências e Step Bay Step' ? 'selected' : ''}>Step Bay Step</option>
+        <option value="Sem Local" ${abaAtual === 'Sem Local' ? 'selected' : ''}>Sem Local</option>
+        <option value="ferramentaria" ${abaAtual === 'ferramentaria' ? 'selected' : ''}>Ferramentaria</option>
+      `;
+    }
+
     const selectAbaDestino = `
       <div>
         <label style="font-size: 12px; font-weight:600; color: var(--text-muted);">Aba Destino:</label>
         <select id="select-aba-destino" onchange="verificarExibirPrazo()">
-          <option value="ATUALIZADA" ${abaAtual === 'ATUALIZADA' ? 'selected' : ''}>PLÁSTICO</option>
-          <option value="Moldes QLX" ${abaAtual === 'Moldes QLX' ? 'selected' : ''}>Moldes QLX</option>
-          <option value="Transferências e Step Bay Step" ${abaAtual === 'Transferências e Step Bay Step' ? 'selected' : ''}>Step Bay Step</option>
-          <option value="Sem Local" ${abaAtual === 'Sem Local' ? 'selected' : ''}>Sem Local</option>
-          <option value="ferramentaria" ${abaAtual === 'ferramentaria' ? 'selected' : ''}>Ferramentaria</option>
+          ${opcoesAba}
         </select>
       </div>
     `;
@@ -335,6 +391,8 @@
   }
 
   function trocarAba(novaAba) {
+    if (userRole === 'ferramentaria' && novaAba !== 'ferramentaria') return;
+
     abaAtual = novaAba;
     document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
     document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
@@ -351,27 +409,18 @@
 
   async function carregarTodosDados(forcado = false) {
     const statusDiv = document.getElementById('status-msg');
-    
-    if (!forcado && Object.values(bancoCompleto).some(arr => arr.length > 0)) {
-      renderTabelaAbaAtual();
-      atualizarKPIs();
-      statusDiv.innerText = "Carregado localmente. Sincronizando nuvem...";
-      statusDiv.style.color = "var(--primary)";
-    } else {
-      statusDiv.innerText = "Carregando dados da nuvem...";
-      statusDiv.style.color = "var(--primary)";
-    }
+    statusDiv.innerText = "Carregando dados da nuvem...";
+    statusDiv.style.color = "var(--primary)";
 
     const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step", "Sem Local", "ferramentaria"];
 
     try {
       for (let aba of abas) {
-        const resData = await enviarRequisicaoJSONP(`${BASE_API}?sheet=${encodeURIComponent(aba)}`);
+        const resData = await enviarRequisicaoJSONP(`${BASE_API}?sheet=${encodeURIComponent(aba)}&role=${userRole}`);
         if (Array.isArray(resData)) {
           bancoCompleto[aba] = resData;
         }
       }
-      salvarNoLocalStorage();
       renderTabelaAbaAtual();
       atualizarKPIs();
       
@@ -381,8 +430,8 @@
       statusDiv.innerText = `Pronto! Total: ${total} itens sincronizados.`;
       statusDiv.style.color = "var(--success)";
     } catch (error) {
-      statusDiv.innerText = "Modo Offline (Exibindo dados locais).";
-      statusDiv.style.color = "var(--warning)";
+      statusDiv.innerText = "Erro ao conectar com a nuvem.";
+      statusDiv.style.color = "var(--danger)";
     }
   }
 
@@ -398,14 +447,16 @@
     const tbody = document.getElementById('tabela-corpo');
     tbody.innerHTML = '';
 
+    const colAcoes = userRole !== 'nivel1' ? '<th>Ações</th>' : '';
+
     if (modoBuscaGlobal) {
-      thead.innerHTML = `<th>Aba / Origem</th><th>Local / Molde</th><th>Código</th><th>Descrição</th><th>Prazo / Info</th><th>Ações</th>`;
+      thead.innerHTML = `<th>Aba / Origem</th><th>Local / Molde</th><th>Código</th><th>Descrição</th><th>Prazo / Info</th>${colAcoes}`;
     } else if (abaAtual === 'Transferências e Step Bay Step') {
-      thead.innerHTML = `<th>Cód. Qualifix</th><th>Cód. Arteb</th><th>Descrição</th><th>Mercado</th><th>Maq.</th><th>Troca Versão</th><th>Ações</th>`;
+      thead.innerHTML = `<th>Cód. Qualifix</th><th>Cód. Arteb</th><th>Descrição</th><th>Mercado</th><th>Maq.</th><th>Troca Versão</th>${colAcoes}`;
     } else if (abaAtual === 'ferramentaria') {
-      thead.innerHTML = `<th>Local</th><th>Código</th><th>Descrição</th><th>Prazo</th><th>Ações</th>`;
+      thead.innerHTML = `<th>Local</th><th>Código</th><th>Descrição</th><th>Prazo</th>${colAcoes}`;
     } else {
-      thead.innerHTML = `<th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th><th>Código</th><th>Descrição</th><th>Ações</th>`;
+      thead.innerHTML = `<th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th><th>Código</th><th>Descrição</th>${colAcoes}`;
     }
 
     if (!dados || dados.length === 0) {
@@ -420,35 +471,41 @@
       const abaOrigem = item._abaOrigem || abaAtual;
       const nomeAbaExibicao = formatarNomeExibicao(abaOrigem);
 
-      let botoesTransferencia = '';
+      let botoesAcoesHtml = '';
 
-      if (abaOrigem === "ferramentaria") {
-        botoesTransferencia = `
-          <button class="btn-move" onclick="transferirDireto(${index}, 'ATUALIZADA')">➡️ Liberar (PLÁSTICO)</button>
-        `;
-      } else if (abaOrigem === "ATUALIZADA") {
-        botoesTransferencia = `
-          <button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>
-          <button class="btn-move-alt" onclick="transferirDireto(${index}, 'Moldes QLX')">➡️ P/ QLX</button>
-        `;
-      } else if (abaOrigem === "Moldes QLX") {
-        botoesTransferencia = `
-          <button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>
-          <button class="btn-move-alt" onclick="transferirDireto(${index}, 'ATUALIZADA')">➡️ P/ PLÁSTICO</button>
-        `;
-      } else {
-        botoesTransferencia = `
-          <button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>
+      if (userRole !== 'nivel1') {
+        let botoesTransferencia = '';
+
+        if (userRole === 'ferramentaria') {
+          botoesTransferencia = `<button class="btn-move" onclick="transferirDireto(${index}, 'ATUALIZADA')">➡️ Liberar (PLÁSTICO)</button>`;
+        } else if (abaOrigem === "ferramentaria") {
+          botoesTransferencia = `<button class="btn-move" onclick="transferirDireto(${index}, 'ATUALIZADA')">➡️ Liberar (PLÁSTICO)</button>`;
+        } else if (abaOrigem === "ATUALIZADA") {
+          botoesTransferencia = `
+            <button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>
+            <button class="btn-move-alt" onclick="transferirDireto(${index}, 'Moldes QLX')">➡️ P/ QLX</button>
+          `;
+        } else if (abaOrigem === "Moldes QLX") {
+          botoesTransferencia = `
+            <button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>
+            <button class="btn-move-alt" onclick="transferirDireto(${index}, 'ATUALIZADA')">➡️ P/ PLÁSTICO</button>
+          `;
+        } else {
+          botoesTransferencia = `<button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>`;
+        }
+
+        let btnExcluir = userRole === 'admin' || userRole === 'nivel2' ? `<button class="btn-delete" onclick="excluirMolde(${index})">Excluir</button>` : '';
+
+        botoesAcoesHtml = `
+          <td>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button>
+              ${botoesTransferencia}
+              ${btnExcluir}
+            </div>
+          </td>
         `;
       }
-
-      const btnAcoes = `
-        <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button>
-          ${botoesTransferencia}
-          <button class="btn-delete" onclick="excluirMolde(${index})">Excluir</button>
-        </div>
-      `;
 
       if (modoBuscaGlobal) {
         const local = acharCampo(item, ['local', 'molde', 'num', 'nº', 'qualifix'], 0);
@@ -462,7 +519,7 @@
           <td>${codigo}</td>
           <td>${desc}</td>
           <td>${prazoInfo}</td>
-          <td>${btnAcoes}</td>
+          ${botoesAcoesHtml}
         `;
       } else if (abaAtual === 'Transferências e Step Bay Step') {
         const codQ = acharCampo(item, ['qualifix', 'col1'], 0);
@@ -474,7 +531,7 @@
 
         tr.innerHTML = `
           <td><b>${codQ}</b></td><td>${codA}</td><td>${desc}</td><td>${merc}</td><td>${maq}</td><td>${troca}</td>
-          <td>${btnAcoes}</td>
+          ${botoesAcoesHtml}
         `;
       } else if (abaAtual === 'ferramentaria') {
         const local = acharCampo(item, ['local', 'molde', 'num'], 0);
@@ -484,7 +541,7 @@
 
         tr.innerHTML = `
           <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td><td><b style="color:var(--danger);">${prazoFormatado}</b></td>
-          <td>${btnAcoes}</td>
+          ${botoesAcoesHtml}
         `;
       } else {
         const local = acharCampo(item, ['local', 'molde', 'num'], 0);
@@ -493,7 +550,7 @@
 
         tr.innerHTML = `
           <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td>
-          <td>${btnAcoes}</td>
+          ${botoesAcoesHtml}
         `;
       }
       fragment.appendChild(tr);
@@ -503,11 +560,12 @@
   }
 
   function cliqueEditar(index) {
+    if (userRole === 'nivel1') return;
     const item = listaExibida[index];
     if (!item) return;
 
     const abaOrigem = item._abaOrigem || abaAtual;
-    if (abaOrigem !== abaAtual) {
+    if (abaOrigem !== abaAtual && userRole !== 'ferramentaria') {
       trocarAba(abaOrigem);
     }
 
@@ -517,7 +575,6 @@
   function prepararEdicaoDireta(item) {
     if (!item) return;
     itemSendoEditado = item;
-
     const abaOrigem = item._abaOrigem || abaAtual;
 
     if (abaAtual === 'Transferências e Step Bay Step') {
@@ -541,8 +598,7 @@
       }
     }
 
-    const rIndex = item._rowIndex || '';
-    document.getElementById('edit-row-index').value = rIndex;
+    document.getElementById('edit-row-index').value = item._rowIndex || '';
     document.getElementById('edit-aba-origem').value = abaOrigem;
 
     const selectAba = document.getElementById('select-aba-destino');
@@ -551,13 +607,14 @@
       verificarExibirPrazo();
     }
 
-    document.getElementById('form-title').innerText = "Editar Registro (Linha " + (rIndex || 'NOVA') + ")";
+    document.getElementById('form-title').innerText = "Editar Registro (Linha " + (item._rowIndex || 'NOVA') + ")";
     document.getElementById('btn-salvar').innerText = "💾 Salvar / Transferir Registro";
     document.getElementById('btn-cancelar').style.display = "inline-flex";
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function transferirDireto(index, abaDestino) {
+    if (userRole === 'nivel1') return;
     const item = listaExibida[index];
     if (!item) return;
 
@@ -570,9 +627,8 @@
     let col3 = acharCampo(item, ['desc', 'descricao'], 2);
     let col4 = "";
 
-    // LÓGICA DE DEREGISTRAR LOCAL NAS TROCAS ENTRE PLÁSTICO E QLX
     if ((abaOrigem === 'ATUALIZADA' && abaDestino === 'Moldes QLX') || (abaOrigem === 'Moldes QLX' && abaDestino === 'ATUALIZADA')) {
-      const retirarLocal = confirm(`Deseja remover o local/molde deste item?\n\n- Pressione OK para remover o local e mover para a aba "Sem Local".\n- Pressione CANCELAR para manter o local e transferir para "${nomeDestino}".`);
+      const retirarLocal = confirm(`Deseja remover o local/molde deste item?\n\n- Pressione OK para remover o local e mover para "Sem Local".\n- CANCELAR para manter o local e transferir para "${nomeDestino}".`);
       if (retirarLocal) {
         col1 = ""; 
         abaDestino = "Sem Local";
@@ -586,16 +642,11 @@
       col4 = prazoInfo;
     }
 
-    const acaoTexto = abaDestino === 'ferramentaria' ? 'transferir para Ferramentaria' : `transferir para ${nomeDestino}`;
-
-    if (!confirm(`Deseja ${acaoTexto} o item "${desc}"?`)) {
-      return;
-    }
+    if (!confirm(`Deseja transferir o item "${desc}" para ${nomeDestino}?`)) return;
 
     const rIndexOrigem = item._rowIndex;
-
     const statusDiv = document.getElementById('status-msg');
-    statusDiv.innerText = "Sincronizando transferência na nuvem...";
+    statusDiv.innerText = "Sincronizando transferência...";
     statusDiv.style.color = "var(--primary)";
 
     try {
@@ -613,17 +664,14 @@
         await enviarComandoNuvem({ action: "DELETE", sheet: abaOrigem, rowIndex: rIndexOrigem });
       }
 
-      statusDiv.innerText = `✅ Registro transferido para ${nomeDestino}! Sincronizando...`;
+      statusDiv.innerText = `✅ Registro transferido para ${nomeDestino}!`;
       statusDiv.style.color = "var(--success)";
     } catch (e) {
-      console.error(e);
       statusDiv.innerText = "⚠️ Erro ao transferir registro.";
       statusDiv.style.color = "var(--danger)";
     }
 
-    setTimeout(() => {
-      carregarTodosDados(true);
-    }, 1000);
+    setTimeout(() => { carregarTodosDados(true); }, 1000);
   }
 
   function filtrarGeral() {
@@ -634,6 +682,8 @@
 
       let resultados = [];
       Object.keys(bancoCompleto).forEach(nomeAba => {
+        if (userRole === 'ferramentaria' && nomeAba !== 'ferramentaria') return;
+
         bancoCompleto[nomeAba].forEach(item => {
           const valores = Object.keys(item)
             .filter(k => k !== '_rowIndex')
@@ -651,6 +701,8 @@
   }
 
   async function salvarMolde() {
+    if (userRole === 'nivel1') return;
+
     const col1 = document.getElementById('input-col1').value.trim();
     const col2 = document.getElementById('input-col2').value.trim();
     const col3 = document.getElementById('input-col3').value.trim();
@@ -675,7 +727,7 @@
 
     const eTransferencia = rowIndex && (abaOrigemGuardada !== abaDestino);
 
-    statusDiv.innerText = "Salvando registro na nuvem...";
+    statusDiv.innerText = "Salvando registro...";
     statusDiv.style.color = "var(--primary)";
 
     try {
@@ -687,54 +739,43 @@
       }
 
       limparFormulario();
-      statusDiv.innerText = "✅ Salvo com sucesso! Atualizando dados...";
+      statusDiv.innerText = "✅ Salvo com sucesso!";
       statusDiv.style.color = "var(--success)";
     } catch (e) {
-      console.error(e);
       statusDiv.innerText = "⚠️ Erro ao salvar registro.";
       statusDiv.style.color = "var(--danger)";
     }
 
-    setTimeout(() => {
-      carregarTodosDados(true);
-    }, 1000);
+    setTimeout(() => { carregarTodosDados(true); }, 1000);
   }
 
   async function excluirMolde(index) {
+    if (userRole === 'nivel1') return;
+
     const item = listaExibida[index];
     if (!item) return;
 
     const abaOrigem = item._abaOrigem || abaAtual;
     const rowIndex = item._rowIndex;
 
-    if (!rowIndex) {
-      alert("Erro: Não foi possível identificar a linha a ser excluída na planilha.");
-      return;
-    }
+    if (!rowIndex) return;
 
     const desc = acharCampo(item, ['desc', 'descricao', 'codigo', 'cod'], 2);
-    const confirmar = confirm(`Tem certeza que deseja EXCLUIR o registro "${desc}" (Linha ${rowIndex}) da aba "${formatarNomeExibicao(abaOrigem)}"?`);
-
-    if (!confirmar) return;
+    if (!confirm(`Tem certeza que deseja EXCLUIR "${desc}" (Linha ${rowIndex})?`)) return;
 
     const statusDiv = document.getElementById('status-msg');
-    statusDiv.innerText = "Excluindo registro na planilha...";
+    statusDiv.innerText = "Excluindo registro...";
     statusDiv.style.color = "var(--danger)";
 
     try {
-      const urlDelete = `${BASE_API}?action=DELETE&sheet=${encodeURIComponent(abaOrigem)}&rowIndex=${rowIndex}`;
-      await enviarRequisicaoJSONP(urlDelete);
-
-      statusDiv.innerText = "🗑️ Registro excluído com sucesso! Atualizando...";
+      await enviarComandoNuvem({ action: "DELETE", sheet: abaOrigem, rowIndex: rowIndex });
+      statusDiv.innerText = "🗑️ Excluído com sucesso!";
       statusDiv.style.color = "var(--success)";
     } catch (err) {
-      console.error("Erro ao excluir:", err);
-      statusDiv.innerText = "⚠️ Ocorreu um erro ao excluir, recarregando...";
+      statusDiv.innerText = "⚠️ Ocorreu um erro ao excluir.";
     }
 
-    setTimeout(() => {
-      carregarTodosDados(true);
-    }, 800);
+    setTimeout(() => { carregarTodosDados(true); }, 800);
   }
 
   function limparFormulario() {
@@ -753,7 +794,8 @@
     }
   }
 
-  carregarDoLocalStorage();
+  // Inicialização
+  aplicarPermissoesInterface();
   redefinirFormulario();
   carregarTodosDados();
 </script>
