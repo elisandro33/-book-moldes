@@ -26,16 +26,22 @@
 
     body { background-color: var(--bg-color); color: var(--text-main); padding: 24px; }
 
-    .container { max-width: 1280px; margin: 0 auto; }
+    /* Modal de Login Overlap */
+    .login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+    .login-box { background: #fff; padding: 32px; border-radius: 12px; width: 100%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .login-box h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+    .login-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; text-align: center; }
+    .login-field { margin-bottom: 16px; }
+    .login-field label { font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px; }
+
+    .container { max-width: 1280px; margin: 0 auto; display: none; }
 
     /* Header */
     .header-dashboard { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
     .header-title h1 { font-size: 24px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
     .header-title p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
 
-    .user-control { display: flex; align-items: center; gap: 12px; background: #fff; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); }
-    .user-control label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
-    .user-control select { width: auto; padding: 6px 10px; }
+    .user-info-bar { display: flex; align-items: center; gap: 12px; background: #fff; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; }
 
     /* Cards KPIs Topo */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
@@ -54,13 +60,13 @@
 
     /* Form Controles */
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-    input[type="text"], input[type="date"], select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; outline: none; transition: border 0.2s; background: #fff; }
-    input[type="text"]:focus, input[type="date"]:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    input[type="text"], input[type="password"], select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; outline: none; transition: border 0.2s; background: #fff; }
+    input[type="text"]:focus, input[type="password"]:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 
     /* Botões */
     .btn-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary { background: var(--primary); color: white; width: 100%; }
     .btn-primary:hover { background: var(--primary-hover); }
     .btn-reload { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
     .btn-reload:hover { background: #e2e8f0; }
@@ -87,7 +93,30 @@
 </head>
 <body>
 
-<div class="container">
+<!-- Tela de Login -->
+<div class="login-overlay" id="login-modal">
+  <div class="login-box">
+    <h2>🔑 Acesso ao Sistema</h2>
+    <p>Digite seu usuário e senha para acessar</p>
+    
+    <div class="login-field">
+      <label>Usuário</label>
+      <input type="text" id="login-user" placeholder="Digite seu usuário">
+    </div>
+    
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="Digite sua senha">
+    </div>
+
+    <div id="login-msg" style="font-size: 12px; color: var(--danger); margin-bottom: 12px; text-align: center;"></div>
+    
+    <button class="btn btn-primary" onclick="efetuarLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- Aplicação Principal -->
+<div class="container" id="app-container">
   <div class="header-dashboard">
     <div class="header-title">
       <h1>📦 Book de Moldes</h1>
@@ -95,14 +124,9 @@
     </div>
     
     <div style="display:flex; gap:12px; align-items:center;">
-      <div class="user-control">
-        <label for="select-user-role">Nível Usuário:</label>
-        <select id="select-user-role" onchange="alterarNivelUsuario()">
-          <option value="nivel1">Nível 1 (Apenas Pesquisa)</option>
-          <option value="nivel2">Nível 2 (Movimentação)</option>
-          <option value="ferramentaria">Ferramentaria</option>
-          <option value="admin" selected>Administrador</option>
-        </select>
+      <div class="user-info-bar">
+        👤 <b id="lbl-user-name">-</b> (<span id="lbl-user-role">-</span>)
+        <a href="#" onclick="fazerLogout()" style="color:var(--danger); margin-left:8px; text-decoration:none; font-weight:600;">Sair</a>
       </div>
       <button class="btn btn-reload" onclick="carregarTodosDados(true)">🔄 Recarregar</button>
     </div>
@@ -146,7 +170,7 @@
     <div id="form-campos" class="form-grid"></div>
     
     <div class="btn-actions">
-      <button onclick="salvarMolde()" id="btn-salvar" class="btn btn-primary">💾 Salvar Registro</button>
+      <button onclick="salvarMolde()" id="btn-salvar" class="btn btn-primary" style="width:auto;">💾 Salvar Registro</button>
       <button onclick="limparFormulario()" id="btn-cancelar" class="btn btn-cancel" style="display:none;">Cancelar Edição</button>
     </div>
   </div>
@@ -173,8 +197,10 @@
 <script>
   const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
   
-  let userRole = "admin"; // nivel1, nivel2, ferramentaria, admin
+  let currentUser = localStorage.getItem('bm_user') || "";
+  let userRole = localStorage.getItem('bm_role') || ""; 
   let abaAtual = "ATUALIZADA";
+  
   let bancoCompleto = { 
     "ATUALIZADA": [], 
     "Moldes QLX": [], 
@@ -186,18 +212,100 @@
   let listaExibida = [];
   let timerBusca = null;
 
-  function alterarNivelUsuario() {
-    userRole = document.getElementById('select-user-role').value;
-    
-    // Se for perfil ferramentaria, força para a aba Ferramentaria
+  function enviarRequisicaoJSONP(url) {
+    return new Promise((resolve, reject) => {
+      const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
+      window[callbackName] = function(data) {
+        delete window[callbackName];
+        if (script && script.parentNode) script.parentNode.removeChild(script);
+        resolve(data);
+      };
+
+      const script = document.createElement('script');
+      const sep = url.includes('?') ? '&' : '?';
+      script.src = url + sep + 'callback=' + callbackName;
+      script.onerror = function() {
+        delete window[callbackName];
+        if (script && script.parentNode) script.parentNode.removeChild(script);
+        reject(new Error('Erro de conexão.'));
+      };
+      document.body.appendChild(script);
+    });
+  }
+
+  function enviarComandoNuvem(params) {
+    return new Promise((resolve, reject) => {
+      params.role = userRole;
+      const query = Object.keys(params)
+        .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] !== undefined && params[k] !== null ? String(params[k]) : ''))
+        .join('&');
+      
+      const url = `${BASE_API}?${query}`;
+      enviarRequisicaoJSONP(url).then(resolve).catch(reject);
+    });
+  }
+
+  async function efetuarLogin() {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
+    const msg = document.getElementById('login-msg');
+
+    if (!user || !pass) {
+      msg.innerText = "Informe o usuário e a senha.";
+      return;
+    }
+
+    msg.innerText = "Autenticando...";
+    msg.style.color = "var(--primary)";
+
+    try {
+      const res = await enviarRequisicaoJSONP(`${BASE_API}?action=LOGIN&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`);
+      
+      if (res.status === "success") {
+        currentUser = res.user;
+        userRole = res.role;
+
+        localStorage.setItem('bm_user', currentUser);
+        localStorage.setItem('bm_role', userRole);
+
+        msg.innerText = "";
+        iniciarSessao();
+      } else {
+        msg.style.color = "var(--danger)";
+        msg.innerText = res.message || "Erro ao efetuar login.";
+      }
+    } catch (e) {
+      msg.style.color = "var(--danger)";
+      msg.innerText = "Erro ao conectar com o servidor.";
+    }
+  }
+
+  function fazerLogout() {
+    localStorage.removeItem('bm_user');
+    localStorage.removeItem('bm_role');
+    location.reload();
+  }
+
+  function iniciarSessao() {
+    if (!currentUser || !userRole) {
+      document.getElementById('login-modal').style.display = 'flex';
+      document.getElementById('app-container').style.display = 'none';
+      return;
+    }
+
+    document.getElementById('login-modal').style.display = 'none';
+    document.getElementById('app-container').style.display = 'block';
+
+    document.getElementById('lbl-user-name').innerText = currentUser;
+    document.getElementById('lbl-user-role').innerText = userRole.toUpperCase();
+
     if (userRole === "ferramentaria") {
       abaAtual = "ferramentaria";
     }
-    
+
     aplicarPermissoesInterface();
     redefinirFormulario();
-    renderTabelaAbaAtual();
-    atualizarKPIs();
+    carregarTodosDados();
   }
 
   function aplicarPermissoesInterface() {
@@ -208,14 +316,12 @@
     const tabSemlocal = document.getElementById('tab-semlocal');
     const tabFerramentaria = document.getElementById('tab-ferramentaria');
 
-    // Regra do Formulário
     if (userRole === 'nivel1') {
       cardForm.style.display = 'none';
     } else {
       cardForm.style.display = 'block';
     }
 
-    // Regra do Perfil Ferramentaria
     if (userRole === 'ferramentaria') {
       tabAtualizada.style.display = 'none';
       tabQlx.style.display = 'none';
@@ -268,39 +374,6 @@
     document.getElementById('kpi-total').innerText = totalGeral;
     document.getElementById('kpi-aba-count').innerText = countAbaAtual;
     document.getElementById('kpi-aba-nome').innerText = formatarNomeExibicao(abaAtual);
-  }
-
-  function enviarRequisicaoJSONP(url) {
-    return new Promise((resolve, reject) => {
-      const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
-      window[callbackName] = function(data) {
-        delete window[callbackName];
-        if (script && script.parentNode) script.parentNode.removeChild(script);
-        resolve(data);
-      };
-
-      const script = document.createElement('script');
-      const sep = url.includes('?') ? '&' : '?';
-      script.src = url + sep + 'callback=' + callbackName;
-      script.onerror = function() {
-        delete window[callbackName];
-        if (script && script.parentNode) script.parentNode.removeChild(script);
-        reject(new Error('Erro de conexão.'));
-      };
-      document.body.appendChild(script);
-    });
-  }
-
-  function enviarComandoNuvem(params) {
-    return new Promise((resolve, reject) => {
-      params.role = userRole; // Envia a role para validação no backend
-      const query = Object.keys(params)
-        .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] !== undefined && params[k] !== null ? String(params[k]) : ''))
-        .join('&');
-      
-      const url = `${BASE_API}?${query}`;
-      enviarRequisicaoJSONP(url).then(resolve).catch(reject);
-    });
   }
 
   function acharCampo(item, palavrasChave, indicePadrao = -1) {
@@ -794,10 +867,13 @@
     }
   }
 
-  // Inicialização
-  aplicarPermissoesInterface();
-  redefinirFormulario();
-  carregarTodosDados();
+  // Permite dar Enter na tela de login
+  document.getElementById('login-pass').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') efetuarLogin();
+  });
+
+  // Inicializa validação de Sessão
+  iniciarSessao();
 </script>
 </body>
 </html>
