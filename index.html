@@ -15,6 +15,7 @@
       --border-color: #374151;
       --danger: #ef4444;
       --success: #10b981;
+      --warning: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -36,6 +37,7 @@
     .btn-primary:hover { background-color: var(--accent-hover); }
     .btn-danger { background-color: var(--danger); color: white; }
     .btn-success { background-color: var(--success); color: white; }
+    .btn-warning { background-color: var(--warning); color: black; }
     .btn-cancel { background-color: #4b5563; color: white; }
 
     .table-container { background-color: var(--card-bg); border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); }
@@ -43,6 +45,8 @@
     th, td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
     th { background-color: rgba(0,0,0,0.2); color: var(--text-muted); font-weight: 600; }
     tr:hover { background-color: rgba(255,255,255,0.02); }
+
+    .action-btns-cell { display: flex; gap: 6px; flex-wrap: wrap; }
 
     .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
     .modal { background-color: var(--card-bg); border-radius: 10px; padding: 24px; width: 100%; max-width: 500px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -97,12 +101,16 @@
       <button class="tab-btn active" onclick="trocarAba('ATUALIZADA', this)">Plástico (ATUALIZADA)</button>
       <button class="tab-btn" onclick="trocarAba('Transferências e Step Bay Step', this)">Transferências / Step</button>
       <button class="tab-btn" onclick="trocarAba('Sem local', this)">Sem Local</button>
+      <button class="tab-btn" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
       <button class="tab-btn" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
       <button class="tab-btn" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
     </div>
 
     <div class="actions-bar">
-      <input type="text" class="search-box" id="inp-search" placeholder="Buscar molde, código..." oninput="filtrarTabela()">
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <input type="text" class="search-box" id="inp-search" placeholder="Buscar molde, código..." oninput="filtrarTabela()">
+        <button class="btn btn-success" id="btn-add-molde" onclick="abrirModalNovoMolde()">➕ Adicionar Molde</button>
+      </div>
       <div id="status-msg"></div>
     </div>
 
@@ -158,17 +166,42 @@
     </div>
   </div>
 
+  <!-- MODAL ADICIONAR / EDITAR MOLDE -->
+  <div class="overlay" id="modal-molde" style="display: none;">
+    <div class="modal">
+      <h2 id="modal-molde-title">➕ Adicionar Molde</h2>
+      
+      <div class="field-group">
+        <label>Local</label>
+        <input type="text" id="molde-local" placeholder="Ex: A1, B2...">
+      </div>
+
+      <div class="field-group">
+        <label>Código</label>
+        <input type="text" id="molde-codigo" placeholder="Código do molde">
+      </div>
+
+      <div class="field-group">
+        <label>Descrição</label>
+        <input type="text" id="molde-desc" placeholder="Descrição da peça / molde">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+        <button class="btn btn-cancel" onclick="fecharModalMolde()">Cancelar</button>
+        <button class="btn btn-success" onclick="salvarMolde()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // URL DO SEU GOOGLE APPS SCRIPT WEB APP
     const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec"; 
 
     let currentUser = "";
     let userRole = "";
     let abaAtual = "ATUALIZADA";
     let dadosBrutos = [];
-    let itemSelecionadoOS = null;
+    let itemSelecionado = null;
 
-    // Requisição JSONP
     function chamarAPI(params) {
       return new Promise((resolve, reject) => {
         const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
@@ -268,26 +301,39 @@
 
       const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex');
 
-      // Cabeçalho
       let trHead = "<tr>";
       colunas.forEach(c => trHead += `<th>${c}</th>`);
       if (userRole !== 'nivel1') trHead += "<th>Ações</th>";
       trHead += "</tr>";
       head.innerHTML = trHead;
 
-      // Linhas
       dados.forEach((row) => {
         let trBody = "<tr>";
         colunas.forEach(c => trBody += `<td>${row[c] !== undefined ? row[c] : ''}</td>`);
 
         if (userRole !== 'nivel1') {
-          trBody += `<td>`;
+          trBody += `<td><div class="action-btns-cell">`;
+          
           if (abaAtual !== 'ferramentaria' && abaAtual !== 'HISTORICO_MANUTENCAO') {
-            trBody += `<button class="btn btn-primary" onclick="abrirModalOSPorRowIndex(${row._rowIndex})">🔧 P/ Ferramentaria</button>`;
+            trBody += `<button class="btn btn-primary" onclick="abrirModalOSPorRowIndex(${row._rowIndex})">🔧 Ferramentaria</button>`;
           } else if (abaAtual === 'ferramentaria') {
             trBody += `<button class="btn btn-success" onclick="liberarParaPlasticoPorRowIndex(${row._rowIndex})">✅ Liberar p/ Plástico</button>`;
           }
-          trBody += `</td>`;
+
+          // Botão Transferir QLX / Voltar
+          if (abaAtual === 'ATUALIZADA') {
+            trBody += `<button class="btn btn-warning" onclick="transferirMoldesQLX(${row._rowIndex}, 'QLX')">➡️ P/ QLX</button>`;
+          } else if (abaAtual === 'Moldes QLX') {
+            trBody += `<button class="btn btn-warning" onclick="transferirMoldesQLX(${row._rowIndex}, 'PLASTICO')">⬅️ P/ Plástico</button>`;
+          }
+
+          // Editar e Excluir
+          if (abaAtual !== 'HISTORICO_MANUTENCAO') {
+            trBody += `<button class="btn btn-warning" onclick="abrirModalEditarMolde(${row._rowIndex})">✏️ Editar</button>`;
+            trBody += `<button class="btn btn-danger" onclick="excluirMolde(${row._rowIndex})">🗑️ Excluir</button>`;
+          }
+
+          trBody += `</div></td>`;
         }
 
         trBody += "</tr>";
@@ -303,13 +349,120 @@
       renderizarTabela(filtrados);
     }
 
-    function abrirModalOSPorRowIndex(rowIndex) {
-      itemSelecionadoOS = dadosBrutos.find(item => Number(item._rowIndex) === Number(rowIndex));
+    // --- NOVO MOLDE / EDITAR MOLDE ---
+    function abrirModalNovoMolde() {
+      itemSelecionado = null;
+      document.getElementById('modal-molde-title').innerText = "➕ Adicionar Molde";
+      document.getElementById('molde-local').value = "";
+      document.getElementById('molde-codigo').value = "";
+      document.getElementById('molde-desc').value = "";
+      document.getElementById('modal-molde').style.display = "flex";
+    }
 
-      if (!itemSelecionadoOS) {
-        alert("Erro ao localizar o item selecionado.");
+    function abrirModalEditarMolde(rowIndex) {
+      itemSelecionado = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
+      if (!itemSelecionado) return;
+
+      const keys = Object.keys(itemSelecionado).filter(k => k !== '_rowIndex');
+
+      document.getElementById('modal-molde-title').innerText = "✏️ Editar Molde";
+      document.getElementById('molde-local').value = itemSelecionado[keys[0]] || "";
+      document.getElementById('molde-codigo').value = itemSelecionado[keys[1]] || "";
+      document.getElementById('molde-desc').value = itemSelecionado[keys[2]] || "";
+      document.getElementById('modal-molde').style.display = "flex";
+    }
+
+    function fecharModalMolde() {
+      document.getElementById('modal-molde').style.display = "none";
+      itemSelecionado = null;
+    }
+
+    async function salvarMolde() {
+      const local = document.getElementById('molde-local').value.trim();
+      const codigo = document.getElementById('molde-codigo').value.trim();
+      const desc = document.getElementById('molde-desc').value.trim();
+
+      if (!codigo || !desc) {
+        alert("Preencha ao menos Código e Descrição.");
         return;
       }
+
+      fecharModalMolde();
+
+      const action = itemSelecionado ? "EDITAR_MOLDE" : "ADICIONAR_MOLDE";
+      const payload = {
+        action: action,
+        aba: abaAtual,
+        local: local,
+        codigo: codigo,
+        descricao: desc,
+        rowIndex: itemSelecionado ? itemSelecionado._rowIndex : null
+      };
+
+      try {
+        const res = await chamarAPI(payload);
+        if (res && res.status === "success") {
+          alert("✅ Molde salvo com sucesso!");
+          carregarDadosAba(abaAtual);
+        } else {
+          alert("Erro: " + (res.message || "Erro desconhecido"));
+        }
+      } catch (e) {
+        alert("Erro na requisição: " + e.message);
+      }
+    }
+
+    async function excluirMolde(rowIndex) {
+      if (!confirm("Tem certeza de que deseja excluir este molde?")) return;
+
+      try {
+        const res = await chamarAPI({
+          action: "EXCLUIR_MOLDE",
+          aba: abaAtual,
+          rowIndex: rowIndex
+        });
+
+        if (res && res.status === "success") {
+          alert("✅ Molde excluído com sucesso!");
+          carregarDadosAba(abaAtual);
+        } else {
+          alert("Erro ao excluir: " + (res.message || "Erro no servidor"));
+        }
+      } catch (e) {
+        alert("Erro na requisição: " + e.message);
+      }
+    }
+
+    async function transferirMoldesQLX(rowIndex, destino) {
+      const item = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
+      if (!item) return;
+
+      const acaoTxt = destino === 'QLX' ? "transferir para Moldes QLX" : "retornar para Plástico (ATUALIZADA)";
+      if (!confirm(`Deseja realmente ${acaoTxt}?`)) return;
+
+      try {
+        const res = await chamarAPI({
+          action: "TRANSFERIR_QLX",
+          origem: abaAtual,
+          destino: destino,
+          rowIndex: rowIndex
+        });
+
+        if (res && res.status === "success") {
+          alert("✅ Transferência realizada com sucesso!");
+          carregarDadosAba(abaAtual);
+        } else {
+          alert("Erro na transferência: " + (res.message || "Erro no servidor"));
+        }
+      } catch (e) {
+        alert("Erro na requisição: " + e.message);
+      }
+    }
+
+    // --- SOLICITAÇÃO DE OS ---
+    function abrirModalOSPorRowIndex(rowIndex) {
+      itemSelecionado = dadosBrutos.find(item => Number(item._rowIndex) === Number(rowIndex));
+      if (!itemSelecionado) return;
 
       const agora = new Date();
       document.getElementById('os-data').value = agora.toISOString().split('T')[0];
@@ -323,65 +476,40 @@
 
     function fecharModalOS() {
       document.getElementById('modal-os').style.display = 'none';
-      itemSelecionadoOS = null;
+      itemSelecionado = null;
     }
 
     async function confirmarEnvioFerramentaria() {
-      if (!itemSelecionadoOS || itemSelecionadoOS._rowIndex === undefined || itemSelecionadoOS._rowIndex === null) {
-        alert("Erro: Nenhum item válido selecionado.");
-        return;
-      }
+      if (!itemSelecionado || itemSelecionado._rowIndex === undefined) return;
 
-      const dataVal = document.getElementById('os-data').value;
-      const horaVal = document.getElementById('os-hora').value;
-      const solicitanteVal = document.getElementById('os-solicitante').value.trim();
-      const obsVal = document.getElementById('os-obs').value.trim();
+      const keys = Object.keys(itemSelecionado).filter(k => k !== '_rowIndex');
 
       let tipos = [];
       document.querySelectorAll('input[name="os-tipo"]:checked').forEach(ck => tipos.push(ck.value));
 
-      if (!solicitanteVal) {
-        alert("Por favor, preencha o solicitante.");
-        return;
-      }
-
-      const keys = Object.keys(itemSelecionadoOS).filter(k => k !== '_rowIndex');
-      const col1 = itemSelecionadoOS[keys[0]] !== undefined ? itemSelecionadoOS[keys[0]] : "";
-      const col2 = itemSelecionadoOS[keys[1]] !== undefined ? itemSelecionadoOS[keys[1]] : "";
-      const col3 = itemSelecionadoOS[keys[2]] !== undefined ? itemSelecionadoOS[keys[2]] : "";
-      const rIndex = itemSelecionadoOS._rowIndex;
-
       fecharModalOS();
-
-      const status = document.getElementById('status-msg');
-      if (status) {
-        status.innerText = "Gerando Ordem de Serviço...";
-        status.style.color = "var(--accent)";
-      }
 
       try {
         const res = await chamarAPI({
           action: "SOLICITAR_FERRAMENTARIA",
           abaOrigem: abaAtual,
-          rowIndex: rIndex,
-          col1: col1,
-          col2: col2,
-          col3: col3,
-          data: dataVal,
-          hora: horaVal,
-          solicitante: solicitanteVal,
+          rowIndex: itemSelecionado._rowIndex,
+          col1: itemSelecionado[keys[0]] || "",
+          col2: itemSelecionado[keys[1]] || "",
+          col3: itemSelecionado[keys[2]] || "",
+          data: document.getElementById('os-data').value,
+          hora: document.getElementById('os-hora').value,
+          solicitante: document.getElementById('os-solicitante').value.trim(),
           tipos: tipos.join(", "),
-          obs: obsVal
+          obs: document.getElementById('os-obs').value.trim()
         });
 
         if (res && res.status === "success") {
           alert(`✅ Ordem de Serviço Nº ${res.osNumber} criada com sucesso!`);
           carregarDadosAba(abaAtual);
-        } else {
-          alert("Erro retornado pelo servidor: " + (res.message || "Erro desconhecido"));
         }
       } catch (e) {
-        alert("Erro na comunicação com o servidor: " + e.message);
+        alert("Erro ao gerar OS: " + e.message);
       }
     }
 
@@ -389,7 +517,7 @@
       const item = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
       if (!item) return;
 
-      if (!confirm(`Confirmar a liberação do molde para o setor de Plástico?`)) return;
+      if (!confirm("Confirmar a liberação do molde para o setor de Plástico?")) return;
 
       const keys = Object.keys(item).filter(k => k !== '_rowIndex');
 
@@ -398,14 +526,14 @@
           action: "LIBERAR_PLASTICO",
           abaOrigem: abaAtual,
           rowIndex: item._rowIndex,
-          col1: item[keys[0]] !== undefined ? item[keys[0]] : "",
-          col2: item[keys[1]] !== undefined ? item[keys[1]] : "",
-          col3: item[keys[2]] !== undefined ? item[keys[2]] : "",
+          col1: item[keys[0]] || "",
+          col2: item[keys[1]] || "",
+          col3: item[keys[2]] || "",
           liberadoPor: currentUser
         });
 
         if (res && res.status === "success") {
-          alert("✅ Molde liberado para o Plástico e registrado no histórico!");
+          alert("✅ Molde liberado para o Plástico!");
           carregarDadosAba(abaAtual);
         }
       } catch (e) {
