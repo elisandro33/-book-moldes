@@ -159,8 +159,8 @@
   </div>
 
   <script>
-    // URL DO SEU GOOGLE APPS SCRIPT WEB APP
-    const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec"; 
+    // URL DO SEU GOOGLE APPS SCRIPT WEB APP (Certifique-se de usar a sua URL atualizada)
+    const BASE_API = "https://script.google.com/macros/s/AKfycbzQ7R6Y83x--EXEMPLO--/exec"; 
 
     let currentUser = "";
     let userRole = "";
@@ -168,7 +168,7 @@
     let dadosBrutos = [];
     let itemSelecionadoOS = null;
 
-    // Comunicação via JSONP para suporte total ao GitHub Pages
+    // Requisição JSONP
     function chamarAPI(params) {
       return new Promise((resolve, reject) => {
         const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
@@ -276,16 +276,16 @@
       head.innerHTML = trHead;
 
       // Linhas
-      dados.forEach((row, idx) => {
+      dados.forEach((row) => {
         let trBody = "<tr>";
         colunas.forEach(c => trBody += `<td>${row[c] !== undefined ? row[c] : ''}</td>`);
 
         if (userRole !== 'nivel1') {
           trBody += `<td>`;
           if (abaAtual !== 'ferramentaria' && abaAtual !== 'HISTORICO_MANUTENCAO') {
-            trBody += `<button class="btn btn-primary" onclick="abrirModalOS(${idx})">🔧 P/ Ferramentaria</button>`;
+            trBody += `<button class="btn btn-primary" onclick="abrirModalOSPorRowIndex(${row._rowIndex})">🔧 P/ Ferramentaria</button>`;
           } else if (abaAtual === 'ferramentaria') {
-            trBody += `<button class="btn btn-success" onclick="liberarParaPlastico(${idx})">✅ Liberar p/ Plástico</button>`;
+            trBody += `<button class="btn btn-success" onclick="liberarParaPlasticoPorRowIndex(${row._rowIndex})">✅ Liberar p/ Plástico</button>`;
           }
           trBody += `</td>`;
         }
@@ -303,13 +303,18 @@
       renderizarTabela(filtrados);
     }
 
-    // Modal de Ações OS
-    function abrirModalOS(index) {
-      itemSelecionadoOS = dadosBrutos[index];
+    function abrirModalOSPorRowIndex(rowIndex) {
+      itemSelecionadoOS = dadosBrutos.find(item => item._rowIndex === rowIndex);
+
+      if (!itemSelecionadoOS) {
+        alert("Erro ao localizar o item selecionado.");
+        return;
+      }
+
       const agora = new Date();
       document.getElementById('os-data').value = agora.toISOString().split('T')[0];
       document.getElementById('os-hora').value = agora.toTimeString().split(' ')[0].substring(0, 5);
-      document.getElementById('os-solicitante').value = currentUser;
+      document.getElementById('os-solicitante').value = currentUser || "";
       document.getElementById('os-obs').value = '';
       document.querySelectorAll('input[name="os-tipo"]').forEach(ck => ck.checked = false);
 
@@ -322,62 +327,68 @@
     }
 
     async function confirmarEnvioFerramentaria() {
-  if (!itemSelecionadoOS) return;
+      if (!itemSelecionadoOS) {
+        alert("Nenhum item válido selecionado.");
+        return;
+      }
 
-  const dataVal = document.getElementById('os-data').value;
-  const horaVal = document.getElementById('os-hora').value;
-  const solicitanteVal = document.getElementById('os-solicitante').value.trim();
-  const obsVal = document.getElementById('os-obs').value.trim();
+      const dataVal = document.getElementById('os-data').value;
+      const horaVal = document.getElementById('os-hora').value;
+      const solicitanteVal = document.getElementById('os-solicitante').value.trim();
+      const obsVal = document.getElementById('os-obs').value.trim();
 
-  let tipos = [];
-  document.querySelectorAll('input[name="os-tipo"]:checked').forEach(ck => tipos.push(ck.value));
+      let tipos = [];
+      document.querySelectorAll('input[name="os-tipo"]:checked').forEach(ck => tipos.push(ck.value));
 
-  if (!solicitanteVal) {
-    alert("Por favor, preencha o solicitante.");
-    return;
-  }
+      if (!solicitanteVal) {
+        alert("Por favor, preencha o solicitante.");
+        return;
+      }
 
-  // Extrai as colunas do objeto selecionado ignorando a chave interna _rowIndex
-  const keys = Object.keys(itemSelecionadoOS).filter(k => k !== '_rowIndex');
-  const col1 = itemSelecionadoOS[keys[0]] !== undefined ? itemSelecionadoOS[keys[0]] : "";
-  const col2 = itemSelecionadoOS[keys[1]] !== undefined ? itemSelecionadoOS[keys[1]] : "";
-  const col3 = itemSelecionadoOS[keys[2]] !== undefined ? itemSelecionadoOS[keys[2]] : "";
+      const keys = Object.keys(itemSelecionadoOS).filter(k => k !== '_rowIndex');
+      const col1 = itemSelecionadoOS[keys[0]] !== undefined ? itemSelecionadoOS[keys[0]] : "";
+      const col2 = itemSelecionadoOS[keys[1]] !== undefined ? itemSelecionadoOS[keys[1]] : "";
+      const col3 = itemSelecionadoOS[keys[2]] !== undefined ? itemSelecionadoOS[keys[2]] : "";
+      const rIndex = itemSelecionadoOS._rowIndex;
 
-  fecharModalOS();
+      fecharModalOS();
 
-  const status = document.getElementById('status-msg');
-  if (status) {
-    status.innerText = "Gerando Ordem de Serviço...";
-    status.style.color = "var(--accent)";
-  }
+      const status = document.getElementById('status-msg');
+      if (status) {
+        status.innerText = "Gerando Ordem de Serviço...";
+        status.style.color = "var(--accent)";
+      }
 
-  try {
-    const res = await chamarAPI({
-      action: "SOLICITAR_FERRAMENTARIA",
-      abaOrigem: abaAtual,
-      rowIndex: itemSelecionadoOS._rowIndex || "",
-      col1: col1,
-      col2: col2,
-      col3: col3,
-      data: dataVal,
-      hora: horaVal,
-      solicitante: solicitanteVal,
-      tipos: tipos.join(", "),
-      obs: obsVal
-    });
+      try {
+        const res = await chamarAPI({
+          action: "SOLICITAR_FERRAMENTARIA",
+          abaOrigem: abaAtual,
+          rowIndex: rIndex,
+          col1: col1,
+          col2: col2,
+          col3: col3,
+          data: dataVal,
+          hora: horaVal,
+          solicitante: solicitanteVal,
+          tipos: tipos.join(", "),
+          obs: obsVal
+        });
 
-    if (res && res.status === "success") {
-      alert(`✅ Ordem de Serviço Nº ${res.osNumber} criada com sucesso!`);
-      carregarDadosAba(abaAtual);
-    } else {
-      alert("Erro retornado pelo servidor: " + (res.message || "Erro desconhecido"));
+        if (res && res.status === "success") {
+          alert(`✅ Ordem de Serviço Nº ${res.osNumber} criada com sucesso!`);
+          carregarDadosAba(abaAtual);
+        } else {
+          alert("Erro retornado pelo servidor: " + (res.message || "Erro desconhecido"));
+        }
+      } catch (e) {
+        alert("Erro na comunicação com o servidor: " + e.message);
+      }
     }
-  } catch (e) {
-    alert("Erro na comunicação com o servidor: " + e.message);
-  }
-}
-    async function liberarParaPlastico(index) {
-      const item = dadosBrutos[index];
+
+    async function liberarParaPlasticoPorRowIndex(rowIndex) {
+      const item = dadosBrutos.find(i => i._rowIndex === rowIndex);
+      if (!item) return;
+
       if (!confirm(`Confirmar a liberação do molde para o setor de Plástico?`)) return;
 
       const keys = Object.keys(item).filter(k => k !== '_rowIndex');
@@ -387,9 +398,9 @@
           action: "LIBERAR_PLASTICO",
           abaOrigem: abaAtual,
           rowIndex: item._rowIndex,
-          col1: item[keys[0]] || "",
-          col2: item[keys[1]] || "",
-          col3: item[keys[2]] || "",
+          col1: item[keys[0]] !== undefined ? item[keys[0]] : "",
+          col2: item[keys[1]] !== undefined ? item[keys[1]] : "",
+          col3: item[keys[2]] !== undefined ? item[keys[2]] : "",
           liberadoPor: currentUser
         });
 
@@ -398,7 +409,7 @@
           carregarDadosAba(abaAtual);
         }
       } catch (e) {
-        alert("Erro ao liberar ferramenta.");
+        alert("Erro ao liberar ferramenta: " + e.message);
       }
     }
   </script>
