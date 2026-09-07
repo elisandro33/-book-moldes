@@ -201,6 +201,7 @@
     let abaAtual = "ATUALIZADA";
     let dadosBrutos = [];
     let itemSelecionado = null;
+    let itemSelecionadoOS = null;
 
     function chamarAPI(params) {
       return new Promise((resolve, reject) => {
@@ -320,7 +321,7 @@
             trBody += `<button class="btn btn-success" onclick="liberarParaPlasticoPorRowIndex(${row._rowIndex})">✅ Liberar p/ Plástico</button>`;
           }
 
-          // Botão Transferir QLX / Voltar
+          // Transferências QLX / Plástico
           if (abaAtual === 'ATUALIZADA') {
             trBody += `<button class="btn btn-warning" onclick="transferirMoldesQLX(${row._rowIndex}, 'QLX')">➡️ P/ QLX</button>`;
           } else if (abaAtual === 'Moldes QLX') {
@@ -461,13 +462,17 @@
 
     // --- SOLICITAÇÃO DE OS ---
     function abrirModalOSPorRowIndex(rowIndex) {
-      itemSelecionado = dadosBrutos.find(item => Number(item._rowIndex) === Number(rowIndex));
-      if (!itemSelecionado) return;
+      itemSelecionadoOS = dadosBrutos.find(item => Number(item._rowIndex) === Number(rowIndex));
+      
+      if (!itemSelecionadoOS) {
+        alert("Erro ao localizar o item selecionado.");
+        return;
+      }
 
       const agora = new Date();
       document.getElementById('os-data').value = agora.toISOString().split('T')[0];
       document.getElementById('os-hora').value = agora.toTimeString().split(' ')[0].substring(0, 5);
-      document.getElementById('os-solicitante').value = currentUser || "";
+      document.getElementById('os-solicitante').value = currentUser || "Elisandro";
       document.getElementById('os-obs').value = '';
       document.querySelectorAll('input[name="os-tipo"]').forEach(ck => ck.checked = false);
 
@@ -476,40 +481,55 @@
 
     function fecharModalOS() {
       document.getElementById('modal-os').style.display = 'none';
-      itemSelecionado = null;
+      itemSelecionadoOS = null;
     }
 
     async function confirmarEnvioFerramentaria() {
-      if (!itemSelecionado || itemSelecionado._rowIndex === undefined) return;
+      if (!itemSelecionadoOS || itemSelecionadoOS._rowIndex === undefined || itemSelecionadoOS._rowIndex === null) {
+        alert("Erro: Nenhum item válido selecionado para OS.");
+        return;
+      }
 
-      const keys = Object.keys(itemSelecionado).filter(k => k !== '_rowIndex');
+      const keys = Object.keys(itemSelecionadoOS).filter(k => k !== '_rowIndex');
 
       let tipos = [];
       document.querySelectorAll('input[name="os-tipo"]:checked').forEach(ck => tipos.push(ck.value));
 
+      const dataVal = document.getElementById('os-data').value;
+      const horaVal = document.getElementById('os-hora').value;
+      const solicitanteVal = document.getElementById('os-solicitante').value.trim();
+      const obsVal = document.getElementById('os-obs').value.trim();
+
+      const payload = {
+        action: "SOLICITAR_FERRAMENTARIA",
+        abaOrigem: abaAtual,
+        rowIndex: itemSelecionadoOS._rowIndex,
+        col1: itemSelecionadoOS[keys[0]] || "",
+        col2: itemSelecionadoOS[keys[1]] || "",
+        col3: itemSelecionadoOS[keys[2]] || "",
+        data: dataVal,
+        hora: horaVal,
+        solicitante: solicitanteVal,
+        tipos: tipos.join(", "),
+        obs: obsVal
+      };
+
       fecharModalOS();
 
+      const status = document.getElementById('status-msg');
+      if (status) status.innerText = "Gerando OS...";
+
       try {
-        const res = await chamarAPI({
-          action: "SOLICITAR_FERRAMENTARIA",
-          abaOrigem: abaAtual,
-          rowIndex: itemSelecionado._rowIndex,
-          col1: itemSelecionado[keys[0]] || "",
-          col2: itemSelecionado[keys[1]] || "",
-          col3: itemSelecionado[keys[2]] || "",
-          data: document.getElementById('os-data').value,
-          hora: document.getElementById('os-hora').value,
-          solicitante: document.getElementById('os-solicitante').value.trim(),
-          tipos: tipos.join(", "),
-          obs: document.getElementById('os-obs').value.trim()
-        });
+        const res = await chamarAPI(payload);
 
         if (res && res.status === "success") {
           alert(`✅ Ordem de Serviço Nº ${res.osNumber} criada com sucesso!`);
           carregarDadosAba(abaAtual);
+        } else {
+          alert("Erro ao gerar OS: " + (res.message || "Erro desconhecido no servidor"));
         }
       } catch (e) {
-        alert("Erro ao gerar OS: " + e.message);
+        alert("Erro de conexão ao gerar OS: " + e.message);
       }
     }
 
