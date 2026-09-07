@@ -3,1033 +3,400 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GESTÃO DE MOLDES - Dashboard</title>
+  <title>GESTÃO DE MOLDES</title>
   <style>
     :root {
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --bg-color: #f8fafc;
-      --card-bg: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border-color: #e2e8f0;
-      --success: #10b981;
+      --bg-color: #1e222d;
+      --card-bg: #2a2e3d;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border-color: #374151;
       --danger: #ef4444;
-      --warning: #f59e0b;
-      --purple: #8b5cf6;
-      --purple-hover: #7c3aed;
-      --teal: #0d9488;
-      --teal-hover: #0f766e;
+      --success: #10b981;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; }
 
-    body { background-color: var(--bg-color); color: var(--text-main); padding: 24px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+    .header h1 { font-size: 22px; font-weight: 600; }
+    .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
+    
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-btn { background-color: var(--card-bg); color: var(--text-muted); border: 1px solid var(--border-color); padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: 0.2s; }
+    .tab-btn.active, .tab-btn:hover { background-color: var(--accent); color: white; border-color: var(--accent); }
 
-    .login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-    .login-box { background: #fff; padding: 32px; border-radius: 12px; width: 100%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-    .login-box h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; text-align: center; }
-    .login-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; text-align: center; }
-    .login-field { margin-bottom: 16px; }
-    .login-field label { font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px; }
+    .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; flex-wrap: wrap; }
+    .search-box { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--card-bg); color: white; width: 250px; outline: none; }
+    
+    .btn { padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; }
+    .btn-primary { background-color: var(--accent); color: white; }
+    .btn-primary:hover { background-color: var(--accent-hover); }
+    .btn-danger { background-color: var(--danger); color: white; }
+    .btn-success { background-color: var(--success); color: white; }
+    .btn-cancel { background-color: #4b5563; color: white; }
 
-    .container { max-width: 1280px; margin: 0 auto; display: none; }
-
-    .header-dashboard { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
-    .header-title h1 { font-size: 24px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
-    .header-title p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
-
-    .user-info-bar { display: flex; align-items: center; gap: 12px; background: #fff; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; }
-
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .kpi-card { background: var(--card-bg); border-radius: 12px; padding: 16px 20px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .kpi-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .kpi-value { font-size: 26px; font-weight: 700; color: var(--primary); margin-top: 4px; }
-
-    .nav-tabs { display: flex; gap: 8px; background: #e2e8f0; padding: 4px; border-radius: 10px; margin-bottom: 24px; width: fit-content; flex-wrap: wrap; }
-    .tab-btn { border: none; background: transparent; padding: 8px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
-    .tab-btn.active { background: var(--card-bg); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-
-    .dashboard-card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 24px; }
-    .card-header { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
-
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-    input[type="text"], input[type="password"], select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; outline: none; transition: border 0.2s; background: #fff; }
-    input[type="text"]:focus, input[type="password"]:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-
-    .btn-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-primary { background: var(--primary); color: white; width: 100%; }
-    .btn-primary:hover { background: var(--primary-hover); }
-    .btn-reload { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
-    .btn-reload:hover { background: #e2e8f0; }
-    .btn-cancel { background: #cbd5e1; color: #334155; }
-    .btn-cancel:hover { background: #94a3b8; color: #fff; }
-
-    .btn-edit { background: var(--warning); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
-    .btn-move { background: var(--purple); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
-    .btn-move:hover { background: var(--purple-hover); }
-    .btn-move-alt { background: var(--teal); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
-    .btn-move-alt:hover { background: var(--teal-hover); }
-    .btn-delete { background: var(--danger); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
-
-    .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-color); }
+    .table-container { background-color: var(--card-bg); border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-    th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid var(--border-color); white-space: nowrap; }
-    td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); color: var(--text-main); white-space: nowrap; }
-    tr:hover { background-color: #f8fafc; }
+    th, td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+    th { background-color: rgba(0,0,0,0.2); color: var(--text-muted); font-weight: 600; }
+    tr:hover { background-color: rgba(255,255,255,0.02); }
 
-    .status { text-align: left; font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text-muted); }
-    .badge-aba { background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; display: inline-block; }
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .modal { background-color: var(--card-bg); border-radius: 10px; padding: 24px; width: 100%; max-width: 500px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .modal h2 { margin-bottom: 16px; font-size: 18px; }
+    
+    .field-group { margin-bottom: 12px; }
+    .field-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+    .field-group input, .field-group textarea { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-color); color: white; outline: none; }
+
+    .checkbox-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+    .checkbox-group label { font-size: 13px; color: white; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+    #status-msg { margin-top: 10px; font-size: 13px; text-align: right; }
   </style>
 </head>
 <body>
 
-<div class="login-overlay" id="login-modal">
-  <div class="login-box">
-    <h2>🔑 Acesso ao Sistema</h2>
-    <p>Digite seu usuário e senha para acessar</p>
-    
-    <div class="login-field">
-      <label>Usuário</label>
-      <input type="text" id="login-user" placeholder="Digite seu usuário">
-    </div>
-    
-    <div class="login-field">
-      <label>Senha</label>
-      <input type="password" id="login-pass" placeholder="Digite sua senha">
-    </div>
-
-    <div id="login-msg" style="font-size: 12px; color: var(--danger); margin-bottom: 12px; text-align: center;"></div>
-    
-    <button class="btn btn-primary" onclick="efetuarLogin()">Entrar</button>
-  </div>
-</div>
-
-<div class="container" id="app-container">
-  <div class="header-dashboard">
-    <div class="header-title">
-      <h1><a href="https://qualifix.com.br/#hero" style="text-decoration:none; color:inherit;">Gestão de Moldes</a></h1>
-      <p>Painel de Controle e Gestão Ferramental</p>
-    </div>
-    
-    <div style="display:flex; gap:12px; align-items:center;">
-      <div class="user-info-bar">
-        👤 <b id="lbl-user-name">-</b> (<span id="lbl-user-role">-</span>)
-        <a href="#" onclick="fazerLogout()" style="color:var(--danger); margin-left:8px; text-decoration:none; font-weight:600;">Sair</a>
+  <!-- TELA DE LOGIN -->
+  <div class="overlay" id="screen-login">
+    <div class="modal" style="max-width: 360px; text-align: center;">
+      <h2 style="margin-bottom: 8px;">🔑 Acesso ao Sistema</h2>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Digite seu usuário e senha para acessar</p>
+      
+      <div class="field-group" style="text-align: left;">
+        <label>Usuário</label>
+        <input type="text" id="login-user" placeholder="Ex: operador1">
       </div>
-      <button class="btn btn-reload" onclick="carregarTodosDados(true)">🔄 Recarregar</button>
+      
+      <div class="field-group" style="text-align: left;">
+        <label>Senha</label>
+        <input type="password" id="login-pass" placeholder="••••••••">
+      </div>
+
+      <div id="login-err" style="color: var(--danger); font-size: 12px; margin-bottom: 12px; display: none;"></div>
+
+      <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 10px;" onclick="efetuarLogin()">Entrar</button>
     </div>
   </div>
 
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-title">Total Geral no Banco</div>
-      <div class="kpi-value" id="kpi-total">0</div>
+  <!-- INTERFACE PRINCIPAL -->
+  <div id="screen-app" style="display: none;">
+    <div class="header">
+      <h1>GESTÃO DE MOLDES</h1>
+      <div class="user-info">
+        <span>Usuário: <b id="lbl-user">-</b> (<span id="lbl-role">-</span>)</span>
+        <button class="btn btn-danger" onclick="logout()">Sair</button>
+      </div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Itens na Aba Selecionada</div>
-      <div class="kpi-value" id="kpi-aba-count">0</div>
+
+    <!-- ABAS DA PLANILHA -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="trocarAba('ATUALIZADA', this)">Plástico (ATUALIZADA)</button>
+      <button class="tab-btn" onclick="trocarAba('Transferências e Step Bay Step', this)">Transferências / Step</button>
+      <button class="tab-btn" onclick="trocarAba('Sem local', this)">Sem Local</button>
+      <button class="tab-btn" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
+      <button class="tab-btn" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Aba Ativa</div>
-      <div class="kpi-value" id="kpi-aba-nome" style="font-size: 20px;">PLÁSTICO</div>
+
+    <div class="actions-bar">
+      <input type="text" class="search-box" id="inp-search" placeholder="Buscar molde, código..." oninput="filtrarTabela()">
+      <div id="status-msg"></div>
     </div>
-  </div>
 
-  <div class="nav-tabs" id="container-abas">
-    <button id="tab-atualizada" class="tab-btn active" onclick="trocarAba('ATUALIZADA')">PLÁSTICO</button>
-    <button id="tab-qlx" class="tab-btn" onclick="trocarAba('Moldes QLX')">Moldes QLX</button>
-    <button id="tab-step" class="tab-btn" onclick="trocarAba('Transferências e Step Bay Step')">Step Bay Step</button>
-    <button id="tab-semlocal" class="tab-btn" onclick="trocarAba('Sem Local')">Sem Local</button>
-    <button id="tab-ferramentaria" class="tab-btn" onclick="trocarAba('ferramentaria')">Ferramentaria</button>
-  </div>
-
-  <div id="status-msg" class="status">Iniciando...</div>
-
-  <div class="dashboard-card" id="card-formulario">
-    <div class="card-header">
-      <span id="form-title">Adicionar Registro</span>
-    </div>
-    <input type="hidden" id="edit-row-index" value="">
-    <input type="hidden" id="edit-aba-origem" value="">
-    
-    <div id="form-campos" class="form-grid"></div>
-    
-    <div class="btn-actions">
-      <button onclick="salvarMolde()" id="btn-salvar" class="btn btn-primary" style="width:auto;">💾 Salvar Registro</button>
-      <button onclick="limparFormulario()" id="btn-cancelar" class="btn btn-cancel" style="display:none;">Cancelar Edição</button>
-    </div>
-  </div>
-
-  <div class="dashboard-card">
-    <div class="card-header">🔍 Consulta Geral</div>
-    <input type="text" id="input-busca" placeholder="Digite Código, Local ou Descrição para filtrar..." onkeyup="filtrarGeral()">
-  </div>
-
-  <div class="dashboard-card">
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr id="tabela-cabecalho"></tr>
-        </thead>
-        <tbody id="tabela-corpo"></tbody>
+    <!-- TABELA DE DADOS -->
+    <div class="table-container">
+      <table id="tbl-data">
+        <thead id="tbl-head"></thead>
+        <tbody id="tbl-body"></tbody>
       </table>
     </div>
   </div>
-</div>
+
   <!-- MODAL DE SOLICITAÇÃO DE MANUTENÇÃO (OS) -->
-<div class="login-overlay" id="modal-os" style="display: none;">
-  <div class="login-box" style="max-width: 500px; text-align: left;">
-    <h2 style="margin-bottom: 12px; text-align: center;">🔧 Solicitador de Manutenção</h2>
-    
-    <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-      <div>
-        <label style="font-size: 11px; font-weight:600;">Data Entrada</label>
-        <input type="date" id="os-data">
+  <div class="overlay" id="modal-os" style="display: none;">
+    <div class="modal">
+      <h2>🔧 Solicitação de Manutenção (OS)</h2>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="field-group">
+          <label>Data Entrada</label>
+          <input type="date" id="os-data">
+        </div>
+        <div class="field-group">
+          <label>Hora Entrada</label>
+          <input type="time" id="os-hora">
+        </div>
       </div>
-      <div>
-        <label style="font-size: 11px; font-weight:600;">Hora Entrada</label>
-        <input type="time" id="os-hora">
+
+      <div class="field-group">
+        <label>Solicitante</label>
+        <input type="text" id="os-solicitante" placeholder="Nome do solicitante">
       </div>
-    </div>
 
-    <div class="login-field">
-      <label>Solicitante</label>
-      <input type="text" id="os-solicitante" placeholder="Nome do solicitante">
-    </div>
-
-    <div class="login-field">
-      <label>Tipo de Serviço</label>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; margin-top: 4px;">
-        <label><input type="checkbox" name="os-tipo" value="Crítico"> Crítico</label>
-        <label><input type="checkbox" name="os-tipo" value="Melhoria"> Melhoria</label>
-        <label><input type="checkbox" name="os-tipo" value="Preventiva"> Preventiva</label>
-        <label><input type="checkbox" name="os-tipo" value="Modificação"> Modificação</label>
+      <div class="field-group">
+        <label>Tipo de Serviço</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" name="os-tipo" value="Crítico"> Crítico</label>
+          <label><input type="checkbox" name="os-tipo" value="Melhoria"> Melhoria</label>
+          <label><input type="checkbox" name="os-tipo" value="Preventiva"> Preventiva</label>
+          <label><input type="checkbox" name="os-tipo" value="Modificação"> Modificação</label>
+        </div>
       </div>
-    </div>
 
-    <div class="login-field">
-      <label>Detalhamento do Problema / Observações</label>
-      <textarea id="os-obs" rows="3" style="width:100%; border-radius:8px; border:1px solid var(--border-color); padding:8px; outline:none; font-family:inherit;"></textarea>
-    </div>
+      <div class="field-group">
+        <label>Detalhamento do Problema / Observações</label>
+        <textarea id="os-obs" rows="3"></textarea>
+      </div>
 
-    <div class="btn-actions" style="margin-top: 16px;">
-      <button class="btn btn-primary" onclick="confirmarEnvioFerramentaria()">Confirmar e Gerar OS</button>
-      <button class="btn btn-cancel" onclick="fecharModalOS()">Cancelar</button>
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+        <button class="btn btn-cancel" onclick="fecharModalOS()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarEnvioFerramentaria()">Confirmar e Gerar OS</button>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-  // Insira a URL do seu Web App caso acesse como sistema independente
-  const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
+  <script>
+    // URL DO SEU GOOGLE APPS SCRIPT WEB APP
+    const BASE_API = "https://script.google.com/macros/s/AKfycbzQ7R6Y83x--EXEMPLO--/exec"; 
 
-  let currentUser = localStorage.getItem('bm_user') || "";
-  let userRole = localStorage.getItem('bm_role') || ""; 
-  let abaAtual = "ATUALIZADA";
-  
-  let bancoCompleto = { 
-    "ATUALIZADA": [], 
-    "Moldes QLX": [], 
-    "Transferências e Step Bay Step": [],
-    "Sem Local": [],
-    "ferramentaria": []
-  };
-  let itemSendoEditado = null;
-  let listaExibida = [];
-  let timerBusca = null;
+    let currentUser = "";
+    let userRole = "";
+    let abaAtual = "ATUALIZADA";
+    let dadosBrutos = [];
+    let itemSelecionadoOS = null;
 
-  function chamarAPI(parametros) {
-    return new Promise((resolve, reject) => {
-      if (typeof google !== 'undefined' && google.script && google.script.run) {
-        const acao = parametros.action;
-        if (acao === "LOGIN") {
-          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).tratarLogin(parametros.user, parametros.pass);
-          return;
-        } else if (acao === "SAVE") {
-          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).tratarSalvar(parametros);
-          return;
-        } else if (acao === "DELETE") {
-          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).tratarExcluir(parametros);
-          return;
-        } else if (parametros.sheet) {
-          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).lerDadosAba(parametros.sheet, parametros.role);
-          return;
-        }
-      }
-
-      if (BASE_API && BASE_API.length > 0) {
+    // Comunicação via JSONP para suporte total ao GitHub Pages
+    function chamarAPI(params) {
+      return new Promise((resolve, reject) => {
         const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
-        parametros.callback = callbackName;
-
-        const queryString = Object.keys(parametros)
-          .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(parametros[key]))
-          .join('&');
-
-        const script = document.createElement('script');
-        script.src = `${BASE_API}?${queryString}`;
-
         window[callbackName] = function(data) {
           delete window[callbackName];
           document.body.removeChild(script);
           resolve(data);
         };
 
-        script.onerror = function() {
-          delete window[callbackName];
-          document.body.removeChild(script);
-          reject(new Error("Erro de conexão com o servidor."));
-        };
+        params.callback = callbackName;
+        const queryString = Object.keys(params)
+          .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key]))
+          .join('&');
 
+        const script = document.createElement('script');
+        script.src = BASE_API + '?' + queryString;
+        script.onerror = () => reject(new Error('Erro na requisição com o servidor'));
         document.body.appendChild(script);
+      });
+    }
+
+    async function efetuarLogin() {
+      const user = document.getElementById('login-user').value.trim();
+      const pass = document.getElementById('login-pass').value.trim();
+      const errDiv = document.getElementById('login-err');
+
+      if (!user || !pass) {
+        errDiv.innerText = "Preencha usuário e senha.";
+        errDiv.style.display = "block";
         return;
       }
 
-      reject(new Error("Ambiente Apps Script não identificado e BASE_API não configurada."));
-    });
-  }
-
-  async function efetuarLogin() {
-    const user = document.getElementById('login-user').value.trim();
-    const pass = document.getElementById('login-pass').value.trim();
-    const msg = document.getElementById('login-msg');
-
-    if (!user || !pass) {
-      msg.innerText = "Informe o usuário e a senha.";
-      return;
-    }
-
-    msg.innerText = "Autenticando...";
-    msg.style.color = "var(--primary)";
-
-    try {
-      const res = await chamarAPI({ action: "LOGIN", user: user, pass: pass });
+      errDiv.style.display = "none";
       
-      if (res && res.status === "success") {
-        currentUser = res.user;
-        userRole = res.role;
+      try {
+        const res = await chamarAPI({ action: "LOGIN", user: user, pass: pass });
+        if (res && res.status === "success") {
+          currentUser = res.user;
+          userRole = res.role;
+          
+          document.getElementById('lbl-user').innerText = currentUser;
+          document.getElementById('lbl-role').innerText = userRole;
+          document.getElementById('screen-login').style.display = "none";
+          document.getElementById('screen-app').style.display = "block";
 
-        localStorage.setItem('bm_user', currentUser);
-        localStorage.setItem('bm_role', userRole);
-
-        msg.innerText = "";
-        iniciarSessao();
-      } else {
-        msg.style.color = "var(--danger)";
-        msg.innerText = (res && res.message) ? res.message : "Erro ao efetuar login.";
-      }
-    } catch (e) {
-      msg.style.color = "var(--danger)";
-      msg.innerText = "Erro de autenticação com o servidor.";
-    }
-  }
-  
-  let itemParaFerramentaria = null;
-
-// Função chamada ao clicar em '🔧 P/ Ferramentaria'
-function transferirDireto(index, abaDestino) {
-  if (userRole === 'nivel1') return;
-  const item = listaExibida[index];
-  if (!item) return;
-
-  const abaOrigem = item._abaOrigem || abaAtual;
-
-  // 1. Fluxo de envio para Ferramentaria (Abre Modal de OS)
-  if (abaDestino === 'ferramentaria') {
-    itemParaFerramentaria = { item: item, abaOrigem: abaOrigem };
-    
-    // Preenche data e hora automáticos
-    const agora = new Date();
-    document.getElementById('os-data').value = agora.toISOString().split('T')[0];
-    document.getElementById('os-hora').value = agora.toTimeString().split(' ')[0].substring(0, 5);
-    document.getElementById('os-solicitante').value = currentUser;
-    document.getElementById('os-obs').value = '';
-    document.querySelectorAll('input[name="os-tipo"]').forEach(ck => ck.checked = false);
-
-    document.getElementById('modal-os').style.display = 'flex';
-    return;
-  }
-
-  // 2. Fluxo de liberação para Plástico (Registra Responsável e Historico)
-  if (abaDestino === 'ATUALIZADA' && abaOrigem === 'ferramentaria') {
-    if (!confirm(`Confirmar a liberação do molde "${item.col_2 || item.col_0}" para o PLÁSTICO?`)) return;
-
-    const statusDiv = document.getElementById('status-msg');
-    statusDiv.innerText = "Registrando liberação no histórico e transferindo...";
-    statusDiv.style.color = "var(--primary)";
-
-    chamarAPI({
-      action: "LIBERAR_PLASTICO",
-      abaOrigem: abaOrigem,
-      rowIndex: item._rowIndex,
-      col1: acharCampo(item, ['local', 'molde'], 0),
-      col2: acharCampo(item, ['cod', 'codigo'], 1),
-      col3: acharCampo(item, ['desc', 'descricao'], 2),
-      liberadoPor: currentUser
-    }).then(res => {
-      statusDiv.innerText = "✅ Molde liberado com sucesso para o Plástico!";
-      statusDiv.style.color = "var(--success)";
-      carregarTodosDados(true);
-    });
-  }
-}
-
-function fecharModalOS() {
-  document.getElementById('modal-os').style.display = 'none';
-  itemParaFerramentaria = null;
-}
-
-async function confirmarEnvioFerramentaria() {
-  if (!itemParaFerramentaria) return;
-
-  const dataVal = document.getElementById('os-data').value;
-  const horaVal = document.getElementById('os-hora').value;
-  const solicitanteVal = document.getElementById('os-solicitante').value.trim();
-  const obsVal = document.getElementById('os-obs').value.trim();
-
-  let tiposSelecionados = [];
-  document.querySelectorAll('input[name="os-tipo"]:checked').forEach(ck => {
-    tiposSelecionados.push(ck.value);
-  });
-
-  if (!solicitanteVal) {
-    alert("Informe o nome do solicitante.");
-    return;
-  }
-
-  const item = itemParaFerramentaria.item;
-  const abaOrigem = itemParaFerramentaria.abaOrigem;
-
-  fecharModalOS();
-
-  const statusDiv = document.getElementById('status-msg');
-  statusDiv.innerText = "Gerando Ordem de Serviço e enviando para Ferramentaria...";
-  statusDiv.style.color = "var(--primary)";
-
-  try {
-    const res = await chamarAPI({
-      action: "SOLICITAR_FERRAMENTARIA",
-      abaOrigem: abaOrigem,
-      rowIndex: item._rowIndex,
-      col1: acharCampo(item, ['local', 'molde'], 0),
-      col2: acharCampo(item, ['cod', 'codigo'], 1),
-      col3: acharCampo(item, ['desc', 'descricao'], 2),
-      data: dataVal,
-      hora: horaVal,
-      solicitante: solicitanteVal,
-      tipos: tiposSelecionados.join(", "),
-      obs: obsVal
-    });
-
-    if (res && res.status === "success") {
-      alert(`✅ Ordem de Serviço Nº ${res.osNumber} gerada com sucesso!`);
-      statusDiv.innerText = `✅ OS Nº ${res.osNumber} gerada e enviada!`;
-      statusDiv.style.color = "var(--success)";
-      carregarTodosDados(true);
-    }
-  } catch (e) {
-    statusDiv.innerText = "⚠️ Erro ao registrar solicitação.";
-    statusDiv.style.color = "var(--danger)";
-  }
-}
-
-  function fazerLogout() {
-    localStorage.removeItem('bm_user');
-    localStorage.removeItem('bm_role');
-    location.reload();
-  }
-
-  function iniciarSessao() {
-    if (!currentUser || !userRole) {
-      document.getElementById('login-modal').style.display = 'flex';
-      document.getElementById('app-container').style.display = 'none';
-      return;
-    }
-
-    document.getElementById('login-modal').style.display = 'none';
-    document.getElementById('app-container').style.display = 'block';
-
-    document.getElementById('lbl-user-name').innerText = currentUser;
-    document.getElementById('lbl-user-role').innerText = userRole.toUpperCase();
-
-    if (userRole === "ferramentaria") {
-      abaAtual = "ferramentaria";
-    }
-
-    aplicarPermissoesInterface();
-    redefinirFormulario();
-    carregarTodosDados();
-  }
-
-  function aplicarPermissoesInterface() {
-    const cardForm = document.getElementById('card-formulario');
-    const tabAtualizada = document.getElementById('tab-atualizada');
-    const tabQlx = document.getElementById('tab-qlx');
-    const tabStep = document.getElementById('tab-step');
-    const tabSemlocal = document.getElementById('tab-semlocal');
-    const tabFerramentaria = document.getElementById('tab-ferramentaria');
-
-    if (userRole === 'nivel1') {
-      cardForm.style.display = 'none';
-    } else {
-      cardForm.style.display = 'block';
-    }
-
-    if (userRole === 'ferramentaria') {
-      tabAtualizada.style.display = 'none';
-      tabQlx.style.display = 'none';
-      tabStep.style.display = 'none';
-      tabSemlocal.style.display = 'none';
-      tabFerramentaria.style.display = 'inline-block';
-      trocarAba('ferramentaria');
-    } else {
-      tabAtualizada.style.display = 'inline-block';
-      tabQlx.style.display = 'inline-block';
-      tabStep.style.display = 'inline-block';
-      tabSemlocal.style.display = 'inline-block';
-      tabFerramentaria.style.display = 'inline-block';
-    }
-  }
-
-  function formatarPrazo(valor) {
-    if (!valor || valor === '-') return '-';
-    if (typeof valor === 'string' && valor.includes('T') && valor.includes('Z')) {
-      const data = new Date(valor);
-      if (!isNaN(data.getTime())) {
-        const dia = String(data.getUTCDate()).padStart(2, '0');
-        const mes = String(data.getUTCMonth() + 1).padStart(2, '0');
-        const ano = data.getUTCFullYear();
-        return `${dia}/${mes}/${ano}`;
-      }
-    }
-    return valor;
-  }
-
-  function normalizarTexto(valor) {
-    if (valor === undefined || valor === null || valor === '') return '-';
-    return String(valor).trim();
-  }
-
-  function formatarNomeExibicao(nomeAba) {
-    if (nomeAba === 'ATUALIZADA') return 'PLÁSTICO';
-    if (nomeAba === 'ferramentaria') return 'FERRAMENTARIA';
-    return nomeAba;
-  }
-
-  function atualizarKPIs() {
-    let totalGeral = 0;
-    Object.keys(bancoCompleto).forEach(aba => {
-      totalGeral += (bancoCompleto[aba] || []).length;
-    });
-
-    const countAbaAtual = (bancoCompleto[abaAtual] || []).length;
-
-    document.getElementById('kpi-total').innerText = totalGeral;
-    document.getElementById('kpi-aba-count').innerText = countAbaAtual;
-    document.getElementById('kpi-aba-nome').innerText = formatarNomeExibicao(abaAtual);
-  }
-
-  function acharCampo(item, palavrasChave, indicePadrao = -1) {
-    if (!item) return '-';
-    const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_abaOrigem');
-    for (let k of keys) {
-      const keyLimpa = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-      for (let p of palavrasChave) {
-        if (keyLimpa.includes(p)) {
-          return normalizarTexto(item[k]);
-        }
-      }
-    }
-    if (indicePadrao >= 0 && keys[indicePadrao] !== undefined) {
-      return normalizarTexto(item[keys[indicePadrao]]);
-    }
-    return '-';
-  }
-
-  function verificarExibirPrazo() {
-    const selectAba = document.getElementById('select-aba-destino');
-    const containerPrazo = document.getElementById('container-campo-prazo');
-    if (selectAba && containerPrazo) {
-      if (selectAba.value === 'ferramentaria') {
-        containerPrazo.style.display = 'block';
-      } else {
-        containerPrazo.style.display = 'none';
-        const inCol4 = document.getElementById('input-col4');
-        if (inCol4) inCol4.value = '';
-      }
-    }
-  }
-
-  function redefinirFormulario() {
-    const container = document.getElementById('form-campos');
-    container.innerHTML = '';
-
-    let opcoesAba = '';
-    if (userRole === 'ferramentaria') {
-      opcoesAba = `
-        <option value="ferramentaria" selected>Ferramentaria</option>
-        <option value="ATUALIZADA">PLÁSTICO</option>
-      `;
-    } else {
-      opcoesAba = `
-        <option value="ATUALIZADA" ${abaAtual === 'ATUALIZADA' ? 'selected' : ''}>PLÁSTICO</option>
-        <option value="Moldes QLX" ${abaAtual === 'Moldes QLX' ? 'selected' : ''}>Moldes QLX</option>
-        <option value="Transferências e Step Bay Step" ${abaAtual === 'Transferências e Step Bay Step' ? 'selected' : ''}>Step Bay Step</option>
-        <option value="Sem Local" ${abaAtual === 'Sem Local' ? 'selected' : ''}>Sem Local</option>
-        <option value="ferramentaria" ${abaAtual === 'ferramentaria' ? 'selected' : ''}>Ferramentaria</option>
-      `;
-    }
-
-    const selectAbaDestino = `
-      <div>
-        <label style="font-size: 12px; font-weight:600; color: var(--text-muted);">Aba Destino:</label>
-        <select id="select-aba-destino" onchange="verificarExibirPrazo()">
-          ${opcoesAba}
-        </select>
-      </div>
-    `;
-
-    if (abaAtual === 'Transferências e Step Bay Step') {
-      container.innerHTML = `
-        <input type="text" id="input-col1" placeholder="Código Qualifix">
-        <input type="text" id="input-col2" placeholder="Código Arteb">
-        <input type="text" id="input-col3" placeholder="Descrição">
-        <input type="text" id="input-col4" placeholder="Mercado">
-        <input type="text" id="input-col5" placeholder="Maq.">
-        <input type="text" id="input-col6" placeholder="Troca de Versão">
-        ${selectAbaDestino}
-      `;
-    } else {
-      let placeholderLocal = 'Local (ex: A1)';
-      if (abaAtual === 'Moldes QLX') placeholderLocal = 'Molde Nº (ex: 101)';
-
-      const exibePrazoInicial = abaAtual === 'ferramentaria' ? 'block' : 'none';
-
-      container.innerHTML = `
-        <input type="text" id="input-col1" placeholder="${placeholderLocal}">
-        <input type="text" id="input-col2" placeholder="Código">
-        <input type="text" id="input-col3" placeholder="Descrição">
-        <div id="container-campo-prazo" style="display: ${exibePrazoInicial}; width: 100%;">
-          <input type="text" id="input-col4" placeholder="Prazo (ex: 15/09/2026 ou 10 dias)">
-        </div>
-        ${selectAbaDestino}
-      `;
-    }
-  }
-
-  function trocarAba(novaAba) {
-    if (userRole === 'ferramentaria' && novaAba !== 'ferramentaria') return;
-
-    abaAtual = novaAba;
-    document.getElementById('tab-atualizada').classList.toggle('active', abaAtual === 'ATUALIZADA');
-    document.getElementById('tab-qlx').classList.toggle('active', abaAtual === 'Moldes QLX');
-    document.getElementById('tab-step').classList.toggle('active', abaAtual === 'Transferências e Step Bay Step');
-    document.getElementById('tab-semlocal').classList.toggle('active', abaAtual === 'Sem Local');
-    document.getElementById('tab-ferramentaria').classList.toggle('active', abaAtual === 'ferramentaria');
-    
-    document.getElementById('input-busca').value = '';
-    redefinirFormulario();
-    limparFormulario();
-    renderTabelaAbaAtual();
-    atualizarKPIs();
-  }
-
-  async function carregarTodosDados(forcado = false) {
-    const statusDiv = document.getElementById('status-msg');
-    statusDiv.innerText = "Carregando dados do servidor...";
-    statusDiv.style.color = "var(--primary)";
-
-    const abas = ["ATUALIZADA", "Moldes QLX", "Transferências e Step Bay Step", "Sem Local", "ferramentaria"];
-
-    try {
-      for (let aba of abas) {
-        const resData = await chamarAPI({ sheet: aba, role: userRole });
-        if (Array.isArray(resData)) {
-          bancoCompleto[aba] = resData;
-        }
-      }
-      renderTabelaAbaAtual();
-      atualizarKPIs();
-      
-      let total = 0;
-      Object.keys(bancoCompleto).forEach(a => total += bancoCompleto[a].length);
-      
-      statusDiv.innerText = `Pronto! Total: ${total} itens sincronizados.`;
-      statusDiv.style.color = "var(--success)";
-    } catch (error) {
-      statusDiv.innerText = "Erro ao conectar com o servidor.";
-      statusDiv.style.color = "var(--danger)";
-    }
-  }
-
-  function renderTabelaAbaAtual() {
-    const dados = bancoCompleto[abaAtual] || [];
-    const dadosComAba = dados.map(item => ({ ...item, _abaOrigem: abaAtual }));
-    renderTabela(dadosComAba, false);
-  }
-
-  function renderTabela(dados, modoBuscaGlobal = false) {
-    listaExibida = dados;
-    const thead = document.getElementById('tabela-cabecalho');
-    const tbody = document.getElementById('tabela-corpo');
-    tbody.innerHTML = '';
-
-    const colAcoes = userRole !== 'nivel1' ? '<th>Ações</th>' : '';
-
-    if (modoBuscaGlobal) {
-      thead.innerHTML = `<th>Aba / Origem</th><th>Local / Molde</th><th>Código</th><th>Descrição</th><th>Prazo / Info</th>${colAcoes}`;
-    } else if (abaAtual === 'Transferências e Step Bay Step') {
-      thead.innerHTML = `<th>Cód. Qualifix</th><th>Cód. Arteb</th><th>Descrição</th><th>Mercado</th><th>Maq.</th><th>Troca Versão</th>${colAcoes}`;
-    } else if (abaAtual === 'ferramentaria') {
-      thead.innerHTML = `<th>Local</th><th>Código</th><th>Descrição</th><th>Prazo</th>${colAcoes}`;
-    } else {
-      thead.innerHTML = `<th>${abaAtual === 'Moldes QLX' ? 'Molde Nº' : 'Local'}</th><th>Código</th><th>Descrição</th>${colAcoes}`;
-    }
-
-    if (!dados || dados.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
-      return;
-    }
-
-    const fragment = document.createDocumentFragment();
-
-    dados.forEach((item, index) => {
-      const tr = document.createElement('tr');
-      const abaOrigem = item._abaOrigem || abaAtual;
-      const nomeAbaExibicao = formatarNomeExibicao(abaOrigem);
-
-      let botoesAcoesHtml = '';
-
-      if (userRole !== 'nivel1') {
-        let botoesTransferencia = '';
-
-        if (userRole === 'ferramentaria') {
-          botoesTransferencia = `<button class="btn-move" onclick="transferirDireto(${index}, 'ATUALIZADA')">➡️ Liberar (PLÁSTICO)</button>`;
-        } else if (abaOrigem === "ferramentaria") {
-          botoesTransferencia = `<button class="btn-move" onclick="transferirDireto(${index}, 'ATUALIZADA')">➡️ Liberar (PLÁSTICO)</button>`;
-        } else if (abaOrigem === "ATUALIZADA") {
-          botoesTransferencia = `
-            <button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>
-            <button class="btn-move-alt" onclick="transferirDireto(${index}, 'Moldes QLX')">➡️ P/ QLX</button>
-          `;
-        } else if (abaOrigem === "Moldes QLX") {
-          botoesTransferencia = `
-            <button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>
-            <button class="btn-move-alt" onclick="transferirDireto(${index}, 'ATUALIZADA')">➡️ P/ PLÁSTICO</button>
-          `;
+          carregarDadosAba(abaAtual);
         } else {
-          botoesTransferencia = `<button class="btn-move" onclick="transferirDireto(${index}, 'ferramentaria')">🔧 P/ Ferramentaria</button>`;
+          errDiv.innerText = res.message || "Usuário ou senha incorretos.";
+          errDiv.style.display = "block";
+        }
+      } catch (e) {
+        errDiv.innerText = "Erro ao conectar com o servidor.";
+        errDiv.style.display = "block";
+      }
+    }
+
+    function logout() {
+      currentUser = "";
+      userRole = "";
+      document.getElementById('screen-app').style.display = "none";
+      document.getElementById('screen-login').style.display = "flex";
+    }
+
+    function trocarAba(nomeAba, btn) {
+      abaAtual = nomeAba;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      carregarDadosAba(nomeAba);
+    }
+
+    async function carregarDadosAba(nomeAba) {
+      const status = document.getElementById('status-msg');
+      status.innerText = "Carregando dados...";
+      status.style.color = "var(--text-muted)";
+
+      try {
+        const res = await chamarAPI({ sheet: nomeAba, role: userRole });
+        dadosBrutos = res || [];
+        renderizarTabela(dadosBrutos);
+        status.innerText = "";
+      } catch (e) {
+        status.innerText = "Erro ao carregar dados.";
+        status.style.color = "var(--danger)";
+      }
+    }
+
+    function renderizarTabela(dados) {
+      const head = document.getElementById('tbl-head');
+      const body = document.getElementById('tbl-body');
+      head.innerHTML = "";
+      body.innerHTML = "";
+
+      if (!dados || dados.length === 0) {
+        body.innerHTML = "<tr><td colspan='10' style='text-align:center;'>Nenhum registro encontrado.</td></tr>";
+        return;
+      }
+
+      const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex');
+
+      // Cabeçalho
+      let trHead = "<tr>";
+      colunas.forEach(c => trHead += `<th>${c}</th>`);
+      if (userRole !== 'nivel1') trHead += "<th>Ações</th>";
+      trHead += "</tr>";
+      head.innerHTML = trHead;
+
+      // Linhas
+      dados.forEach((row, idx) => {
+        let trBody = "<tr>";
+        colunas.forEach(c => trBody += `<td>${row[c] !== undefined ? row[c] : ''}</td>`);
+
+        if (userRole !== 'nivel1') {
+          trBody += `<td>`;
+          if (abaAtual !== 'ferramentaria' && abaAtual !== 'HISTORICO_MANUTENCAO') {
+            trBody += `<button class="btn btn-primary" onclick="abrirModalOS(${idx})">🔧 P/ Ferramentaria</button>`;
+          } else if (abaAtual === 'ferramentaria') {
+            trBody += `<button class="btn btn-success" onclick="liberarParaPlastico(${idx})">✅ Liberar p/ Plástico</button>`;
+          }
+          trBody += `</td>`;
         }
 
-        let btnExcluir = userRole === 'admin' || userRole === 'nivel2' ? `<button class="btn-delete" onclick="excluirMolde(${index})">Excluir</button>` : '';
-
-        botoesAcoesHtml = `
-          <td>
-            <div style="display:flex; gap:6px; flex-wrap:wrap;">
-              <button class="btn-edit" onclick="cliqueEditar(${index})">Editar</button>
-              ${botoesTransferencia}
-              ${btnExcluir}
-            </div>
-          </td>
-        `;
-      }
-
-      if (modoBuscaGlobal) {
-        const local = acharCampo(item, ['local', 'molde', 'num', 'nº', 'qualifix'], 0);
-        const codigo = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
-        const desc = acharCampo(item, ['desc', 'descricao'], 2);
-        const prazoInfo = formatarPrazo(acharCampo(item, ['prazo', 'mercado'], 3));
-
-        tr.innerHTML = `
-          <td><span class="badge-aba">${nomeAbaExibicao}</span></td>
-          <td><b>${local}</b></td>
-          <td>${codigo}</td>
-          <td>${desc}</td>
-          <td>${prazoInfo}</td>
-          ${botoesAcoesHtml}
-        `;
-      } else if (abaAtual === 'Transferências e Step Bay Step') {
-        const codQ = acharCampo(item, ['qualifix', 'col1'], 0);
-        const codA = acharCampo(item, ['arteb', 'col2'], 1);
-        const desc = acharCampo(item, ['desc', 'descricao'], 2);
-        const merc = acharCampo(item, ['mercado'], 3);
-        const maq = acharCampo(item, ['maq', 'maquina'], 4);
-        const troca = acharCampo(item, ['troca', 'versao'], 5);
-
-        tr.innerHTML = `
-          <td><b>${codQ}</b></td><td>${codA}</td><td>${desc}</td><td>${merc}</td><td>${maq}</td><td>${troca}</td>
-          ${botoesAcoesHtml}
-        `;
-      } else if (abaAtual === 'ferramentaria') {
-        const local = acharCampo(item, ['local', 'molde', 'num'], 0);
-        const codigo = acharCampo(item, ['cod', 'codigo'], 1);
-        const desc = acharCampo(item, ['desc', 'descricao'], 2);
-        const prazoFormatado = formatarPrazo(acharCampo(item, ['prazo'], 3));
-
-        tr.innerHTML = `
-          <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td><td><b style="color:var(--danger);">${prazoFormatado}</b></td>
-          ${botoesAcoesHtml}
-        `;
-      } else {
-        const local = acharCampo(item, ['local', 'molde', 'num'], 0);
-        const codigo = acharCampo(item, ['cod', 'codigo'], 1);
-        const desc = acharCampo(item, ['desc', 'descricao'], 2);
-
-        tr.innerHTML = `
-          <td><b>${local}</b></td><td>${codigo}</td><td>${desc}</td>
-          ${botoesAcoesHtml}
-        `;
-      }
-      fragment.appendChild(tr);
-    });
-
-    tbody.appendChild(fragment);
-  }
-
-  function cliqueEditar(index) {
-    if (userRole === 'nivel1') return;
-    const item = listaExibida[index];
-    if (!item) return;
-
-    const abaOrigem = item._abaOrigem || abaAtual;
-    if (abaOrigem !== abaAtual && userRole !== 'ferramentaria') {
-      trocarAba(abaOrigem);
-    }
-
-    prepararEdicaoDireta(item);
-  }
-
-  function prepararEdicaoDireta(item) {
-    if (!item) return;
-    itemSendoEditado = item;
-    const abaOrigem = item._abaOrigem || abaAtual;
-
-    if (abaAtual === 'Transferências e Step Bay Step') {
-      document.getElementById('input-col1').value = acharCampo(item, ['qualifix'], 0) !== '-' ? acharCampo(item, ['qualifix'], 0) : '';
-      document.getElementById('input-col2').value = acharCampo(item, ['arteb'], 1) !== '-' ? acharCampo(item, ['arteb'], 1) : '';
-      document.getElementById('input-col3').value = acharCampo(item, ['desc'], 2) !== '-' ? acharCampo(item, ['desc'], 2) : '';
-      document.getElementById('input-col4').value = acharCampo(item, ['mercado'], 3) !== '-' ? acharCampo(item, ['mercado'], 3) : '';
-      document.getElementById('input-col5').value = acharCampo(item, ['maq'], 4) !== '-' ? acharCampo(item, ['maq'], 4) : '';
-      document.getElementById('input-col6').value = acharCampo(item, ['troca'], 5) !== '-' ? acharCampo(item, ['troca'], 5) : '';
-    } else {
-      const local = acharCampo(item, ['local', 'molde', 'num'], 0);
-      const cod = acharCampo(item, ['cod', 'codigo'], 1);
-      const desc = acharCampo(item, ['desc'], 2);
-      const prazo = formatarPrazo(acharCampo(item, ['prazo'], 3));
-
-      document.getElementById('input-col1').value = local !== '-' ? local : '';
-      document.getElementById('input-col2').value = cod !== '-' ? cod : '';
-      document.getElementById('input-col3').value = desc !== '-' ? desc : '';
-      if (document.getElementById('input-col4')) {
-        document.getElementById('input-col4').value = prazo !== '-' ? prazo : '';
-      }
-    }
-
-    document.getElementById('edit-row-index').value = item._rowIndex || '';
-    document.getElementById('edit-aba-origem').value = abaOrigem;
-
-    const selectAba = document.getElementById('select-aba-destino');
-    if (selectAba) {
-      selectAba.value = abaOrigem;
-      verificarExibirPrazo();
-    }
-
-    document.getElementById('form-title').innerText = "Editar Registro (Linha " + (item._rowIndex || 'NOVA') + ")";
-    document.getElementById('btn-salvar').innerText = "💾 Salvar / Transferir Registro";
-    document.getElementById('btn-cancelar').style.display = "inline-flex";
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  async function transferirDireto(index, abaDestino) {
-    if (userRole === 'nivel1') return;
-    const item = listaExibida[index];
-    if (!item) return;
-
-    const abaOrigem = item._abaOrigem || abaAtual;
-    const desc = acharCampo(item, ['desc', 'descricao'], 2);
-    let nomeDestino = formatarNomeExibicao(abaDestino);
-
-    let col1 = acharCampo(item, ['local', 'molde', 'qualifix'], 0);
-    let col2 = acharCampo(item, ['cod', 'codigo', 'arteb'], 1);
-    let col3 = acharCampo(item, ['desc', 'descricao'], 2);
-    let col4 = "";
-
-    if ((abaOrigem === 'ATUALIZADA' && abaDestino === 'Moldes QLX') || (abaOrigem === 'Moldes QLX' && abaDestino === 'ATUALIZADA')) {
-      const retirarLocal = confirm(`Deseja remover o local/molde deste item?\n\n- Pressione OK para remover o local e mover para "Sem Local".\n- CANCELAR para manter o local e transferir para "${nomeDestino}".`);
-      if (retirarLocal) {
-        col1 = ""; 
-        abaDestino = "Sem Local";
-        nomeDestino = "Sem Local";
-      }
-    }
-
-    if (abaDestino === 'ferramentaria') {
-      const prazoInfo = prompt(`Informe o PRAZO para a Ferramentaria (opcional):`, "");
-      if (prazoInfo === null) return;
-      col4 = prazoInfo;
-    }
-
-    if (!confirm(`Deseja transferir o item "${desc}" para ${nomeDestino}?`)) return;
-
-    const rIndexOrigem = item._rowIndex;
-    const statusDiv = document.getElementById('status-msg');
-    statusDiv.innerText = "Sincronizando transferência...";
-    statusDiv.style.color = "var(--primary)";
-
-    try {
-      await chamarAPI({
-        action: "SAVE",
-        sheet: abaDestino,
-        rowIndex: "",
-        c1: col1 === '-' ? '' : col1,
-        c2: col2 === '-' ? '' : col2,
-        c3: col3 === '-' ? '' : col3,
-        c4: col4,
-        role: userRole
+        trBody += "</tr>";
+        body.innerHTML += trBody;
       });
-
-      if (rIndexOrigem) {
-        await chamarAPI({ action: "DELETE", sheet: abaOrigem, rowIndex: rIndexOrigem, role: userRole });
-      }
-
-      statusDiv.innerText = `✅ Registro transferido para ${nomeDestino}!`;
-      statusDiv.style.color = "var(--success)";
-    } catch (e) {
-      statusDiv.innerText = "⚠️ Erro ao transferir registro.";
-      statusDiv.style.color = "var(--danger)";
     }
 
-    setTimeout(() => { carregarTodosDados(true); }, 1000);
-  }
+    function filtrarTabela() {
+      const q = document.getElementById('inp-search').value.toLowerCase();
+      const filtrados = dadosBrutos.filter(item => {
+        return Object.values(item).some(v => v.toString().toLowerCase().includes(q));
+      });
+      renderizarTabela(filtrados);
+    }
 
-  function filtrarGeral() {
-    clearTimeout(timerBusca);
-    timerBusca = setTimeout(() => {
-      const termo = document.getElementById('input-busca').value.trim().toLowerCase();
-      if (!termo) { renderTabelaAbaAtual(); return; }
+    // Modal de Ações OS
+    function abrirModalOS(index) {
+      itemSelecionadoOS = dadosBrutos[index];
+      const agora = new Date();
+      document.getElementById('os-data').value = agora.toISOString().split('T')[0];
+      document.getElementById('os-hora').value = agora.toTimeString().split(' ')[0].substring(0, 5);
+      document.getElementById('os-solicitante').value = currentUser;
+      document.getElementById('os-obs').value = '';
+      document.querySelectorAll('input[name="os-tipo"]').forEach(ck => ck.checked = false);
 
-      let resultados = [];
-      Object.keys(bancoCompleto).forEach(nomeAba => {
-        if (userRole === 'ferramentaria' && nomeAba !== 'ferramentaria') return;
+      document.getElementById('modal-os').style.display = 'flex';
+    }
 
-        bancoCompleto[nomeAba].forEach(item => {
-          const valores = Object.keys(item)
-            .filter(k => k !== '_rowIndex')
-            .map(k => String(item[k]))
-            .join(' ')
-            .toLowerCase();
+    function fecharModalOS() {
+      document.getElementById('modal-os').style.display = 'none';
+      itemSelecionadoOS = null;
+    }
 
-          if (valores.includes(termo)) {
-            resultados.push({ ...item, _abaOrigem: nomeAba });
-          }
+    async function confirmarEnvioFerramentaria() {
+      if (!itemSelecionadoOS) return;
+
+      const dataVal = document.getElementById('os-data').value;
+      const horaVal = document.getElementById('os-hora').value;
+      const solicitanteVal = document.getElementById('os-solicitante').value.trim();
+      const obsVal = document.getElementById('os-obs').value.trim();
+
+      let tipos = [];
+      document.querySelectorAll('input[name="os-tipo"]:checked').forEach(ck => tipos.push(ck.value));
+
+      if (!solicitanteVal) {
+        alert("Por favor, preencha o solicitante.");
+        return;
+      }
+
+      const keys = Object.keys(itemSelecionadoOS).filter(k => k !== '_rowIndex');
+      const col1 = itemSelecionadoOS[keys[0]] || "";
+      const col2 = itemSelecionadoOS[keys[1]] || "";
+      const col3 = itemSelecionadoOS[keys[2]] || "";
+
+      fecharModalOS();
+
+      const status = document.getElementById('status-msg');
+      status.innerText = "Gerando Ordem de Serviço...";
+      status.style.color = "var(--accent)";
+
+      try {
+        const res = await chamarAPI({
+          action: "SOLICITAR_FERRAMENTARIA",
+          abaOrigem: abaAtual,
+          rowIndex: itemSelecionadoOS._rowIndex,
+          col1: col1,
+          col2: col2,
+          col3: col3,
+          data: dataVal,
+          hora: horaVal,
+          solicitante: solicitanteVal,
+          tipos: tipos.join(", "),
+          obs: obsVal
         });
-      });
-      renderTabela(resultados, true);
-    }, 250);
-  }
 
-  async function salvarMolde() {
-    if (userRole === 'nivel1') return;
-
-    const col1 = document.getElementById('input-col1').value.trim();
-    const col2 = document.getElementById('input-col2').value.trim();
-    const col3 = document.getElementById('input-col3').value.trim();
-    
-    const campoCol4 = document.getElementById('input-col4');
-    const col4 = campoCol4 ? campoCol4.value.trim() : '';
-    
-    const rowIndex = document.getElementById('edit-row-index').value;
-    const abaOrigemGuardada = document.getElementById('edit-aba-origem').value || abaAtual;
-    const abaDestino = document.getElementById('select-aba-destino') ? document.getElementById('select-aba-destino').value : abaAtual;
-
-    if (!col1 && !col2) {
-      alert('Preencha pelo menos um campo!');
-      return;
-    }
-
-    const statusDiv = document.getElementById('status-msg');
-    let col5 = "", col6 = "";
-    
-    if (abaAtual === 'Transferências e Step Bay Step') {
-      col5 = document.getElementById('input-col5') ? document.getElementById('input-col5').value.trim() : '';
-      col6 = document.getElementById('input-col6') ? document.getElementById('input-col6').value.trim() : '';
-    }
-
-    const eTransferencia = rowIndex && (abaOrigemGuardada !== abaDestino);
-
-    statusDiv.innerText = "Salvando registro...";
-    statusDiv.style.color = "var(--primary)";
-
-    try {
-      if (eTransferencia) {
-        await chamarAPI({ action: "SAVE", sheet: abaDestino, rowIndex: "", c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6, role: userRole });
-        await chamarAPI({ action: "DELETE", sheet: abaOrigemGuardada, rowIndex: rowIndex, role: userRole });
-      } else {
-        await chamarAPI({ action: "SAVE", sheet: abaDestino, rowIndex: rowIndex, c1: col1, c2: col2, c3: col3, c4: col4, c5: col5, c6: col6, role: userRole });
+        if (res && res.status === "success") {
+          alert(`✅ Ordem de Serviço Nº ${res.osNumber} criada com sucesso!`);
+          carregarDadosAba(abaAtual);
+        }
+      } catch (e) {
+        alert("Erro ao enviar solicitação.");
       }
-
-      limparFormulario();
-      statusDiv.innerText = "✅ Salvo com sucesso!";
-      statusDiv.style.color = "var(--success)";
-    } catch (e) {
-      statusDiv.innerText = "⚠️ Erro ao salvar registro.";
-      statusDiv.style.color = "var(--danger)";
     }
 
-    setTimeout(() => { carregarTodosDados(true); }, 1000);
-  }
+    async function liberarParaPlastico(index) {
+      const item = dadosBrutos[index];
+      if (!confirm(`Confirmar a liberação do molde para o setor de Plástico?`)) return;
 
-  async function excluirMolde(index) {
-    if (userRole === 'nivel1') return;
+      const keys = Object.keys(item).filter(k => k !== '_rowIndex');
 
-    const item = listaExibida[index];
-    if (!item) return;
+      try {
+        const res = await chamarAPI({
+          action: "LIBERAR_PLASTICO",
+          abaOrigem: abaAtual,
+          rowIndex: item._rowIndex,
+          col1: item[keys[0]] || "",
+          col2: item[keys[1]] || "",
+          col3: item[keys[2]] || "",
+          liberadoPor: currentUser
+        });
 
-    const abaOrigem = item._abaOrigem || abaAtual;
-    const rowIndex = item._rowIndex;
-
-    if (!rowIndex) return;
-
-    const desc = acharCampo(item, ['desc', 'descricao', 'codigo', 'cod'], 2);
-    if (!confirm(`Tem certeza que deseja EXCLUIR "${desc}" (Linha ${rowIndex})?`)) return;
-
-    const statusDiv = document.getElementById('status-msg');
-    statusDiv.innerText = "Excluindo registro...";
-    statusDiv.style.color = "var(--danger)";
-
-    try {
-      await chamarAPI({ action: "DELETE", sheet: abaOrigem, rowIndex: rowIndex, role: userRole });
-      statusDiv.innerText = "🗑️ Excluído com sucesso!";
-      statusDiv.style.color = "var(--success)";
-    } catch (err) {
-      statusDiv.innerText = "⚠️ Ocorreu um erro ao excluir.";
+        if (res && res.status === "success") {
+          alert("✅ Molde liberado para o Plástico e registrado no histórico!");
+          carregarDadosAba(abaAtual);
+        }
+      } catch (e) {
+        alert("Erro ao liberar ferramenta.");
+      }
     }
-
-    setTimeout(() => { carregarTodosDados(true); }, 800);
-  }
-
-  function limparFormulario() {
-    itemSendoEditado = null;
-    document.querySelectorAll('#form-campos input').forEach(i => i.value = '');
-    document.getElementById('edit-row-index').value = '';
-    document.getElementById('edit-aba-origem').value = '';
-    document.getElementById('form-title').innerText = "Adicionar Registro";
-    document.getElementById('btn-salvar').innerText = "💾 Salvar Registro";
-    document.getElementById('btn-cancelar').style.display = "none";
-    
-    const selectAba = document.getElementById('select-aba-destino');
-    if (selectAba) {
-      selectAba.value = abaAtual;
-      verificarExibirPrazo();
-    }
-  }
-
-  document.getElementById('login-pass').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') efetuarLogin();
-  });
-
-  iniciarSessao();
-</script>
+  </script>
 </body>
 </html>
