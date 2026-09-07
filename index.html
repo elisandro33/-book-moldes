@@ -192,7 +192,22 @@
       </div>
     </div>
   </div>
+<!-- MODAL DE LIBERAÇÃO PARA O PLÁSTICO -->
+  <div class="overlay" id="modal-liberar" style="display: none;">
+    <div class="modal">
+      <h2>✅ Liberar Molde para Plástico</h2>
+      
+      <div class="field-group">
+        <label>Ação Realizada / Observações da Manutenção</label>
+        <textarea id="liberar-acao" rows="4" placeholder="Descreva o serviço realizado no molde..."></textarea>
+      </div>
 
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+        <button class="btn btn-cancel" onclick="fecharModalLiberar()">Cancelar</button>
+        <button class="btn btn-success" onclick="confirmarLiberacaoPlastico()">Confirmar Liberação</button>
+      </div>
+    </div>
+  </div>
   <script>
     const BASE_API = "https://script.google.com/macros/s/SEU_SCRIPT_ID_AQUI/exec"; 
 
