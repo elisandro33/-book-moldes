@@ -322,56 +322,60 @@
     }
 
     async function confirmarEnvioFerramentaria() {
-      if (!itemSelecionadoOS) return;
+  if (!itemSelecionadoOS) return;
 
-      const dataVal = document.getElementById('os-data').value;
-      const horaVal = document.getElementById('os-hora').value;
-      const solicitanteVal = document.getElementById('os-solicitante').value.trim();
-      const obsVal = document.getElementById('os-obs').value.trim();
+  const dataVal = document.getElementById('os-data').value;
+  const horaVal = document.getElementById('os-hora').value;
+  const solicitanteVal = document.getElementById('os-solicitante').value.trim();
+  const obsVal = document.getElementById('os-obs').value.trim();
 
-      let tipos = [];
-      document.querySelectorAll('input[name="os-tipo"]:checked').forEach(ck => tipos.push(ck.value));
+  let tipos = [];
+  document.querySelectorAll('input[name="os-tipo"]:checked').forEach(ck => tipos.push(ck.value));
 
-      if (!solicitanteVal) {
-        alert("Por favor, preencha o solicitante.");
-        return;
-      }
+  if (!solicitanteVal) {
+    alert("Por favor, preencha o solicitante.");
+    return;
+  }
 
-      const keys = Object.keys(itemSelecionadoOS).filter(k => k !== '_rowIndex');
-      const col1 = itemSelecionadoOS[keys[0]] || "";
-      const col2 = itemSelecionadoOS[keys[1]] || "";
-      const col3 = itemSelecionadoOS[keys[2]] || "";
+  // Extrai as colunas do objeto selecionado ignorando a chave interna _rowIndex
+  const keys = Object.keys(itemSelecionadoOS).filter(k => k !== '_rowIndex');
+  const col1 = itemSelecionadoOS[keys[0]] !== undefined ? itemSelecionadoOS[keys[0]] : "";
+  const col2 = itemSelecionadoOS[keys[1]] !== undefined ? itemSelecionadoOS[keys[1]] : "";
+  const col3 = itemSelecionadoOS[keys[2]] !== undefined ? itemSelecionadoOS[keys[2]] : "";
 
-      fecharModalOS();
+  fecharModalOS();
 
-      const status = document.getElementById('status-msg');
-      status.innerText = "Gerando Ordem de Serviço...";
-      status.style.color = "var(--accent)";
+  const status = document.getElementById('status-msg');
+  if (status) {
+    status.innerText = "Gerando Ordem de Serviço...";
+    status.style.color = "var(--accent)";
+  }
 
-      try {
-        const res = await chamarAPI({
-          action: "SOLICITAR_FERRAMENTARIA",
-          abaOrigem: abaAtual,
-          rowIndex: itemSelecionadoOS._rowIndex,
-          col1: col1,
-          col2: col2,
-          col3: col3,
-          data: dataVal,
-          hora: horaVal,
-          solicitante: solicitanteVal,
-          tipos: tipos.join(", "),
-          obs: obsVal
-        });
+  try {
+    const res = await chamarAPI({
+      action: "SOLICITAR_FERRAMENTARIA",
+      abaOrigem: abaAtual,
+      rowIndex: itemSelecionadoOS._rowIndex || "",
+      col1: col1,
+      col2: col2,
+      col3: col3,
+      data: dataVal,
+      hora: horaVal,
+      solicitante: solicitanteVal,
+      tipos: tipos.join(", "),
+      obs: obsVal
+    });
 
-        if (res && res.status === "success") {
-          alert(`✅ Ordem de Serviço Nº ${res.osNumber} criada com sucesso!`);
-          carregarDadosAba(abaAtual);
-        }
-      } catch (e) {
-        alert("Erro ao enviar solicitação.");
-      }
+    if (res && res.status === "success") {
+      alert(`✅ Ordem de Serviço Nº ${res.osNumber} criada com sucesso!`);
+      carregarDadosAba(abaAtual);
+    } else {
+      alert("Erro retornado pelo servidor: " + (res.message || "Erro desconhecido"));
     }
-
+  } catch (e) {
+    alert("Erro na comunicação com o servidor: " + e.message);
+  }
+}
     async function liberarParaPlastico(index) {
       const item = dadosBrutos[index];
       if (!confirm(`Confirmar a liberação do molde para o setor de Plástico?`)) return;
