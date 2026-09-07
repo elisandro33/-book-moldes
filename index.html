@@ -26,7 +26,6 @@
 
     body { background-color: var(--bg-color); color: var(--text-main); padding: 24px; }
 
-    /* Modal de Login Overlap */
     .login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
     .login-box { background: #fff; padding: 32px; border-radius: 12px; width: 100%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     .login-box h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; text-align: center; }
@@ -36,34 +35,28 @@
 
     .container { max-width: 1280px; margin: 0 auto; display: none; }
 
-    /* Header */
     .header-dashboard { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
     .header-title h1 { font-size: 24px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
     .header-title p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
 
     .user-info-bar { display: flex; align-items: center; gap: 12px; background: #fff; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; }
 
-    /* Cards KPIs Topo */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .kpi-card { background: var(--card-bg); border-radius: 12px; padding: 16px 20px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .kpi-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .kpi-value { font-size: 26px; font-weight: 700; color: var(--primary); margin-top: 4px; }
 
-    /* Navegação por Abas */
     .nav-tabs { display: flex; gap: 8px; background: #e2e8f0; padding: 4px; border-radius: 10px; margin-bottom: 24px; width: fit-content; flex-wrap: wrap; }
     .tab-btn { border: none; background: transparent; padding: 8px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
     .tab-btn.active { background: var(--card-bg); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-    /* Seções e Cards */
     .dashboard-card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 24px; }
     .card-header { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
 
-    /* Form Controles */
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
     input[type="text"], input[type="password"], select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; outline: none; transition: border 0.2s; background: #fff; }
     input[type="text"]:focus, input[type="password"]:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 
-    /* Botões */
     .btn-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-primary { background: var(--primary); color: white; width: 100%; }
@@ -80,7 +73,6 @@
     .btn-move-alt:hover { background: var(--teal-hover); }
     .btn-delete { background: var(--danger); padding: 6px 10px; border-radius: 6px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
 
-    /* Tabela */
     .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-color); }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
     th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid var(--border-color); white-space: nowrap; }
@@ -93,7 +85,6 @@
 </head>
 <body>
 
-<!-- Tela de Login -->
 <div class="login-overlay" id="login-modal">
   <div class="login-box">
     <h2>🔑 Acesso ao Sistema</h2>
@@ -115,7 +106,6 @@
   </div>
 </div>
 
-<!-- Aplicação Principal -->
 <div class="container" id="app-container">
   <div class="header-dashboard">
     <div class="header-title">
@@ -132,7 +122,6 @@
     </div>
   </div>
 
-  <!-- Cards KPI -->
   <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-title">Total Geral no Banco</div>
@@ -148,7 +137,6 @@
     </div>
   </div>
 
-  <!-- Abas de Navegação -->
   <div class="nav-tabs" id="container-abas">
     <button id="tab-atualizada" class="tab-btn active" onclick="trocarAba('ATUALIZADA')">PLÁSTICO</button>
     <button id="tab-qlx" class="tab-btn" onclick="trocarAba('Moldes QLX')">Moldes QLX</button>
@@ -159,7 +147,6 @@
 
   <div id="status-msg" class="status">Iniciando...</div>
 
-  <!-- Formulário em Card -->
   <div class="dashboard-card" id="card-formulario">
     <div class="card-header">
       <span id="form-title">Adicionar Registro</span>
@@ -175,13 +162,11 @@
     </div>
   </div>
 
-  <!-- Filtro / Busca Geral -->
   <div class="dashboard-card">
     <div class="card-header">🔍 Consulta Geral</div>
     <input type="text" id="input-busca" placeholder="Digite Código, Local ou Descrição para filtrar..." onkeyup="filtrarGeral()">
   </div>
 
-  <!-- Tabela com Resultados -->
   <div class="dashboard-card">
     <div class="table-responsive">
       <table>
@@ -195,9 +180,8 @@
 </div>
 
 <script>
-  // Se for acessar como Web App independente, insira aqui a URL do seu Web App no formato:
-  // https://script.google.com/macros/s/SEU_ID_AQUI/exec
-  const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
+  // Insira a URL do seu Web App caso acesse como sistema independente
+  const BASE_API = "";
 
   let currentUser = localStorage.getItem('bm_user') || "";
   let userRole = localStorage.getItem('bm_role') || ""; 
@@ -214,10 +198,8 @@
   let listaExibida = [];
   let timerBusca = null;
 
-  // Função unificada de comunicação com o backend
   function chamarAPI(parametros) {
     return new Promise((resolve, reject) => {
-      // 1. Tenta rodar via suporte nativo do Apps Script caso esteja rodando no ambiente do Google
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         const acao = parametros.action;
         if (acao === "LOGIN") {
@@ -235,7 +217,6 @@
         }
       }
 
-      // 2. Se a URL base estiver configurada, executa requisição via JSONP para evitar bloqueios de CORS
       if (BASE_API && BASE_API.length > 0) {
         const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
         parametros.callback = callbackName;
@@ -263,7 +244,7 @@
         return;
       }
 
-      reject(new Error("Ambiente do Apps Script não encontrado ou BASE_API não informada."));
+      reject(new Error("Ambiente Apps Script não identificado e BASE_API não configurada."));
     });
   }
 
@@ -423,7 +404,8 @@
         containerPrazo.style.display = 'block';
       } else {
         containerPrazo.style.display = 'none';
-        document.getElementById('input-col4').value = '';
+        const inCol4 = document.getElementById('input-col4');
+        if (inCol4) inCol4.value = '';
       }
     }
   }
@@ -477,7 +459,7 @@
         <input type="text" id="input-col1" placeholder="${placeholderLocal}">
         <input type="text" id="input-col2" placeholder="Código">
         <input type="text" id="input-col3" placeholder="Descrição">
-        <div id="container-campo-prazo" style="display: ${exibePrazoInicial};">
+        <div id="container-campo-prazo" style="display: ${exibePrazoInicial}; width: 100%;">
           <input type="text" id="input-col4" placeholder="Prazo (ex: 15/09/2026 ou 10 dias)">
         </div>
         ${selectAbaDestino}
@@ -802,7 +784,9 @@
     const col1 = document.getElementById('input-col1').value.trim();
     const col2 = document.getElementById('input-col2').value.trim();
     const col3 = document.getElementById('input-col3').value.trim();
-    const col4 = document.getElementById('input-col4') ? document.getElementById('input-col4').value.trim() : '';
+    
+    const campoCol4 = document.getElementById('input-col4');
+    const col4 = campoCol4 ? campoCol4.value.trim() : '';
     
     const rowIndex = document.getElementById('edit-row-index').value;
     const abaOrigemGuardada = document.getElementById('edit-aba-origem').value || abaAtual;
@@ -890,12 +874,10 @@
     }
   }
 
-  // Permite dar Enter na tela de login
   document.getElementById('login-pass').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') efetuarLogin();
   });
 
-  // Inicializa validação de Sessão
   iniciarSessao();
 </script>
 </body>
