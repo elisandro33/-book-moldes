@@ -194,7 +194,7 @@
   </div>
 
   <script>
-    const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec"; 
+    const BASE_API = "https://script.google.com/macros/s/SEU_SCRIPT_ID_AQUI/exec"; 
 
     let currentUser = "";
     let userRole = "";
@@ -410,10 +410,9 @@
       const c2 = document.getElementById('crud-col2').value.trim();
       const c3 = document.getElementById('crud-col3').value.trim();
 
-      fecharModalCrud();
-
       const action = modoCrud === 'ADICIONAR' ? "ADICIONAR_MOLDE" : "EDITAR_MOLDE";
-      const payload = {
+      
+      let payload = {
         action: action,
         sheet: abaAtual,
         col1: c1,
@@ -421,9 +420,15 @@
         col3: c3
       };
 
-      if (modoCrud === 'EDITAR' && itemSelecionado) {
+      if (modoCrud === 'EDITAR') {
+        if (!itemSelecionado || !itemSelecionado._rowIndex) {
+          alert("Erro: Linha do item não encontrada para edição.");
+          return;
+        }
         payload.rowIndex = itemSelecionado._rowIndex;
       }
+
+      fecharModalCrud();
 
       try {
         const res = await chamarAPI(payload);
