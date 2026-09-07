@@ -15,6 +15,7 @@
       --border-color: #374151;
       --danger: #ef4444;
       --success: #10b981;
+      --warning: #f59e0b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -36,6 +37,7 @@
     .btn-primary:hover { background-color: var(--accent-hover); }
     .btn-danger { background-color: var(--danger); color: white; }
     .btn-success { background-color: var(--success); color: white; }
+    .btn-warning { background-color: var(--warning); color: white; }
     .btn-cancel { background-color: #4b5563; color: white; }
 
     .table-container { background-color: var(--card-bg); border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); }
@@ -43,6 +45,8 @@
     th, td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
     th { background-color: rgba(0,0,0,0.2); color: var(--text-muted); font-weight: 600; }
     tr:hover { background-color: rgba(255,255,255,0.02); }
+
+    .actions-cell { display: flex; gap: 6px; }
 
     .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
     .modal { background-color: var(--card-bg); border-radius: 10px; padding: 24px; width: 100%; max-width: 500px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -60,7 +64,7 @@
 </head>
 <body>
 
-  <!-- TELA DE LOGIN -->
+  <!-- LOGIN -->
   <div class="overlay" id="screen-login">
     <div class="modal" style="max-width: 360px; text-align: center;">
       <h2 style="margin-bottom: 8px;">🔑 Acesso ao Sistema</h2>
@@ -82,7 +86,7 @@
     </div>
   </div>
 
-  <!-- INTERFACE PRINCIPAL -->
+  <!-- APLICAÇÃO PRINCIPAL -->
   <div id="screen-app" style="display: none;">
     <div class="header">
       <h1>GESTÃO DE MOLDES</h1>
@@ -92,17 +96,21 @@
       </div>
     </div>
 
-    <!-- ABAS -->
+    <!-- NAVEGAÇÃO DE ABAS -->
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="trocarAba('ATUALIZADA', this)">Plástico (ATUALIZADA)</button>
       <button class="tab-btn" onclick="trocarAba('Transferências e Step Bay Step', this)">Transferências / Step</button>
       <button class="tab-btn" onclick="trocarAba('Sem local', this)">Sem Local</button>
+      <button class="tab-btn" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
       <button class="tab-btn" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
       <button class="tab-btn" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
     </div>
 
     <div class="actions-bar">
       <input type="text" class="search-box" id="inp-search" placeholder="Buscar molde, código..." oninput="filtrarTabela()">
+      <div>
+        <button class="btn btn-success" id="btn-add" style="display: none;" onclick="abrirModalCrud('ADICIONAR')">➕ Novo Molde</button>
+      </div>
       <div id="status-msg"></div>
     </div>
 
@@ -112,6 +120,33 @@
         <thead id="tbl-head"></thead>
         <tbody id="tbl-body"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- MODAL DE CADASTRO / EDIÇÃO -->
+  <div class="overlay" id="modal-crud" style="display: none;">
+    <div class="modal">
+      <h2 id="modal-crud-title">➕ Adicionar Item</h2>
+      
+      <div class="field-group">
+        <label id="lbl-col1">Local</label>
+        <input type="text" id="crud-col1">
+      </div>
+
+      <div class="field-group">
+        <label id="lbl-col2">Código</label>
+        <input type="text" id="crud-col2">
+      </div>
+
+      <div class="field-group">
+        <label id="lbl-col3">Descrição</label>
+        <input type="text" id="crud-col3">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+        <button class="btn btn-cancel" onclick="fecharModalCrud()">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarCrud()">Salvar</button>
+      </div>
     </div>
   </div>
 
@@ -133,7 +168,7 @@
 
       <div class="field-group">
         <label>Solicitante</label>
-        <input type="text" id="os-solicitante" placeholder="Nome do solicitante">
+        <input type="text" id="os-solicitante">
       </div>
 
       <div class="field-group">
@@ -159,14 +194,14 @@
   </div>
 
   <script>
-    // CERTIFIQUE-SE DE ATUALIZAR A URL ABAIXO COM A SUA URL DE IMPLANTAÇÃO DO GOOGLE APPS SCRIPT
     const BASE_API = "https://script.google.com/macros/s/AKfycbzQ7R6Y83x--EXEMPLO--/exec"; 
 
     let currentUser = "";
     let userRole = "";
     let abaAtual = "ATUALIZADA";
     let dadosBrutos = [];
-    let itemSelecionadoOS = null;
+    let itemSelecionado = null;
+    let modoCrud = "";
 
     function chamarAPI(params) {
       return new Promise((resolve, reject) => {
@@ -201,7 +236,7 @@
       }
 
       errDiv.style.display = "none";
-      
+
       try {
         const res = await chamarAPI({ action: "LOGIN", user: user, pass: pass });
         if (res && res.status === "success") {
@@ -235,6 +270,14 @@
       abaAtual = nomeAba;
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+
+      const btnAdd = document.getElementById('btn-add');
+      if (userRole !== 'nivel1' && abaAtual !== 'HISTORICO_MANUTENCAO' && abaAtual !== 'ferramentaria') {
+        btnAdd.style.display = 'inline-flex';
+      } else {
+        btnAdd.style.display = 'none';
+      }
+
       carregarDadosAba(nomeAba);
     }
 
@@ -254,13 +297,11 @@
       }
     }
 
-    // Trata e formata universalmente qualquer célula (Data/Hora/Códigos)
     function formatarValorCelula(valor) {
       if (valor === null || valor === undefined) return "";
 
       var valStr = valor.toString().trim();
 
-      // Formatação de objetos de Data/Hora ISO (ex: 2026-09-10T07:00:00.000Z ou 1899-12-31T...)
       if (valStr.includes("T") && valStr.includes("Z")) {
         var d = new Date(valStr);
         if (!isNaN(d.getTime())) {
@@ -277,7 +318,6 @@
         }
       }
 
-      // Formatação de data simples YYYY-MM-DD -> DD/MM/YYYY
       if (/^\d{4}-\d{2}-\d{2}$/.test(valStr)) {
         var p = valStr.split("-");
         return `${p[2]}/${p[1]}/${p[0]}`;
@@ -299,14 +339,12 @@
 
       const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex');
 
-      // Cabeçalho
       let trHead = "<tr>";
       colunas.forEach(c => trHead += `<th>${c}</th>`);
       if (userRole !== 'nivel1') trHead += "<th>Ações</th>";
       trHead += "</tr>";
       head.innerHTML = trHead;
 
-      // Linhas com tratamento universal para todas as células de todas as abas
       dados.forEach((row) => {
         let trBody = "<tr>";
         colunas.forEach(c => {
@@ -315,13 +353,17 @@
         });
 
         if (userRole !== 'nivel1') {
-          trBody += `<td>`;
+          trBody += `<td><div class="actions-cell">`;
+          
           if (abaAtual !== 'ferramentaria' && abaAtual !== 'HISTORICO_MANUTENCAO') {
             trBody += `<button class="btn btn-primary" onclick="abrirModalOSPorRowIndex(${row._rowIndex})">🔧 P/ Ferramentaria</button>`;
+            trBody += `<button class="btn btn-warning" onclick="abrirModalCrud('EDITAR', ${row._rowIndex})">✏️ Editar</button>`;
+            trBody += `<button class="btn btn-danger" onclick="excluirItem(${row._rowIndex})">🗑️</button>`;
           } else if (abaAtual === 'ferramentaria') {
             trBody += `<button class="btn btn-success" onclick="liberarParaPlasticoPorRowIndex(${row._rowIndex})">✅ Liberar p/ Plástico</button>`;
           }
-          trBody += `</td>`;
+
+          trBody += `</div></td>`;
         }
 
         trBody += "</tr>";
@@ -337,13 +379,89 @@
       renderizarTabela(filtrados);
     }
 
-    function abrirModalOSPorRowIndex(rowIndex) {
-      itemSelecionadoOS = dadosBrutos.find(item => item._rowIndex === rowIndex);
+    function abrirModalCrud(modo, rowIndex = null) {
+      modoCrud = modo;
+      document.getElementById('modal-crud-title').innerText = modo === 'ADICIONAR' ? "➕ Novo Molde" : "✏️ Editar Molde";
+      
+      if (modo === 'EDITAR') {
+        itemSelecionado = dadosBrutos.find(i => i._rowIndex === rowIndex);
+        if (!itemSelecionado) return;
 
-      if (!itemSelecionadoOS) {
-        alert("Erro ao localizar o item selecionado.");
-        return;
+        const keys = Object.keys(itemSelecionado).filter(k => k !== '_rowIndex');
+        document.getElementById('crud-col1').value = itemSelecionado[keys[0]] || "";
+        document.getElementById('crud-col2').value = itemSelecionado[keys[1]] || "";
+        document.getElementById('crud-col3').value = itemSelecionado[keys[2]] || "";
+      } else {
+        itemSelecionado = null;
+        document.getElementById('crud-col1').value = "";
+        document.getElementById('crud-col2').value = "";
+        document.getElementById('crud-col3').value = "";
       }
+
+      document.getElementById('modal-crud').style.display = 'flex';
+    }
+
+    function fecharModalCrud() {
+      document.getElementById('modal-crud').style.display = 'none';
+    }
+
+    async function salvarCrud() {
+      const c1 = document.getElementById('crud-col1').value.trim();
+      const c2 = document.getElementById('crud-col2').value.trim();
+      const c3 = document.getElementById('crud-col3').value.trim();
+
+      fecharModalCrud();
+
+      const action = modoCrud === 'ADICIONAR' ? "ADICIONAR_MOLDE" : "EDITAR_MOLDE";
+      const payload = {
+        action: action,
+        sheet: abaAtual,
+        col1: c1,
+        col2: c2,
+        col3: c3
+      };
+
+      if (modoCrud === 'EDITAR' && itemSelecionado) {
+        payload.rowIndex = itemSelecionado._rowIndex;
+      }
+
+      try {
+        const res = await chamarAPI(payload);
+        if (res && res.status === "success") {
+          alert("✅ Registro salvo com sucesso!");
+          carregarDadosAba(abaAtual);
+        } else {
+          alert("Erro ao salvar: " + (res.message || "Erro desconhecido"));
+        }
+      } catch (e) {
+        alert("Erro na operação: " + e.message);
+      }
+    }
+
+    async function excluirItem(rowIndex) {
+      if (!confirm("Tem certeza que deseja excluir este molde?")) return;
+
+      try {
+        const res = await chamarAPI({
+          action: "EXCLUIR_MOLDE",
+          sheet: abaAtual,
+          rowIndex: rowIndex
+        });
+
+        if (res && res.status === "success") {
+          alert("🗑️ Item excluído com sucesso!");
+          carregarDadosAba(abaAtual);
+        } else {
+          alert("Erro ao excluir: " + (res.message || "Erro desconhecido"));
+        }
+      } catch (e) {
+        alert("Erro na exclusão: " + e.message);
+      }
+    }
+
+    function abrirModalOSPorRowIndex(rowIndex) {
+      itemSelecionado = dadosBrutos.find(item => item._rowIndex === rowIndex);
+      if (!itemSelecionado) return;
 
       const agora = new Date();
       document.getElementById('os-data').value = agora.toISOString().split('T')[0];
@@ -357,14 +475,11 @@
 
     function fecharModalOS() {
       document.getElementById('modal-os').style.display = 'none';
-      itemSelecionadoOS = null;
+      itemSelecionado = null;
     }
 
     async function confirmarEnvioFerramentaria() {
-      if (!itemSelecionadoOS) {
-        alert("Nenhum item válido selecionado.");
-        return;
-      }
+      if (!itemSelecionado) return;
 
       const dataVal = document.getElementById('os-data').value;
       const horaVal = document.getElementById('os-hora').value;
@@ -379,19 +494,13 @@
         return;
       }
 
-      const keys = Object.keys(itemSelecionadoOS).filter(k => k !== '_rowIndex');
-      const col1 = itemSelecionadoOS[keys[0]] !== undefined ? itemSelecionadoOS[keys[0]] : "";
-      const col2 = itemSelecionadoOS[keys[1]] !== undefined ? itemSelecionadoOS[keys[1]] : "";
-      const col3 = itemSelecionadoOS[keys[2]] !== undefined ? itemSelecionadoOS[keys[2]] : "";
-      const rIndex = itemSelecionadoOS._rowIndex;
+      const keys = Object.keys(itemSelecionado).filter(k => k !== '_rowIndex');
+      const col1 = itemSelecionado[keys[0]] || "";
+      const col2 = itemSelecionado[keys[1]] || "";
+      const col3 = itemSelecionado[keys[2]] || "";
+      const rIndex = itemSelecionado._rowIndex;
 
       fecharModalOS();
-
-      const status = document.getElementById('status-msg');
-      if (status) {
-        status.innerText = "Gerando Ordem de Serviço...";
-        status.style.color = "var(--accent)";
-      }
 
       try {
         const res = await chamarAPI({
@@ -412,10 +521,10 @@
           alert(`✅ Ordem de Serviço Nº ${res.osNumber} criada com sucesso!`);
           carregarDadosAba(abaAtual);
         } else {
-          alert("Erro retornado pelo servidor: " + (res.message || "Erro desconhecido"));
+          alert("Erro: " + (res.message || "Erro desconhecido"));
         }
       } catch (e) {
-        alert("Erro na comunicação com o servidor: " + e.message);
+        alert("Erro no envio: " + e.message);
       }
     }
 
@@ -432,20 +541,20 @@
           action: "LIBERAR_PLASTICO",
           abaOrigem: abaAtual,
           rowIndex: item._rowIndex,
-          col1: item[keys[0]] !== undefined ? item[keys[0]] : "",
-          col2: item[keys[1]] !== undefined ? item[keys[1]] : "",
-          col3: item[keys[2]] !== undefined ? item[keys[2]] : "",
+          col1: item[keys[0]] || "",
+          col2: item[keys[1]] || "",
+          col3: item[keys[2]] || "",
           liberadoPor: currentUser
         });
 
         if (res && res.status === "success") {
-          alert("✅ Molde liberado para o Plástico e registrado no histórico!");
+          alert("✅ Molde liberado com sucesso!");
           carregarDadosAba(abaAtual);
         } else {
           alert("Erro ao liberar: " + (res.message || "Erro desconhecido"));
         }
       } catch (e) {
-        alert("Erro ao liberar ferramenta: " + e.message);
+        alert("Erro ao liberar: " + e.message);
       }
     }
   </script>
