@@ -5,319 +5,242 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GESTÃO DE MOLDES</title>
   <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #0b1329; color: #ffffff; margin: 0; padding: 30px; }
     
-    /* Tela de Login */
-    #telaLogin {
-      display: flex; justify-content: center; align-items: center; min-height: 80vh;
-    }
-    .card-login {
-      background: #1e293b; padding: 30px; border-radius: 8px; width: 100%; max-width: 400px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center;
-    }
-    .card-login h2 { margin-bottom: 8px; font-size: 20px; }
-    .card-login p { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
+    .user-info { display: flex; align-items: center; gap: 12px; font-size: 14px; color: #8a99ad; }
+    .btn-sair { background-color: #1e293b; color: #fff; border: 1px solid #334155; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+    .btn-sair:hover { background-color: #334155; }
 
-    /* Estilos Gerais de Inputs e Botões */
-    .input-group { margin-bottom: 15px; text-align: left; }
-    .input-group label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 5px; }
-    .input-group input, .input-group textarea, .input-group select {
-      width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155;
-      border-radius: 6px; color: #fff; font-size: 14px;
-    }
-    .input-group input:focus, .input-group textarea:focus { border-color: #3b82f6; outline: none; }
+    /* Tabela */
+    .table-container { background-color: #111c38; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { padding: 16px 20px; font-size: 14px; color: #8a99ad; font-weight: 600; border-bottom: 1px solid #1a274a; }
+    td { padding: 16px 20px; font-size: 14px; color: #e2e8f0; border-bottom: 1px solid #1a274a; }
+    tr:hover { background-color: #162345; }
+
+    /* Botões de Ação na Tabela */
+    .actions-cell { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-action { border: none; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+    .btn-ferramentaria { background-color: #1d4ed8; color: #ffffff; }
+    .btn-ferramentaria:hover { background-color: #2563eb; }
+    .btn-editar { background-color: #854d0e; color: #fef08a; }
+    .btn-editar:hover { background-color: #a16207; }
+    .btn-excluir { background-color: #7f1d1d; color: #fca5a5; padding: 8px; }
+    .btn-excluir:hover { background-color: #991b1b; }
+
+    /* Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background-color: #111c38; padding: 25px; border-radius: 8px; width: 450px; max-width: 90%; border: 1px solid #1a274a; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .modal-header { font-size: 16px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
     
-    .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
-    .checkbox-group label { font-size: 13px; color: #e2e8f0; display: flex; align-items: center; gap: 5px; cursor: pointer; }
-
-    button {
-      width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold;
-      cursor: pointer; transition: 0.2s; font-size: 14px;
-    }
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-primary:hover { background: #1d4ed8; }
-    .btn-secondary { background: #334155; color: #f8fafc; }
-    .btn-secondary:hover { background: #475569; }
-    .btn-action { width: auto; padding: 6px 10px; font-size: 12px; }
-    .btn-ferramentaria { background: #1d4ed8; color: #fff; }
-
-    /* Modais */
-    .modal {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.75); align-items: center; justify-content: center; z-index: 1000;
-    }
-    .modal-content {
-      background: #1e293b; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-
-    /* Painel do Sistema */
-    #painelSistema { display: none; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 12px; color: #8a99ad; margin-bottom: 6px; }
+    .form-group input, .form-group textarea { width: 100%; background-color: #0b1329; border: 1px solid #1a274a; border-radius: 4px; padding: 8px 12px; color: #fff; font-size: 14px; }
+    .form-row { display: flex; gap: 15px; }
+    .form-row .form-group { flex: 1; }
     
-    table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px; overflow: hidden; }
-    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #334155; font-size: 14px; }
-    th { background: #0f172a; color: #94a3b8; font-weight: 600; }
-    tr:hover { background: #283548; }
+    .checkbox-group { display: flex; gap: 15px; margin-top: 6px; }
+    .checkbox-group label { color: #fff; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
 
-    .msg-erro { color: #ef4444; font-size: 13px; margin-top: 10px; display: none; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .btn-modal-cancel { background-color: #1e293b; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .btn-modal-confirm { background-color: #1d4ed8; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; }
   </style>
 </head>
 <body>
 
-  <!-- TELA DE LOGIN -->
-  <div id="telaLogin">
-    <div class="card-login">
-      <h2>🔑 Acesso ao Sistema</h2>
-      <p>Digite seu usuário e senha para acessar</p>
-      
-      <div class="input-group">
-        <label>Usuário</label>
-        <input type="text" id="loginUser" placeholder="Digite o usuário">
-      </div>
-      
-      <div class="input-group">
-        <label>Senha</label>
-        <input type="password" id="loginPass" placeholder="Digite a senha">
-      </div>
-
-      <div id="msgErroLogin" class="msg-erro"></div>
-      
-      <button class="btn-primary" onclick="realizarLogin()" style="margin-top: 10px;">Entrar</button>
+  <header>
+    <h1>GESTÃO DE MOLDES</h1>
+    <div class="user-info">
+      <span>Usuário: admin</span>
+      <button class="btn-sair">Sair</button>
     </div>
-  </div>
+  </header>
 
-  <!-- PAINEL PRINCIPAL DO SISTEMA -->
-  <div id="painelSistema">
-    <header>
-      <h2>GESTÃO DE MOLDES</h2>
-      <div>
-        <span id="labelUsuario" style="margin-right: 15px; color: #94a3b8;"></span>
-        <button class="btn-secondary btn-action" onclick="sair()">Sair</button>
-      </div>
-    </header>
-
+  <div class="table-container">
     <table>
       <thead>
         <tr>
           <th>Local</th>
           <th>Código</th>
           <th>Descrição</th>
-          <th style="width: 150px;">Ações</th>
+          <th style="text-align: right;">Ações</th>
         </tr>
       </thead>
       <tbody id="corpoTabela"></tbody>
     </table>
   </div>
 
-  <!-- MODAL DE SOLICITAÇÃO PARA FERRAMENTARIA (OS) -->
+  <!-- Modal Manutenção -->
   <div id="modalManutencao" class="modal">
     <div class="modal-content">
-      <h3 style="margin-top: 0;">🔧 Solicitação de Manutenção (OS)</h3>
-      
-      <div style="display: flex; gap: 10px;">
-        <div class="input-group" style="flex: 1;">
+      <div class="modal-header">
+        <span>✏️</span> Solicitação de Manutenção (OS)
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
           <label>Data Entrada</label>
           <input type="date" id="dataEntrada">
         </div>
-        <div class="input-group" style="flex: 1;">
+        <div class="form-group">
           <label>Hora Entrada</label>
           <input type="time" id="horaEntrada">
         </div>
       </div>
 
-      <div class="input-group">
+      <div class="form-group">
         <label>Solicitante</label>
         <input type="text" id="solicitante" value="Elisandro">
       </div>
 
-      <div class="input-group">
+      <div class="form-group">
         <label>Tipo de Serviço</label>
         <div class="checkbox-group">
-          <label><input type="checkbox" class="tipoServico" value="Crítico"> Crítico</label>
+          <label><input type="checkbox" class="tipoServico" value="Crítico" checked> Crítico</label>
           <label><input type="checkbox" class="tipoServico" value="Melhoria"> Melhoria</label>
           <label><input type="checkbox" class="tipoServico" value="Preventiva"> Preventiva</label>
-          <label><input type="checkbox" class="tipoServico" value="Modificação"> Modificação</label>
+          <label><input type="checkbox" class="tipoServico" value="Modificação" checked> Modificação</label>
         </div>
       </div>
 
-      <div class="input-group">
+      <div class="form-group">
         <label>Detalhamento do Problema / Observações</label>
-        <textarea id="obs" rows="3" placeholder="Descreva o problema..."></textarea>
+        <textarea id="obs" rows="3"></textarea>
       </div>
 
-      <div class="modal-actions">
-        <button class="btn-secondary btn-action" onclick="fecharModalManutencao()">Cancelar</button>
-        <button class="btn-primary btn-action" onclick="confirmarEGerarOS()">Confirmar e Gerar OS</button>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-modal-confirm" onclick="confirmarEGerarOS()">Confirmar e Gerar OS</button>
       </div>
     </div>
   </div>
 
-  <script>
-    // URL do Web App do Google Apps Script
-    var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
-    
-    var listaDados = [];
-    var itemManutencao = null; // Guarda o objeto completo selecionado
-    var usuarioLogado = null;
+<script>
+  // Insira a URL do seu Google Apps Script abaixo
+  var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec"; 
+  var listaDados = [];
+  var itemManutencao = null; // Armazena a linha selecionada
 
-    // Função auxiliar para requisições JSONP
-    function fazerRequisicaoJSONP(url, callback) {
-      var cbName = 'jsonp_cb_' + Math.round(100000 * Math.random());
-      window[cbName] = function(data) {
-        delete window[cbName];
-        var elem = document.getElementById(cbName);
-        if (elem) elem.parentNode.removeChild(elem);
-        callback(data);
-      };
+  function fazerRequisicaoJSONP(url, callback) {
+    var cbName = 'jsonp_cb_' + Math.round(100000 * Math.random());
+    window[cbName] = function(data) {
+      delete window[cbName];
+      var elem = document.getElementById(cbName);
+      if (elem) elem.parentNode.removeChild(elem);
+      callback(data);
+    };
 
-      var script = document.createElement('script');
-      script.id = cbName;
-      script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cbName;
-      document.body.appendChild(script);
+    var script = document.createElement('script');
+    script.id = cbName;
+    script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cbName;
+    document.body.appendChild(script);
+  }
+
+  function carregarDados() {
+    fazerRequisicaoJSONP(SCRIPT_URL + "?sheet=ATUALIZADA", function(data) {
+      listaDados = Array.isArray(data) ? data : [];
+      renderizarTabela();
+    });
+  }
+
+  function renderizarTabela() {
+    var tbody = document.getElementById("corpoTabela");
+    tbody.innerHTML = "";
+
+    listaDados.forEach(function(item, index) {
+      var tr = document.createElement("tr");
+
+      var colKeys = Object.keys(item);
+      var colLocal = item["Local"] || item["col_1"] || item[colKeys[0]] || "";
+      var colCodigo = item["Código"] || item["col_2"] || item[colKeys[1]] || "";
+      var colDesc = item["Descrição"] || item["col_3"] || item[colKeys[2]] || "";
+
+      tr.innerHTML = `
+        <td>${colLocal}</td>
+        <td>${colCodigo}</td>
+        <td>${colDesc}</td>
+        <td class="actions-cell">
+          <button class="btn-action btn-ferramentaria" onclick="abrirModalManutencao(${index})">✏️ P/ Ferramentaria</button>
+          <button class="btn-action btn-editar" onclick="editarItem(${index})">✏️ Editar</button>
+          <button class="btn-action btn-excluir" onclick="excluirItem(${index})">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function abrirModalManutencao(index) {
+    if (index === undefined || !listaDados[index]) return;
+
+    // Guarda o objeto com o _rowIndex original de forma segura
+    itemManutencao = listaDados[index];
+
+    var hoje = new Date();
+    document.getElementById("dataEntrada").value = hoje.toISOString().split('T')[0];
+    document.getElementById("horaEntrada").value = hoje.toTimeString().substring(0, 5);
+
+    document.getElementById("modalManutencao").style.display = "flex";
+  }
+
+  function fecharModal() {
+    document.getElementById("modalManutencao").style.display = "none";
+    itemManutencao = null;
+  }
+
+  function confirmarEGerarOS() {
+    if (!itemManutencao || itemManutencao._rowIndex === undefined || itemManutencao._rowIndex === null) {
+      alert("Erro: O item selecionado é inválido.");
+      return;
     }
 
-    // Login
-    function realizarLogin() {
-      var user = document.getElementById("loginUser").value.trim();
-      var pass = document.getElementById("loginPass").value.trim();
-      var divErro = document.getElementById("msgErroLogin");
+    var tipos = [];
+    document.querySelectorAll('.tipoServico:checked').forEach(function(cb) {
+      tipos.push(cb.value);
+    });
 
-      if (!user || !pass) {
-        divErro.innerText = "Informe o usuário e a senha.";
-        divErro.style.display = "block";
-        return;
+    var colKeys = Object.keys(itemManutencao);
+    var colLocal = itemManutencao["Local"] || itemManutencao["col_1"] || itemManutencao[colKeys[0]] || "";
+    var colCodigo = itemManutencao["Código"] || itemManutencao["col_2"] || itemManutencao[colKeys[1]] || "";
+    var colDesc = itemManutencao["Descrição"] || itemManutencao["col_3"] || itemManutencao[colKeys[2]] || "";
+
+    var url = SCRIPT_URL +
+      "?action=SOLICITAR_FERRAMENTARIA" +
+      "&rowIndex=" + encodeURIComponent(itemManutencao._rowIndex) +
+      "&abaOrigem=" + encodeURIComponent("ATUALIZADA") +
+      "&col1=" + encodeURIComponent(colLocal) +
+      "&col2=" + encodeURIComponent(colCodigo) +
+      "&col3=" + encodeURIComponent(colDesc) +
+      "&data=" + encodeURIComponent(document.getElementById("dataEntrada").value) +
+      "&hora=" + encodeURIComponent(document.getElementById("horaEntrada").value) +
+      "&solicitante=" + encodeURIComponent(document.getElementById("solicitante").value) +
+      "&tipos=" + encodeURIComponent(tipos.join(", ")) +
+      "&obs=" + encodeURIComponent(document.getElementById("obs").value);
+
+    fazerRequisicaoJSONP(url, function(resposta) {
+      if (resposta && resposta.status === "success") {
+        alert("OS nº " + resposta.osNumber + " gerada com sucesso!");
+        fecharModal();
+        carregarDados();
+      } else {
+        alert("Erro no envio: " + (resposta ? resposta.message : "Erro no servidor"));
       }
+    });
+  }
 
-      divErro.style.display = "none";
-      var url = SCRIPT_URL + "?action=LOGIN&user=" + encodeURIComponent(user) + "&pass=" + encodeURIComponent(pass);
+  function editarItem(index) {
+    // Implemente a função de edição conforme seu script
+  }
 
-      fazerRequisicaoJSONP(url, function(res) {
-        if (res && res.status === "success") {
-          usuarioLogado = res;
-          document.getElementById("labelUsuario").innerText = "Usuário: " + res.user;
-          document.getElementById("telaLogin").style.display = "none";
-          document.getElementById("painelSistema").style.display = "block";
-          carregarDados();
-        } else {
-          divErro.innerText = (res && res.message) ? res.message : "Usuário ou senha incorretos.";
-          divErro.style.display = "block";
-        }
-      });
-    }
+  function excluirItem(index) {
+    // Implemente a função de exclusão conforme seu script
+  }
 
-    function sair() {
-      usuarioLogado = null;
-      document.getElementById("painelSistema").style.display = "none";
-      document.getElementById("telaLogin").style.display = "flex";
-      document.getElementById("loginPass").value = "";
-    }
-
-    // Carregar Tabela
-    function carregarDados() {
-      fazerRequisicaoJSONP(SCRIPT_URL + "?sheet=ATUALIZADA", function(data) {
-        listaDados = Array.isArray(data) ? data : [];
-        renderizarTabela();
-      });
-    }
-
-    function renderizarTabela() {
-      var tbody = document.getElementById("corpoTabela");
-      tbody.innerHTML = "";
-
-      if (listaDados.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Nenhum molde encontrado.</td></tr>";
-        return;
-      }
-
-      listaDados.forEach(function(item, index) {
-        var tr = document.createElement("tr");
-
-        var colKeys = Object.keys(item);
-        var colLocal = item["Local"] || item["col_1"] || item[colKeys[0]] || "";
-        var colCodigo = item["Código"] || item["col_2"] || item[colKeys[1]] || "";
-        var colDesc = item["Descrição"] || item["col_3"] || item[colKeys[2]] || "";
-
-        tr.innerHTML = `
-          <td>${colLocal}</td>
-          <td>${colCodigo}</td>
-          <td>${colDesc}</td>
-          <td>
-            <button class="btn-action btn-ferramentaria" onclick="abrirModalManutencao(${index})">🔧 P/ Ferramentaria</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // Modal de Manutenção
-    function abrirModalManutencao(index) {
-      if (index === undefined || !listaDados[index]) {
-        alert("Erro: Item inválido selecionado.");
-        return;
-      }
-
-      // Armazena com segurança o item selecionado contendo o _rowIndex
-      itemManutencao = listaDados[index];
-
-      var hoje = new Date();
-      document.getElementById("dataEntrada").value = hoje.toISOString().split('T')[0];
-      document.getElementById("horaEntrada").value = hoje.toTimeString().substring(0, 5);
-      document.getElementById("obs").value = "";
-      
-      document.querySelectorAll('.tipoServico').forEach(cb => cb.checked = false);
-
-      document.getElementById("modalManutencao").style.display = "flex";
-    }
-
-    function fecharModalManutencao() {
-      document.getElementById("modalManutencao").style.display = "none";
-      itemManutencao = null;
-    }
-
-    // Envio da OS
-    function confirmarEGerarOS() {
-      // Validação do _rowIndex para evitar o erro de propriedades de null
-      if (!itemManutencao || itemManutencao._rowIndex === undefined || itemManutencao._rowIndex === null) {
-        alert("Erro: Nenhum molde válido selecionado. Feche a janela e tente novamente.");
-        return;
-      }
-
-      var tipos = [];
-      document.querySelectorAll('.tipoServico:checked').forEach(function(cb) {
-        tipos.push(cb.value);
-      });
-
-      var colKeys = Object.keys(itemManutencao);
-      var colLocal = itemManutencao["Local"] || itemManutencao["col_1"] || itemManutencao[colKeys[0]] || "";
-      var colCodigo = itemManutencao["Código"] || itemManutencao["col_2"] || itemManutencao[colKeys[1]] || "";
-      var colDesc = itemManutencao["Descrição"] || itemManutencao["col_3"] || itemManutencao[colKeys[2]] || "";
-
-      var url = SCRIPT_URL +
-        "?action=SOLICITAR_FERRAMENTARIA" +
-        "&rowIndex=" + encodeURIComponent(itemManutencao._rowIndex) +
-        "&abaOrigem=" + encodeURIComponent("ATUALIZADA") +
-        "&col1=" + encodeURIComponent(colLocal) +
-        "&col2=" + encodeURIComponent(colCodigo) +
-        "&col3=" + encodeURIComponent(colDesc) +
-        "&data=" + encodeURIComponent(document.getElementById("dataEntrada").value) +
-        "&hora=" + encodeURIComponent(document.getElementById("horaEntrada").value) +
-        "&solicitante=" + encodeURIComponent(document.getElementById("solicitante").value) +
-        "&tipos=" + encodeURIComponent(tipos.join(", ")) +
-        "&obs=" + encodeURIComponent(document.getElementById("obs").value);
-
-      fazerRequisicaoJSONP(url, function(resposta) {
-        if (resposta && resposta.status === "success") {
-          alert("OS nº " + resposta.osNumber + " gerada com sucesso!");
-          fecharModalManutencao();
-          carregarDados();
-        } else {
-          alert("Erro no envio: " + (resposta ? resposta.message : "Sem resposta do servidor."));
-        }
-      });
-    }
-  </script>
+  // Carrega a tabela ao abrir a página
+  carregarDados();
+</script>
 </body>
 </html>
