@@ -8,11 +8,17 @@
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
     body { background-color: #0b1329; color: #ffffff; margin: 0; padding: 30px; }
     
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
     h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
     .user-info { display: flex; align-items: center; gap: 12px; font-size: 14px; color: #8a99ad; }
     .btn-sair { background-color: #1e293b; color: #fff; border: 1px solid #334155; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
     .btn-sair:hover { background-color: #334155; }
+
+    /* Navegação por Abas */
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #1a274a; padding-bottom: 10px; }
+    .tab-btn { background-color: #111c38; color: #8a99ad; border: 1px solid #1a274a; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+    .tab-btn.active { background-color: #1d4ed8; color: #ffffff; border-color: #2563eb; }
+    .tab-btn:hover:not(.active) { background-color: #162345; color: #ffffff; }
 
     /* Tabela */
     .table-container { background-color: #111c38; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
@@ -26,10 +32,6 @@
     .btn-action { border: none; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; }
     .btn-ferramentaria { background-color: #1d4ed8; color: #ffffff; }
     .btn-ferramentaria:hover { background-color: #2563eb; }
-    .btn-editar { background-color: #854d0e; color: #fef08a; }
-    .btn-editar:hover { background-color: #a16207; }
-    .btn-excluir { background-color: #7f1d1d; color: #fca5a5; padding: 8px; }
-    .btn-excluir:hover { background-color: #991b1b; }
 
     /* Modal */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center; z-index: 1000; }
@@ -60,9 +62,15 @@
     </div>
   </header>
 
+  <!-- ABAS DA PLANILHA -->
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="trocarAba('ATUALIZADA', this)">ATUALIZADA</button>
+    <button class="tab-btn" onclick="trocarAba('SOLICITAÇÕES DE MANUTENÇÃO', this)">SOLICITAÇÕES DE MANUTENÇÃO</button>
+  </div>
+
   <div class="table-container">
     <table>
-      <thead>
+      <thead id="cabecalhoTabela">
         <tr>
           <th>Local</th>
           <th>Código</th>
@@ -78,7 +86,7 @@
   <div id="modalManutencao" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <span>✏️</span> Solicitação de Manutenção (OS)
+        <span>🔧</span> Solicitação de Manutenção (OS)
       </div>
 
       <div class="form-row">
@@ -100,10 +108,10 @@
       <div class="form-group">
         <label>Tipo de Serviço</label>
         <div class="checkbox-group">
-          <label><input type="checkbox" class="tipoServico" value="Crítico" checked> Crítico</label>
+          <label><input type="checkbox" class="tipoServico" value="Crítico"> Crítico</label>
           <label><input type="checkbox" class="tipoServico" value="Melhoria"> Melhoria</label>
           <label><input type="checkbox" class="tipoServico" value="Preventiva"> Preventiva</label>
-          <label><input type="checkbox" class="tipoServico" value="Modificação" checked> Modificação</label>
+          <label><input type="checkbox" class="tipoServico" value="Modificação"> Modificação</label>
         </div>
       </div>
 
@@ -120,10 +128,11 @@
   </div>
 
 <script>
-  // Insira a URL do seu Google Apps Script abaixo
+  // Insira a URL do seu Google Apps Script aqui
   var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec"; 
   var listaDados = [];
-  var itemManutencao = null; // Armazena a linha selecionada
+  var abaAtual = "ATUALIZADA";
+  var itemManutencao = null;
 
   function fazerRequisicaoJSONP(url, callback) {
     var cbName = 'jsonp_cb_' + Math.round(100000 * Math.random());
@@ -140,8 +149,19 @@
     document.body.appendChild(script);
   }
 
+  function trocarAba(nomeAba, elemento) {
+    abaAtual = nomeAba;
+    
+    // Atualiza classes ativas nas abas
+    var botoes = document.querySelectorAll('.tab-btn');
+    botoes.forEach(btn => btn.classList.remove('active'));
+    elemento.classList.add('active');
+
+    carregarDados();
+  }
+
   function carregarDados() {
-    fazerRequisicaoJSONP(SCRIPT_URL + "?sheet=ATUALIZADA", function(data) {
+    fazerRequisicaoJSONP(SCRIPT_URL + "?sheet=" + encodeURIComponent(abaAtual), function(data) {
       listaDados = Array.isArray(data) ? data : [];
       renderizarTabela();
     });
@@ -151,6 +171,11 @@
     var tbody = document.getElementById("corpoTabela");
     tbody.innerHTML = "";
 
+    if (listaDados.length === 0) {
+      tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Nenhum registro encontrado nesta aba.</td></tr>";
+      return;
+    }
+
     listaDados.forEach(function(item, index) {
       var tr = document.createElement("tr");
 
@@ -159,14 +184,17 @@
       var colCodigo = item["Código"] || item["col_2"] || item[colKeys[1]] || "";
       var colDesc = item["Descrição"] || item["col_3"] || item[colKeys[2]] || "";
 
+      // Exibe botão de ação apenas na aba de moldes principal
+      var acaoHtml = abaAtual === "ATUALIZADA" 
+        ? `<button class="btn-action btn-ferramentaria" onclick="abrirModalManutencao(${index})">🔧 P/ Ferramentaria</button>`
+        : `<span style="color:#8a99ad; font-size:12px;">OS Registrada</span>`;
+
       tr.innerHTML = `
         <td>${colLocal}</td>
         <td>${colCodigo}</td>
         <td>${colDesc}</td>
         <td class="actions-cell">
-          <button class="btn-action btn-ferramentaria" onclick="abrirModalManutencao(${index})">✏️ P/ Ferramentaria</button>
-          <button class="btn-action btn-editar" onclick="editarItem(${index})">✏️ Editar</button>
-          <button class="btn-action btn-excluir" onclick="excluirItem(${index})">🗑️</button>
+          ${acaoHtml}
         </td>
       `;
       tbody.appendChild(tr);
@@ -176,7 +204,6 @@
   function abrirModalManutencao(index) {
     if (index === undefined || !listaDados[index]) return;
 
-    // Guarda o objeto com o _rowIndex original de forma segura
     itemManutencao = listaDados[index];
 
     var hoje = new Date();
@@ -210,7 +237,7 @@
     var url = SCRIPT_URL +
       "?action=SOLICITAR_FERRAMENTARIA" +
       "&rowIndex=" + encodeURIComponent(itemManutencao._rowIndex) +
-      "&abaOrigem=" + encodeURIComponent("ATUALIZADA") +
+      "&abaOrigem=" + encodeURIComponent(abaAtual) +
       "&col1=" + encodeURIComponent(colLocal) +
       "&col2=" + encodeURIComponent(colCodigo) +
       "&col3=" + encodeURIComponent(colDesc) +
@@ -231,15 +258,7 @@
     });
   }
 
-  function editarItem(index) {
-    // Implemente a função de edição conforme seu script
-  }
-
-  function excluirItem(index) {
-    // Implemente a função de exclusão conforme seu script
-  }
-
-  // Carrega a tabela ao abrir a página
+  // Carrega a aba inicial ao abrir
   carregarDados();
 </script>
 </body>
