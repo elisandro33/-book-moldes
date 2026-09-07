@@ -40,7 +40,7 @@
 
     .table-container { background-color: var(--card-bg); border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-    th, td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+    th, td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
     th { background-color: rgba(0,0,0,0.2); color: var(--text-muted); font-weight: 600; }
     tr:hover { background-color: rgba(255,255,255,0.02); }
 
@@ -68,7 +68,7 @@
       
       <div class="field-group" style="text-align: left;">
         <label>Usuário</label>
-        <input type="text" id="login-user" placeholder="Ex: operador1">
+        <input type="text" id="login-user" placeholder="Ex: admin">
       </div>
       
       <div class="field-group" style="text-align: left;">
@@ -92,7 +92,7 @@
       </div>
     </div>
 
-    <!-- ABAS DA PLANILHA -->
+    <!-- ABAS -->
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="trocarAba('ATUALIZADA', this)">Plástico (ATUALIZADA)</button>
       <button class="tab-btn" onclick="trocarAba('Transferências e Step Bay Step', this)">Transferências / Step</button>
@@ -106,7 +106,7 @@
       <div id="status-msg"></div>
     </div>
 
-    <!-- TABELA DE DADOS -->
+    <!-- TABELA -->
     <div class="table-container">
       <table id="tbl-data">
         <thead id="tbl-head"></thead>
@@ -159,8 +159,8 @@
   </div>
 
   <script>
-    // URL DO SEU GOOGLE APPS SCRIPT WEB APP (Certifique-se de usar a sua URL atualizada)
-    const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec"; 
+    // CERTIFIQUE-SE DE ATUALIZAR A URL ABAIXO COM A SUA URL DE IMPLANTAÇÃO DO GOOGLE APPS SCRIPT
+    const BASE_API = "https://script.google.com/macros/s/AKfycbzQ7R6Y83x--EXEMPLO--/exec"; 
 
     let currentUser = "";
     let userRole = "";
@@ -168,7 +168,6 @@
     let dadosBrutos = [];
     let itemSelecionadoOS = null;
 
-    // Requisição JSONP
     function chamarAPI(params) {
       return new Promise((resolve, reject) => {
         const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
@@ -185,7 +184,7 @@
 
         const script = document.createElement('script');
         script.src = BASE_API + '?' + queryString;
-        script.onerror = () => reject(new Error('Erro na requisição com o servidor'));
+        script.onerror = () => reject(new Error('Erro na comunicação com o servidor.'));
         document.body.appendChild(script);
       });
     }
@@ -255,6 +254,38 @@
       }
     }
 
+    // Trata e formata universalmente qualquer célula (Data/Hora/Códigos)
+    function formatarValorCelula(valor) {
+      if (valor === null || valor === undefined) return "";
+
+      var valStr = valor.toString().trim();
+
+      // Formatação de objetos de Data/Hora ISO (ex: 2026-09-10T07:00:00.000Z ou 1899-12-31T...)
+      if (valStr.includes("T") && valStr.includes("Z")) {
+        var d = new Date(valStr);
+        if (!isNaN(d.getTime())) {
+          if (d.getFullYear() < 1920) {
+            var hrs = String(d.getHours()).padStart(2, '0');
+            var mins = String(d.getMinutes()).padStart(2, '0');
+            return `${hrs}:${mins}`;
+          } else {
+            var dia = String(d.getUTCDate()).padStart(2, '0');
+            var mes = String(d.getUTCMonth() + 1).padStart(2, '0');
+            var ano = d.getUTCFullYear();
+            return `${dia}/${mes}/${ano}`;
+          }
+        }
+      }
+
+      // Formatação de data simples YYYY-MM-DD -> DD/MM/YYYY
+      if (/^\d{4}-\d{2}-\d{2}$/.test(valStr)) {
+        var p = valStr.split("-");
+        return `${p[2]}/${p[1]}/${p[0]}`;
+      }
+
+      return valStr;
+    }
+
     function renderizarTabela(dados) {
       const head = document.getElementById('tbl-head');
       const body = document.getElementById('tbl-body');
@@ -262,7 +293,7 @@
       body.innerHTML = "";
 
       if (!dados || dados.length === 0) {
-        body.innerHTML = "<tr><td colspan='10' style='text-align:center;'>Nenhum registro encontrado.</td></tr>";
+        body.innerHTML = "<tr><td colspan='12' style='text-align:center;'>Nenhum registro encontrado.</td></tr>";
         return;
       }
 
@@ -275,10 +306,13 @@
       trHead += "</tr>";
       head.innerHTML = trHead;
 
-      // Linhas
+      // Linhas com tratamento universal para todas as células de todas as abas
       dados.forEach((row) => {
         let trBody = "<tr>";
-        colunas.forEach(c => trBody += `<td>${row[c] !== undefined ? row[c] : ''}</td>`);
+        colunas.forEach(c => {
+          let celulaFormatada = formatarValorCelula(row[c]);
+          trBody += `<td>${celulaFormatada}</td>`;
+        });
 
         if (userRole !== 'nivel1') {
           trBody += `<td>`;
@@ -407,6 +441,8 @@
         if (res && res.status === "success") {
           alert("✅ Molde liberado para o Plástico e registrado no histórico!");
           carregarDadosAba(abaAtual);
+        } else {
+          alert("Erro ao liberar: " + (res.message || "Erro desconhecido"));
         }
       } catch (e) {
         alert("Erro ao liberar ferramenta: " + e.message);
