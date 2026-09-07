@@ -166,6 +166,23 @@
     </div>
   </div>
 
+  <!-- MODAL DE LIBERAÇÃO DA FERRAMENTARIA -->
+  <div class="overlay" id="modal-liberar" style="display: none;">
+    <div class="modal">
+      <h2>✅ Liberar Molde para Plástico</h2>
+      
+      <div class="field-group">
+        <label>Ação / Correção Realizada na Ferramenta</label>
+        <textarea id="liberar-acao" rows="4" placeholder="Descreva o serviço realizado, troca de componentes ou observações de liberação..."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+        <button class="btn btn-cancel" onclick="fecharModalLiberar()">Cancelar</button>
+        <button class="btn btn-success" onclick="confirmarLiberacaoPlastico()">Confirmar Liberação</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL ADICIONAR / EDITAR MOLDE -->
   <div class="overlay" id="modal-molde" style="display: none;">
     <div class="modal">
@@ -202,6 +219,7 @@
     let dadosBrutos = [];
     let itemSelecionado = null;
     let itemSelecionadoOS = null;
+    let itemSelecionadoLiberacao = null;
 
     function chamarAPI(params) {
       return new Promise((resolve, reject) => {
@@ -533,31 +551,66 @@
       }
     }
 
-    async function liberarParaPlasticoPorRowIndex(rowIndex) {
-      const item = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
-      if (!item) return;
+    // --- LIBERAÇÃO DE FERRAMENTARIA ---
+    function liberarParaPlasticoPorRowIndex(rowIndex) {
+      itemSelecionadoLiberacao = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
+      
+      if (!itemSelecionadoLiberacao) {
+        alert("Erro ao localizar o item selecionado.");
+        return;
+      }
 
-      if (!confirm("Confirmar a liberação do molde para o setor de Plástico?")) return;
+      document.getElementById('liberar-acao').value = "";
+      document.getElementById('modal-liberar').style.display = 'flex';
+    }
 
-      const keys = Object.keys(item).filter(k => k !== '_rowIndex');
+    function fecharModalLiberar() {
+      document.getElementById('modal-liberar').style.display = 'none';
+      itemSelecionadoLiberacao = null;
+    }
+
+    async function confirmarLiberacaoPlastico() {
+      if (!itemSelecionadoLiberacao || itemSelecionadoLiberacao._rowIndex === undefined) {
+        alert("Erro: Nenhum item selecionado para liberação.");
+        return;
+      }
+
+      const acaoRealizada = document.getElementById('liberar-acao').value.trim();
+
+      if (!acaoRealizada) {
+        alert("Por favor, descreva a ação ou correção realizada antes de liberar.");
+        return;
+      }
+
+      const keys = Object.keys(itemSelecionadoLiberacao).filter(k => k !== '_rowIndex');
+
+      const payload = {
+        action: "LIBERAR_PLASTICO",
+        abaOrigem: abaAtual,
+        rowIndex: itemSelecionadoLiberacao._rowIndex,
+        col1: itemSelecionadoLiberacao[keys[0]] || "",
+        col2: itemSelecionadoLiberacao[keys[1]] || "",
+        col3: itemSelecionadoLiberacao[keys[2]] || "",
+        acaoRealizada: acaoRealizada,
+        liberadoPor: currentUser
+      };
+
+      fecharModalLiberar();
+
+      const status = document.getElementById('status-msg');
+      if (status) status.innerText = "Liberando molde...";
 
       try {
-        const res = await chamarAPI({
-          action: "LIBERAR_PLASTICO",
-          abaOrigem: abaAtual,
-          rowIndex: item._rowIndex,
-          col1: item[keys[0]] || "",
-          col2: item[keys[1]] || "",
-          col3: item[keys[2]] || "",
-          liberadoPor: currentUser
-        });
+        const res = await chamarAPI(payload);
 
         if (res && res.status === "success") {
-          alert("✅ Molde liberado para o Plástico!");
+          alert("✅ Molde liberado para o Plástico e registrado no histórico!");
           carregarDadosAba(abaAtual);
+        } else {
+          alert("Erro ao liberar ferramenta: " + (res.message || "Erro desconhecido"));
         }
       } catch (e) {
-        alert("Erro ao liberar ferramenta: " + e.message);
+        alert("Erro ao conectar com o servidor: " + e.message);
       }
     }
   </script>
