@@ -178,6 +178,48 @@
     </div>
   </div>
 </div>
+  <!-- MODAL DE SOLICITAÇÃO DE MANUTENÇÃO (OS) -->
+<div class="login-overlay" id="modal-os" style="display: none;">
+  <div class="login-box" style="max-width: 500px; text-align: left;">
+    <h2 style="margin-bottom: 12px; text-align: center;">🔧 Solicitador de Manutenção</h2>
+    
+    <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+      <div>
+        <label style="font-size: 11px; font-weight:600;">Data Entrada</label>
+        <input type="date" id="os-data">
+      </div>
+      <div>
+        <label style="font-size: 11px; font-weight:600;">Hora Entrada</label>
+        <input type="time" id="os-hora">
+      </div>
+    </div>
+
+    <div class="login-field">
+      <label>Solicitante</label>
+      <input type="text" id="os-solicitante" placeholder="Nome do solicitante">
+    </div>
+
+    <div class="login-field">
+      <label>Tipo de Serviço</label>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; margin-top: 4px;">
+        <label><input type="checkbox" name="os-tipo" value="Crítico"> Crítico</label>
+        <label><input type="checkbox" name="os-tipo" value="Melhoria"> Melhoria</label>
+        <label><input type="checkbox" name="os-tipo" value="Preventiva"> Preventiva</label>
+        <label><input type="checkbox" name="os-tipo" value="Modificação"> Modificação</label>
+      </div>
+    </div>
+
+    <div class="login-field">
+      <label>Detalhamento do Problema / Observações</label>
+      <textarea id="os-obs" rows="3" style="width:100%; border-radius:8px; border:1px solid var(--border-color); padding:8px; outline:none; font-family:inherit;"></textarea>
+    </div>
+
+    <div class="btn-actions" style="margin-top: 16px;">
+      <button class="btn btn-primary" onclick="confirmarEnvioFerramentaria()">Confirmar e Gerar OS</button>
+      <button class="btn btn-cancel" onclick="fecharModalOS()">Cancelar</button>
+    </div>
+  </div>
+</div>
 
 <script>
   // Insira a URL do seu Web App caso acesse como sistema independente
@@ -282,6 +324,115 @@
       msg.innerText = "Erro de autenticação com o servidor.";
     }
   }
+  
+  let itemParaFerramentaria = null;
+
+// Função chamada ao clicar em '🔧 P/ Ferramentaria'
+function transferirDireto(index, abaDestino) {
+  if (userRole === 'nivel1') return;
+  const item = listaExibida[index];
+  if (!item) return;
+
+  const abaOrigem = item._abaOrigem || abaAtual;
+
+  // 1. Fluxo de envio para Ferramentaria (Abre Modal de OS)
+  if (abaDestino === 'ferramentaria') {
+    itemParaFerramentaria = { item: item, abaOrigem: abaOrigem };
+    
+    // Preenche data e hora automáticos
+    const agora = new Date();
+    document.getElementById('os-data').value = agora.toISOString().split('T')[0];
+    document.getElementById('os-hora').value = agora.toTimeString().split(' ')[0].substring(0, 5);
+    document.getElementById('os-solicitante').value = currentUser;
+    document.getElementById('os-obs').value = '';
+    document.querySelectorAll('input[name="os-tipo"]').forEach(ck => ck.checked = false);
+
+    document.getElementById('modal-os').style.display = 'flex';
+    return;
+  }
+
+  // 2. Fluxo de liberação para Plástico (Registra Responsável e Historico)
+  if (abaDestino === 'ATUALIZADA' && abaOrigem === 'ferramentaria') {
+    if (!confirm(`Confirmar a liberação do molde "${item.col_2 || item.col_0}" para o PLÁSTICO?`)) return;
+
+    const statusDiv = document.getElementById('status-msg');
+    statusDiv.innerText = "Registrando liberação no histórico e transferindo...";
+    statusDiv.style.color = "var(--primary)";
+
+    chamarAPI({
+      action: "LIBERAR_PLASTICO",
+      abaOrigem: abaOrigem,
+      rowIndex: item._rowIndex,
+      col1: acharCampo(item, ['local', 'molde'], 0),
+      col2: acharCampo(item, ['cod', 'codigo'], 1),
+      col3: acharCampo(item, ['desc', 'descricao'], 2),
+      liberadoPor: currentUser
+    }).then(res => {
+      statusDiv.innerText = "✅ Molde liberado com sucesso para o Plástico!";
+      statusDiv.style.color = "var(--success)";
+      carregarTodosDados(true);
+    });
+  }
+}
+
+function fecharModalOS() {
+  document.getElementById('modal-os').style.display = 'none';
+  itemParaFerramentaria = null;
+}
+
+async function confirmarEnvioFerramentaria() {
+  if (!itemParaFerramentaria) return;
+
+  const dataVal = document.getElementById('os-data').value;
+  const horaVal = document.getElementById('os-hora').value;
+  const solicitanteVal = document.getElementById('os-solicitante').value.trim();
+  const obsVal = document.getElementById('os-obs').value.trim();
+
+  let tiposSelecionados = [];
+  document.querySelectorAll('input[name="os-tipo"]:checked').forEach(ck => {
+    tiposSelecionados.push(ck.value);
+  });
+
+  if (!solicitanteVal) {
+    alert("Informe o nome do solicitante.");
+    return;
+  }
+
+  const item = itemParaFerramentaria.item;
+  const abaOrigem = itemParaFerramentaria.abaOrigem;
+
+  fecharModalOS();
+
+  const statusDiv = document.getElementById('status-msg');
+  statusDiv.innerText = "Gerando Ordem de Serviço e enviando para Ferramentaria...";
+  statusDiv.style.color = "var(--primary)";
+
+  try {
+    const res = await chamarAPI({
+      action: "SOLICITAR_FERRAMENTARIA",
+      abaOrigem: abaOrigem,
+      rowIndex: item._rowIndex,
+      col1: acharCampo(item, ['local', 'molde'], 0),
+      col2: acharCampo(item, ['cod', 'codigo'], 1),
+      col3: acharCampo(item, ['desc', 'descricao'], 2),
+      data: dataVal,
+      hora: horaVal,
+      solicitante: solicitanteVal,
+      tipos: tiposSelecionados.join(", "),
+      obs: obsVal
+    });
+
+    if (res && res.status === "success") {
+      alert(`✅ Ordem de Serviço Nº ${res.osNumber} gerada com sucesso!`);
+      statusDiv.innerText = `✅ OS Nº ${res.osNumber} gerada e enviada!`;
+      statusDiv.style.color = "var(--success)";
+      carregarTodosDados(true);
+    }
+  } catch (e) {
+    statusDiv.innerText = "⚠️ Erro ao registrar solicitação.";
+    statusDiv.style.color = "var(--danger)";
+  }
+}
 
   function fazerLogout() {
     localStorage.removeItem('bm_user');
