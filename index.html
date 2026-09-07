@@ -16,6 +16,7 @@
       --danger: #ef4444;
       --success: #10b981;
       --warning: #f59e0b;
+      --info: #0284c7;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -38,6 +39,7 @@
     .btn-danger { background-color: var(--danger); color: white; }
     .btn-success { background-color: var(--success); color: white; }
     .btn-warning { background-color: var(--warning); color: black; }
+    .btn-info { background-color: var(--info); color: white; }
     .btn-cancel { background-color: #4b5563; color: white; }
 
     .table-container { background-color: var(--card-bg); border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); }
@@ -166,6 +168,23 @@
     </div>
   </div>
 
+  <!-- MODAL DE PREENCHIMENTO DE AÇÃO -->
+  <div class="overlay" id="modal-acao" style="display: none;">
+    <div class="modal">
+      <h2>📝 Preencher Ação / Correção</h2>
+      
+      <div class="field-group">
+        <label>Ação / Manutenção Realizada</label>
+        <textarea id="inp-acao-texto" rows="4" placeholder="Descreva os serviços realizados, peças trocadas ou observações técnicas..."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+        <button class="btn btn-cancel" onclick="fecharModalAcao()">Cancelar</button>
+        <button class="btn btn-info" onclick="salvarAcaoRealizada()">Salvar Ação</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL DE LIBERAÇÃO DA FERRAMENTARIA -->
   <div class="overlay" id="modal-liberar" style="display: none;">
     <div class="modal">
@@ -173,7 +192,7 @@
       
       <div class="field-group">
         <label>Ação / Correção Realizada na Ferramenta</label>
-        <textarea id="liberar-acao" rows="4" placeholder="Descreva o serviço realizado, troca de componentes ou observações de liberação..."></textarea>
+        <textarea id="liberar-acao" rows="4" placeholder="Descreva a ação final realizada para liberação..."></textarea>
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
@@ -220,6 +239,7 @@
     let itemSelecionado = null;
     let itemSelecionadoOS = null;
     let itemSelecionadoLiberacao = null;
+    let itemSelecionadoAcao = null;
 
     function chamarAPI(params) {
       return new Promise((resolve, reject) => {
@@ -352,6 +372,11 @@
             trBody += `<button class="btn btn-danger" onclick="excluirMolde(${row._rowIndex})">🗑️ Excluir</button>`;
           }
 
+          // Botão Ação ao lado do Excluir
+          if (abaAtual === 'ferramentaria') {
+            trBody += `<button class="btn btn-info" onclick="abrirModalAcao(${row._rowIndex})">📝 Ação</button>`;
+          }
+
           trBody += `</div></td>`;
         }
 
@@ -366,6 +391,57 @@
         return Object.values(item).some(v => v.toString().toLowerCase().includes(q));
       });
       renderizarTabela(filtrados);
+    }
+
+    // --- PREENCHER AÇÃO ---
+    function abrirModalAcao(rowIndex) {
+      itemSelecionadoAcao = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
+      if (!itemSelecionadoAcao) {
+        alert("Erro ao localizar o item.");
+        return;
+      }
+
+      document.getElementById('inp-acao-texto').value = itemSelecionadoAcao['Ação Realizada'] || itemSelecionadoAcao['Ação'] || itemSelecionadoAcao['Correção'] || '';
+      document.getElementById('modal-acao').style.display = 'flex';
+    }
+
+    function fecharModalAcao() {
+      document.getElementById('modal-acao').style.display = 'none';
+      itemSelecionadoAcao = null;
+    }
+
+    async function salvarAcaoRealizada() {
+      if (!itemSelecionadoAcao) return;
+
+      const acaoTexto = document.getElementById('inp-acao-texto').value.trim();
+
+      if (!acaoTexto) {
+        alert("Por favor, descreva a ação realizada.");
+        return;
+      }
+
+      fecharModalAcao();
+      const status = document.getElementById('status-msg');
+      if (status) status.innerText = "Salvando ação...";
+
+      try {
+        const res = await chamarAPI({
+          action: "SALVAR_ACAO",
+          aba: abaAtual,
+          rowIndex: itemSelecionadoAcao._rowIndex,
+          acao: acaoTexto,
+          usuario: currentUser
+        });
+
+        if (res && res.status === "success") {
+          alert("✅ Ação registrada com sucesso!");
+          carregarDadosAba(abaAtual);
+        } else {
+          alert("Erro ao salvar ação: " + (res.message || "Erro desconhecido"));
+        }
+      } catch (e) {
+        alert("Erro na requisição: " + e.message);
+      }
     }
 
     // --- NOVO MOLDE / EDITAR MOLDE ---
