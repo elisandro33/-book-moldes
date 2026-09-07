@@ -192,14 +192,15 @@
       </div>
     </div>
   </div>
-<!-- MODAL DE LIBERAÇÃO PARA O PLÁSTICO -->
+
+  <!-- MODAL DE LIBERAÇÃO PARA O PLÁSTICO -->
   <div class="overlay" id="modal-liberar" style="display: none;">
     <div class="modal">
       <h2>✅ Liberar Molde para Plástico</h2>
       
       <div class="field-group">
-        <label>Ação Realizada / Observações da Manutenção</label>
-        <textarea id="liberar-acao" rows="4" placeholder="Descreva o serviço realizado no molde..."></textarea>
+        <label>Ação Realizada / Observação da Manutenção</label>
+        <textarea id="liberar-acao" rows="4" placeholder="Descreva os serviços ou ajustes realizados no molde..."></textarea>
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
@@ -208,8 +209,9 @@
       </div>
     </div>
   </div>
+
   <script>
-    const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec"; 
+    const BASE_API = "https://script.google.com/macros/s/AKfycbzyvhHmnIH2ZpOj3bo8doFLP9BoLif_9h4ZvpVv7yqun7vxBEFuHfyceJ4DvSvW-dJz/exec";
 
     let currentUser = "";
     let userRole = "";
@@ -394,6 +396,16 @@
       renderizarTabela(filtrados);
     }
 
+    function obterValoresLinha(item) {
+      if (!item) return { c1: "", c2: "", c3: "" };
+      const keys = Object.keys(item).filter(k => k !== '_rowIndex');
+      return {
+        c1: item[keys[0]] || "",
+        c2: item[keys[1]] || "",
+        c3: item[keys[2]] || ""
+      };
+    }
+
     function abrirModalCrud(modo, rowIndex = null) {
       modoCrud = modo;
       document.getElementById('modal-crud-title').innerText = modo === 'ADICIONAR' ? "➕ Novo Molde" : "✏️ Editar Molde";
@@ -402,10 +414,10 @@
         itemSelecionado = dadosBrutos.find(i => i._rowIndex === rowIndex);
         if (!itemSelecionado) return;
 
-        const keys = Object.keys(itemSelecionado).filter(k => k !== '_rowIndex');
-        document.getElementById('crud-col1').value = itemSelecionado[keys[0]] || "";
-        document.getElementById('crud-col2').value = itemSelecionado[keys[1]] || "";
-        document.getElementById('crud-col3').value = itemSelecionado[keys[2]] || "";
+        const vals = obterValoresLinha(itemSelecionado);
+        document.getElementById('crud-col1').value = vals.c1;
+        document.getElementById('crud-col2').value = vals.c2;
+        document.getElementById('crud-col3').value = vals.c3;
       } else {
         itemSelecionado = null;
         document.getElementById('crud-col1').value = "";
@@ -514,11 +526,7 @@
         return;
       }
 
-      const keys = Object.keys(itemSelecionado).filter(k => k !== '_rowIndex');
-      const col1 = itemSelecionado[keys[0]] || "";
-      const col2 = itemSelecionado[keys[1]] || "";
-      const col3 = itemSelecionado[keys[2]] || "";
-      const rIndex = itemSelecionado._rowIndex;
+      const vals = obterValoresLinha(itemSelecionado);
 
       fecharModalOS();
 
@@ -526,10 +534,10 @@
         const res = await chamarAPI({
           action: "SOLICITAR_FERRAMENTARIA",
           abaOrigem: abaAtual,
-          rowIndex: rIndex,
-          col1: col1,
-          col2: col2,
-          col3: col3,
+          rowIndex: itemSelecionado._rowIndex,
+          col1: vals.c1,
+          col2: vals.c2,
+          col3: vals.c3,
           data: dataVal,
           hora: horaVal,
           solicitante: solicitanteVal,
@@ -548,22 +556,36 @@
       }
     }
 
-    async function liberarParaPlasticoPorRowIndex(rowIndex) {
-      const item = dadosBrutos.find(i => i._rowIndex === rowIndex);
-      if (!item) return;
+    function liberarParaPlasticoPorRowIndex(rowIndex) {
+      itemSelecionado = dadosBrutos.find(i => i._rowIndex === rowIndex);
+      if (!itemSelecionado) return;
 
-      if (!confirm(`Confirmar a liberação do molde para o setor de Plástico?`)) return;
+      document.getElementById('liberar-acao').value = "";
+      document.getElementById('modal-liberar').style.display = 'flex';
+    }
 
-      const keys = Object.keys(item).filter(k => k !== '_rowIndex');
+    function fecharModalLiberar() {
+      document.getElementById('modal-liberar').style.display = 'none';
+      itemSelecionado = null;
+    }
+
+    async function confirmarLiberacaoPlastico() {
+      if (!itemSelecionado) return;
+
+      const acaoRealizada = document.getElementById('liberar-acao').value.trim();
+      const vals = obterValoresLinha(itemSelecionado);
+
+      fecharModalLiberar();
 
       try {
         const res = await chamarAPI({
           action: "LIBERAR_PLASTICO",
           abaOrigem: abaAtual,
-          rowIndex: item._rowIndex,
-          col1: item[keys[0]] || "",
-          col2: item[keys[1]] || "",
-          col3: item[keys[2]] || "",
+          rowIndex: itemSelecionado._rowIndex,
+          col1: vals.c1,
+          col2: vals.c2,
+          col3: vals.c3,
+          acaoRealizada: acaoRealizada,
           liberadoPor: currentUser
         });
 
