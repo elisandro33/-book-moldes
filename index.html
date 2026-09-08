@@ -172,7 +172,7 @@
   <!-- MODAL DE LIBERAÇÃO DA FERRAMENTARIA -->
   <div class="overlay" id="modal-liberar" style="display: none;">
     <div class="modal">
-      <h2>✅ Liberar Molde para Plástico / Destino</h2>
+      <h2>✅ Liberar Molde para Plástico</h2>
       
       <div class="field-group">
         <label>Ação / Correção Realizada na Ferramenta</label>
@@ -195,14 +195,14 @@
         <label>Aba / Destino</label>
         <select id="molde-destino-aba">
           <option value="ATUALIZADA">Plástico (ATUALIZADA)</option>
-          <option value="Sem local">Sem Local</option>
           <option value="Moldes QLX">Moldes QLX</option>
+          <option value="Sem local">Sem Local</option>
         </select>
       </div>
 
       <div class="field-group">
-        <label id="lbl-molde-local">Local / Molde Número</label>
-        <input type="text" id="molde-local" placeholder="Local ou Número do Molde">
+        <label>Local</label>
+        <input type="text" id="molde-local" placeholder="Ex: A1, B2...">
       </div>
 
       <div class="field-group">
@@ -384,11 +384,11 @@
           if (abaAtual !== 'ferramentaria' && abaAtual !== 'HISTORICO_MANUTENCAO') {
             trBody += `<button class="btn btn-primary" onclick="abrirModalOSPorRowIndex(${row._rowIndex})">🔧 Ferramentaria</button>`;
           } else if (abaAtual === 'ferramentaria') {
-            trBody += `<button class="btn btn-success" onclick="liberarParaPlasticoPorRowIndex(${row._rowIndex})">✅ Liberar</button>`;
+            trBody += `<button class="btn btn-success" onclick="liberarParaPlasticoPorRowIndex(${row._rowIndex})">✅ Liberar p/ Plástico</button>`;
           }
 
-          // Transferências entre QLX e Plástico
-          if (abaAtual === 'ATUALIZADA' || abaAtual === 'Sem local') {
+          // Transferências QLX / Plástico
+          if (abaAtual === 'ATUALIZADA') {
             trBody += `<button class="btn btn-warning" onclick="transferirMoldesQLX(${row._rowIndex}, 'QLX')">➡️ P/ QLX</button>`;
           } else if (abaAtual === 'Moldes QLX') {
             trBody += `<button class="btn btn-warning" onclick="transferirMoldesQLX(${row._rowIndex}, 'PLASTICO')">⬅️ P/ Plástico</button>`;
@@ -421,7 +421,6 @@
       itemSelecionado = null;
       document.getElementById('modal-molde-title').innerText = "➕ Adicionar Molde";
       document.getElementById('group-molde-aba').style.display = "none";
-      document.getElementById('lbl-molde-local').innerText = abaAtual === 'Moldes QLX' ? "Molde Número" : "Local";
       document.getElementById('molde-local').value = "";
       document.getElementById('molde-codigo').value = "";
       document.getElementById('molde-desc').value = "";
@@ -436,10 +435,9 @@
 
       document.getElementById('modal-molde-title').innerText = "✏️ Editar Molde";
       document.getElementById('group-molde-aba').style.display = "block";
-      document.getElementById('lbl-molde-local').innerText = abaAtual === 'Moldes QLX' ? "Molde Número" : "Local";
       
       const selAba = document.getElementById('molde-destino-aba');
-      if (['ATUALIZADA', 'Sem local', 'Moldes QLX'].includes(abaAtual)) {
+      if (['ATUALIZADA', 'Moldes QLX', 'Sem local'].includes(abaAtual)) {
         selAba.value = abaAtual;
       } else {
         selAba.value = 'ATUALIZADA';
@@ -519,7 +517,6 @@
       const item = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
       if (!item) return;
 
-      const keys = Object.keys(item).filter(k => k !== '_rowIndex');
       const acaoTxt = destino === 'QLX' ? "transferir para Moldes QLX" : "retornar para Plástico (ATUALIZADA)";
       if (!confirm(`Deseja realmente ${acaoTxt}?`)) return;
 
@@ -528,10 +525,7 @@
           action: "TRANSFERIR_QLX",
           origem: abaAtual,
           destino: destino,
-          rowIndex: rowIndex,
-          col1: item[keys[0]] || "",
-          col2: item[keys[1]] || "",
-          col3: item[keys[2]] || ""
+          rowIndex: rowIndex
         });
 
         if (res && res.status === "success") {
@@ -671,7 +665,7 @@
         const res = await chamarAPI(payload);
 
         if (res && res.status === "success") {
-          alert("✅ Molde liberado e registrado no histórico!");
+          alert("✅ Molde liberado para o Plástico e registrado no histórico!");
           carregarDadosAba(abaAtual);
         } else {
           alert("Erro ao liberar ferramenta: " + (res.message || "Erro desconhecido"));
