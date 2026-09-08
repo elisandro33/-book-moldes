@@ -58,6 +58,11 @@
     .field-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
     .field-group input, .field-group textarea, .field-group select { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-color); color: white; outline: none; }
 
+    /* Campo de senha com ícone de olho */
+    .password-container { position: relative; width: 100%; }
+    .password-container input { width: 100%; padding-right: 40px; }
+    .toggle-password { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; user-select: none; font-size: 16px; }
+
     .checkbox-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
     .checkbox-group label { font-size: 13px; color: white; cursor: pointer; display: flex; align-items: center; gap: 4px; }
 
@@ -70,21 +75,29 @@
   <div class="overlay" id="screen-login">
     <div class="modal" style="max-width: 360px; text-align: center;">
       <h2 style="margin-bottom: 8px;">🔑 Acesso ao Sistema</h2>
-      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Digite seu usuário e senha para acessar</p>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Selecione seu usuário e digite sua senha</p>
       
       <div class="field-group" style="text-align: left;">
         <label>Usuário</label>
-        <input type="text" id="login-user" placeholder="Ex: ferramentaria">
+        <select id="login-user">
+          <option value="">Carregando usuários...</option>
+        </select>
       </div>
       
       <div class="field-group" style="text-align: left;">
         <label>Senha</label>
-        <input type="password" id="login-pass" placeholder="••••••••">
+        <div class="password-container">
+          <input type="password" id="login-pass" placeholder="••••••••">
+          <span class="toggle-password" id="toggle-pass-btn" onclick="togglePasswordVisibility()">👁️</span>
+        </div>
       </div>
 
+      <div id="login-auth-msg" style="color: var(--info); font-size: 13px; margin-bottom: 12px; display: none;">
+        ⏳ Autenticando, aguarde...
+      </div>
       <div id="login-err" style="color: var(--danger); font-size: 12px; margin-bottom: 12px; display: none;"></div>
 
-      <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 10px;" onclick="efetuarLogin()">Entrar</button>
+      <button class="btn btn-primary" id="btn-login" style="width: 100%; justify-content: center; padding: 10px;" onclick="efetuarLogin()">Entrar</button>
     </div>
   </div>
 
@@ -233,6 +246,10 @@
     let itemSelecionadoOS = null;
     let itemSelecionadoLiberacao = null;
 
+    window.onload = function() {
+      carregarListaUsuarios();
+    };
+
     function chamarAPI(params) {
       return new Promise((resolve, reject) => {
         const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
@@ -254,21 +271,69 @@
       });
     }
 
+    async function carregarListaUsuarios() {
+      const selectUser = document.getElementById('login-user');
+      try {
+        const res = await chamarAPI({ action: "GET_USERS" });
+        selectUser.innerHTML = "";
+        
+        if (res && res.users && res.users.length > 0) {
+          selectUser.innerHTML = '<option value="">-- Selecione o Usuário --</option>';
+          res.users.forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u;
+            opt.innerText = u;
+            selectUser.appendChild(opt);
+          });
+        } else {
+          selectUser.innerHTML = '<option value="">Nenhum usuário encontrado</option>';
+        }
+      } catch (e) {
+        selectUser.innerHTML = '<option value="">Erro ao carregar usuários</option>';
+      }
+    }
+
+    function togglePasswordVisibility() {
+      const passInput = document.getElementById('login-pass');
+      const toggleBtn = document.getElementById('toggle-pass-btn');
+      
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        toggleBtn.innerText = '🙈';
+      } else {
+        passInput.type = 'password';
+        toggleBtn.innerText = '👁️';
+      }
+    }
+
     async function efetuarLogin() {
       const user = document.getElementById('login-user').value.trim();
       const pass = document.getElementById('login-pass').value.trim();
       const errDiv = document.getElementById('login-err');
+      const authMsg = document.getElementById('login-auth-msg');
+      const btnLogin = document.getElementById('btn-login');
 
-      if (!user || !pass) {
-        errDiv.innerText = "Preencha usuário e senha.";
+      if (!user) {
+        errDiv.innerText = "Selecione um usuário.";
+        errDiv.style.display = "block";
+        return;
+      }
+
+      if (!pass) {
+        errDiv.innerText = "Digite a senha.";
         errDiv.style.display = "block";
         return;
       }
 
       errDiv.style.display = "none";
-      
+      authMsg.style.display = "block";
+      btnLogin.disabled = true;
+
       try {
         const res = await chamarAPI({ action: "LOGIN", user: user, pass: pass });
+        authMsg.style.display = "none";
+        btnLogin.disabled = false;
+
         if (res && res.status === "success") {
           currentUser = res.user;
           userRole = res.role;
@@ -280,10 +345,12 @@
 
           configurarAcessoPorUsuario();
         } else {
-          errDiv.innerText = res.message || "Usuário ou senha incorretos.";
+          errDiv.innerText = res.message || "Senha incorreta.";
           errDiv.style.display = "block";
         }
       } catch (e) {
+        authMsg.style.display = "none";
+        btnLogin.disabled = false;
         errDiv.innerText = "Erro ao conectar com o servidor.";
         errDiv.style.display = "block";
       }
@@ -314,6 +381,7 @@
     function logout() {
       currentUser = "";
       userRole = "";
+      document.getElementById('login-pass').value = "";
       document.getElementById('screen-app').style.display = "none";
       document.getElementById('screen-login').style.display = "flex";
     }
@@ -396,290 +464,4 @@
 
           // Editar e Excluir
           if (abaAtual !== 'HISTORICO_MANUTENCAO') {
-            trBody += `<button class="btn btn-warning" onclick="abrirModalEditarMolde(${row._rowIndex})">✏️ Editar</button>`;
-            trBody += `<button class="btn btn-danger" onclick="excluirMolde(${row._rowIndex})">🗑️ Excluir</button>`;
-          }
-
-          trBody += `</div></td>`;
-        }
-
-        trBody += "</tr>";
-        body.innerHTML += trBody;
-      });
-    }
-
-    function filtrarTabela() {
-      const q = document.getElementById('inp-search').value.toLowerCase();
-      const filtrados = dadosBrutos.filter(item => {
-        return Object.values(item).some(v => v.toString().toLowerCase().includes(q));
-      });
-      renderizarTabela(filtrados);
-    }
-
-    // --- NOVO MOLDE / EDITAR MOLDE ---
-    function abrirModalNovoMolde() {
-      itemSelecionado = null;
-      document.getElementById('modal-molde-title').innerText = "➕ Adicionar Molde";
-      document.getElementById('group-molde-aba').style.display = "none";
-      document.getElementById('lbl-molde-local').innerText = abaAtual === 'Moldes QLX' ? "Molde Número" : "Local";
-      document.getElementById('molde-local').value = "";
-      document.getElementById('molde-codigo').value = "";
-      document.getElementById('molde-desc').value = "";
-      document.getElementById('modal-molde').style.display = "flex";
-    }
-
-    function abrirModalEditarMolde(rowIndex) {
-      itemSelecionado = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
-      if (!itemSelecionado) return;
-
-      const keys = Object.keys(itemSelecionado).filter(k => k !== '_rowIndex');
-
-      document.getElementById('modal-molde-title').innerText = "✏️ Editar Molde";
-      document.getElementById('group-molde-aba').style.display = "block";
-      document.getElementById('lbl-molde-local').innerText = abaAtual === 'Moldes QLX' ? "Molde Número" : "Local";
-      
-      const selAba = document.getElementById('molde-destino-aba');
-      if (['ATUALIZADA', 'Sem local', 'Moldes QLX'].includes(abaAtual)) {
-        selAba.value = abaAtual;
-      } else {
-        selAba.value = 'ATUALIZADA';
-      }
-
-      document.getElementById('molde-local').value = itemSelecionado[keys[0]] || "";
-      document.getElementById('molde-codigo').value = itemSelecionado[keys[1]] || "";
-      document.getElementById('molde-desc').value = itemSelecionado[keys[2]] || "";
-      document.getElementById('modal-molde').style.display = "flex";
-    }
-
-    function fecharModalMolde() {
-      document.getElementById('modal-molde').style.display = "none";
-      itemSelecionado = null;
-    }
-
-    async function salvarMolde() {
-      const local = document.getElementById('molde-local').value.trim();
-      const codigo = document.getElementById('molde-codigo').value.trim();
-      const desc = document.getElementById('molde-desc').value.trim();
-
-      if (!codigo || !desc) {
-        alert("Preencha ao menos Código e Descrição.");
-        return;
-      }
-
-      fecharModalMolde();
-
-      const action = itemSelecionado ? "EDITAR_MOLDE" : "ADICIONAR_MOLDE";
-      const novaAba = itemSelecionado ? document.getElementById('molde-destino-aba').value : abaAtual;
-
-      const payload = {
-        action: action,
-        aba: abaAtual,
-        novaAba: novaAba,
-        local: local,
-        codigo: codigo,
-        descricao: desc,
-        rowIndex: itemSelecionado ? itemSelecionado._rowIndex : null
-      };
-
-      try {
-        const res = await chamarAPI(payload);
-        if (res && res.status === "success") {
-          alert("✅ Molde salvo com sucesso!");
-          carregarDadosAba(abaAtual);
-        } else {
-          alert("Erro: " + (res.message || "Erro desconhecido"));
-        }
-      } catch (e) {
-        alert("Erro na requisição: " + e.message);
-      }
-    }
-
-    async function excluirMolde(rowIndex) {
-      if (!confirm("Tem certeza de que deseja excluir este molde?")) return;
-
-      try {
-        const res = await chamarAPI({
-          action: "EXCLUIR_MOLDE",
-          aba: abaAtual,
-          rowIndex: rowIndex
-        });
-
-        if (res && res.status === "success") {
-          alert("✅ Molde excluído com sucesso!");
-          carregarDadosAba(abaAtual);
-        } else {
-          alert("Erro ao excluir: " + (res.message || "Erro no servidor"));
-        }
-      } catch (e) {
-        alert("Erro na requisição: " + e.message);
-      }
-    }
-
-    async function transferirMoldesQLX(rowIndex, destino) {
-      const item = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
-      if (!item) return;
-
-      const keys = Object.keys(item).filter(k => k !== '_rowIndex');
-      const acaoTxt = destino === 'QLX' ? "transferir para Moldes QLX" : "retornar para Plástico (ATUALIZADA)";
-      if (!confirm(`Deseja realmente ${acaoTxt}?`)) return;
-
-      try {
-        const res = await chamarAPI({
-          action: "TRANSFERIR_QLX",
-          origem: abaAtual,
-          destino: destino,
-          rowIndex: rowIndex,
-          col1: item[keys[0]] || "",
-          col2: item[keys[1]] || "",
-          col3: item[keys[2]] || ""
-        });
-
-        if (res && res.status === "success") {
-          alert("✅ Transferência realizada com sucesso!");
-          carregarDadosAba(abaAtual);
-        } else {
-          alert("Erro na transferência: " + (res.message || "Erro no servidor"));
-        }
-      } catch (e) {
-        alert("Erro na requisição: " + e.message);
-      }
-    }
-
-    // --- SOLICITAÇÃO DE OS ---
-    function abrirModalOSPorRowIndex(rowIndex) {
-      itemSelecionadoOS = dadosBrutos.find(item => Number(item._rowIndex) === Number(rowIndex));
-      
-      if (!itemSelecionadoOS) {
-        alert("Erro ao localizar o item selecionado.");
-        return;
-      }
-
-      const agora = new Date();
-      document.getElementById('os-data').value = agora.toISOString().split('T')[0];
-      document.getElementById('os-hora').value = agora.toTimeString().split(' ')[0].substring(0, 5);
-      document.getElementById('os-solicitante').value = currentUser || "Elisandro";
-      document.getElementById('os-obs').value = '';
-      document.querySelectorAll('input[name="os-tipo"]').forEach(ck => ck.checked = false);
-
-      document.getElementById('modal-os').style.display = 'flex';
-    }
-
-    function fecharModalOS() {
-      document.getElementById('modal-os').style.display = 'none';
-      itemSelecionadoOS = null;
-    }
-
-    async function confirmarEnvioFerramentaria() {
-      if (!itemSelecionadoOS || itemSelecionadoOS._rowIndex === undefined || itemSelecionadoOS._rowIndex === null) {
-        alert("Erro: Nenhum item válido selecionado para OS.");
-        return;
-      }
-
-      const keys = Object.keys(itemSelecionadoOS).filter(k => k !== '_rowIndex');
-
-      let tipos = [];
-      document.querySelectorAll('input[name="os-tipo"]:checked').forEach(ck => tipos.push(ck.value));
-
-      const dataVal = document.getElementById('os-data').value;
-      const horaVal = document.getElementById('os-hora').value;
-      const solicitanteVal = document.getElementById('os-solicitante').value.trim();
-      const obsVal = document.getElementById('os-obs').value.trim();
-
-      const payload = {
-        action: "SOLICITAR_FERRAMENTARIA",
-        abaOrigem: abaAtual,
-        rowIndex: itemSelecionadoOS._rowIndex,
-        col1: itemSelecionadoOS[keys[0]] || "",
-        col2: itemSelecionadoOS[keys[1]] || "",
-        col3: itemSelecionadoOS[keys[2]] || "",
-        data: dataVal,
-        hora: horaVal,
-        solicitante: solicitanteVal,
-        tipos: tipos.join(", "),
-        obs: obsVal
-      };
-
-      fecharModalOS();
-
-      const status = document.getElementById('status-msg');
-      if (status) status.innerText = "Gerando OS...";
-
-      try {
-        const res = await chamarAPI(payload);
-
-        if (res && res.status === "success") {
-          alert(`✅ Ordem de Serviço Nº ${res.osNumber} criada com sucesso!`);
-          trocarAba('ferramentaria', document.getElementById('tab-ferramentaria'));
-        } else {
-          alert("Erro ao gerar OS: " + (res.message || "Erro desconhecido no servidor"));
-        }
-      } catch (e) {
-        alert("Erro de conexão ao gerar OS: " + e.message);
-      }
-    }
-
-    // --- LIBERAÇÃO DE FERRAMENTARIA ---
-    function liberarParaPlasticoPorRowIndex(rowIndex) {
-      itemSelecionadoLiberacao = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
-      
-      if (!itemSelecionadoLiberacao) {
-        alert("Erro ao localizar o item selecionado.");
-        return;
-      }
-
-      document.getElementById('liberar-acao').value = "";
-      document.getElementById('modal-liberar').style.display = 'flex';
-    }
-
-    function fecharModalLiberar() {
-      document.getElementById('modal-liberar').style.display = 'none';
-      itemSelecionadoLiberacao = null;
-    }
-
-    async function confirmarLiberacaoPlastico() {
-      if (!itemSelecionadoLiberacao || itemSelecionadoLiberacao._rowIndex === undefined) {
-        alert("Erro: Nenhum item selecionado para liberação.");
-        return;
-      }
-
-      const acaoRealizada = document.getElementById('liberar-acao').value.trim();
-
-      if (!acaoRealizada) {
-        alert("Por favor, descreva a ação ou correção realizada antes de liberar.");
-        return;
-      }
-
-      const keys = Object.keys(itemSelecionadoLiberacao).filter(k => k !== '_rowIndex');
-
-      const payload = {
-        action: "LIBERAR_PLASTICO",
-        abaOrigem: abaAtual,
-        rowIndex: itemSelecionadoLiberacao._rowIndex,
-        col1: itemSelecionadoLiberacao[keys[0]] || "",
-        col2: itemSelecionadoLiberacao[keys[1]] || "",
-        col3: itemSelecionadoLiberacao[keys[2]] || "",
-        acaoRealizada: acaoRealizada,
-        liberadoPor: currentUser
-      };
-
-      fecharModalLiberar();
-
-      const status = document.getElementById('status-msg');
-      if (status) status.innerText = "Liberando molde...";
-
-      try {
-        const res = await chamarAPI(payload);
-
-        if (res && res.status === "success") {
-          alert("✅ Molde liberado e registrado no histórico!");
-          carregarDadosAba(abaAtual);
-        } else {
-          alert("Erro ao liberar ferramenta: " + (res.message || "Erro desconhecido"));
-        }
-      } catch (e) {
-        alert("Erro ao conectar com o servidor: " + e.message);
-      }
-    }
-  </script>
-</body>
-</html>
+        
