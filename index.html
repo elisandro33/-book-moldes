@@ -124,9 +124,9 @@
 
     <!-- TABELA -->
     <div class="table-container">
-      <table id="tblDados">
+      <table>
         <thead>
-          <tr id="tblHeader">
+          <tr>
             <th>Local</th>
             <th>Código</th>
             <th>Descrição</th>
@@ -255,6 +255,7 @@
     function executarJSONP(url) {
       const script = document.createElement('script');
       script.src = url;
+      script.onerror = () => alert("Erro de conexão ao acessar o servidor Google Apps Script.");
       document.body.appendChild(script);
       script.onload = () => document.body.removeChild(script);
     }
@@ -323,30 +324,41 @@
       renderizarTabela(dadosAbaAtual);
     }
 
+    function obterValorColuna(item, nomesPossiveis) {
+      for (let key of Object.keys(item)) {
+        let keyNorm = key.trim().toLowerCase();
+        for (let nome of nomesPossiveis) {
+          if (keyNorm === nome.toLowerCase()) {
+            return item[key] || "";
+          }
+        }
+      }
+      return "";
+    }
+
     function renderizarTabela(dados) {
       const tbody = document.getElementById("tblBody");
       tbody.innerHTML = "";
 
-      if (dados.length === 0) {
+      if (!dados || dados.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
         return;
       }
 
-      dados.forEach(item => {
+      dados.forEach((item, index) => {
         const tr = document.createElement("tr");
-        const col1 = item["LOCAL"] || item["Local"] || item["col_1"] || "";
-        const col2 = item["CÓDIGO"] || item["Código"] || item["col_2"] || "";
-        const col3 = item["DESCRIÇÃO"] || item["Descrição"] || item["col_3"] || "";
-        const rIndex = item._rowIndex;
+        const col1 = obterValorColuna(item, ["LOCAL", "Local", "col_1"]);
+        const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "col_2"]);
+        const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "col_3"]);
 
         tr.innerHTML = `
           <td>${col1}</td>
           <td>${col2}</td>
           <td>${col3}</td>
           <td>
-            <button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentaria('${rIndex}', '${col1}', '${col2}', '${col3}')">Ferramentaria</button>
-            <button class="btn-tbl btn-editar" onclick="abrirModalEditar('${rIndex}', '${col1}', '${col2}', '${col3}')">Editar</button>
-            <button class="btn-tbl btn-excluir" onclick="excluirMolde('${rIndex}')">Excluir</button>
+            <button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentaria(${index})">Ferramentaria</button>
+            <button class="btn-tbl btn-editar" onclick="abrirModalEditar(${index})">Editar</button>
+            <button class="btn-tbl btn-excluir" onclick="excluirMolde(${index})">Excluir</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -389,11 +401,21 @@
     }
 
     /* --- EDITAR MOLDE --- */
-    function abrirModalEditar(rowIndex, local, codigo, descricao) {
-      document.getElementById("editRowIndex").value = rowIndex;
-      document.getElementById("editLocal").value = local;
-      document.getElementById("editCodigo").value = codigo;
-      document.getElementById("editDescricao").value = descricao;
+    function abrirModalEditar(index) {
+      const item = dadosAbaAtual[index];
+      if (!item) {
+        alert("Item não encontrado!");
+        return;
+      }
+
+      const col1 = obterValorColuna(item, ["LOCAL", "Local", "col_1"]);
+      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "col_2"]);
+      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "col_3"]);
+
+      document.getElementById("editRowIndex").value = item._rowIndex;
+      document.getElementById("editLocal").value = col1;
+      document.getElementById("editCodigo").value = col2;
+      document.getElementById("editDescricao").value = col3;
       document.getElementById("modalEditarMolde").style.display = "flex";
     }
 
@@ -417,21 +439,32 @@
     }
 
     /* --- EXCLUIR MOLDE --- */
-    function excluirMolde(rowIndex) {
-      if (confirm("Tem certeza que deseja excluir este molde?")) {
-        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${rowIndex}&callback=retornoAcao`;
+    function excluirMolde(index) {
+      const item = dadosAbaAtual[index];
+      if (!item) return;
+
+      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "col_2"]);
+
+      if (confirm(`Tem certeza que deseja excluir o molde '${col2}'?`)) {
+        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${item._rowIndex}&callback=retornoAcao`;
         executarJSONP(url);
       }
     }
 
     /* --- ENVIAR PARA FERRAMENTARIA --- */
-    function abrirModalFerramentaria(rowIndex, local, codigo, descricao) {
-      document.getElementById("ferrRowIndex").value = rowIndex;
-      document.getElementById("ferrLocal").value = local;
-      document.getElementById("ferrCodigo").value = codigo;
-      document.getElementById("ferrDescricao").value = descricao;
+    function abrirModalFerramentaria(index) {
+      const item = dadosAbaAtual[index];
+      if (!item) return;
+
+      const col1 = obterValorColuna(item, ["LOCAL", "Local", "col_1"]);
+      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "col_2"]);
+      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "col_3"]);
+
+      document.getElementById("ferrRowIndex").value = item._rowIndex;
+      document.getElementById("ferrLocal").value = col1;
+      document.getElementById("ferrCodigo").value = col2;
+      document.getElementById("ferrDescricao").value = col3;
       
-      // Define data e hora atuai
       const agora = new Date();
       document.getElementById("ferrData").value = agora.toISOString().split('T')[0];
       document.getElementById("ferrHora").value = agora.toTimeString().substring(0,5);
@@ -491,7 +524,7 @@
         fecharModalFerramentaria();
         carregarDadosAba(abaAtual);
       } else {
-        alert("Erro na operação: " + (res.message || "Erro desconhecido."));
+        alert("Erro na operação: " + (res && res.message ? res.message : "Erro desconhecido."));
       }
     }
   </script>
