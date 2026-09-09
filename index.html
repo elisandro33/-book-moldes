@@ -57,11 +57,10 @@
     /* BOTOES DE AÇÃO DA TABELA */
     .btn-tbl { padding: 6px 12px; border: none; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer; margin-right: 5px; }
     .btn-ferramentaria { background-color: #1d4ed8; color: #fff; }
-    .btn-qlx { background-color: #d97706; color: #fff; }
     .btn-editar { background-color: #ca8a04; color: #fff; }
     .btn-excluir { background-color: #dc2626; color: #fff; }
 
-    /* MODAL */
+    /* MODAIS */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 100; }
     .modal-content { background-color: #1e293b; padding: 25px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
     .modal-content h3 { margin-bottom: 20px; color: #f8fafc; font-size: 18px; display: flex; align-items: center; gap: 10px; }
@@ -76,7 +75,7 @@
   <div id="loginScreen" class="login-container">
     <div class="login-box">
       <h2>🔑 Acesso ao Sistema</h2>
-      <p>Digite seu usuário e senha</p>
+      <p>Digite seu usuário e senha para acessar</p>
       
       <div class="form-group">
         <label for="loginUser">Usuário</label>
@@ -146,7 +145,6 @@
     <div class="modal-content">
       <h3><i class="fa fa-plus"></i> Adicionar Molde</h3>
       
-      <!-- CAMPO DE ESCOLHA DA ABA DESTINO -->
       <div class="form-group">
         <label for="addAbaDestino">Destino (Aba):</label>
         <select id="addAbaDestino" class="form-control">
@@ -178,6 +176,75 @@
     </div>
   </div>
 
+  <!-- MODAL: EDITAR MOLDE -->
+  <div id="modalEditarMolde" class="modal">
+    <div class="modal-content">
+      <h3><i class="fa fa-pencil"></i> Editar Molde</h3>
+      <input type="hidden" id="editRowIndex">
+      
+      <div class="form-group">
+        <label for="editLocal">Local:</label>
+        <input type="text" id="editLocal" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="editCodigo">Código:</label>
+        <input type="text" id="editCodigo" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="editDescricao">Descrição:</label>
+        <input type="text" id="editDescricao" class="form-control">
+      </div>
+
+      <div class="modal-buttons">
+        <button onclick="fecharModalEditar()" class="btn-cancelar">Cancelar</button>
+        <button onclick="salvarEdicaoMolde()" class="btn-salvar">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ENVIAR PARA FERRAMENTARIA -->
+  <div id="modalFerramentaria" class="modal">
+    <div class="modal-content">
+      <h3><i class="fa fa-wrench"></i> Solicitar Ferramentaria</h3>
+      <input type="hidden" id="ferrRowIndex">
+      <input type="hidden" id="ferrLocal">
+      <input type="hidden" id="ferrCodigo">
+      <input type="hidden" id="ferrDescricao">
+
+      <div class="form-group">
+        <label for="ferrData">Data Entrada:</label>
+        <input type="date" id="ferrData" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="ferrHora">Hora Entrada:</label>
+        <input type="time" id="ferrHora" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="ferrSolicitante">Solicitante:</label>
+        <input type="text" id="ferrSolicitante" class="form-control" placeholder="Nome do solicitante">
+      </div>
+
+      <div class="form-group">
+        <label for="ferrTipos">Tipo de Serviço:</label>
+        <input type="text" id="ferrTipos" class="form-control" placeholder="Ex: Manutenção Corretiva, Ajuste...">
+      </div>
+
+      <div class="form-group">
+        <label for="ferrObs">Observação / Problema:</label>
+        <textarea id="ferrObs" class="form-control" rows="3" placeholder="Detalhes do problema..."></textarea>
+      </div>
+
+      <div class="modal-buttons">
+        <button onclick="fecharModalFerramentaria()" class="btn-cancelar">Cancelar</button>
+        <button onclick="confirmarEnvioFerramentaria()" class="btn-salvar">Enviar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
     
@@ -185,7 +252,6 @@
     let abaAtual = "ATUALIZADA";
     let dadosAbaAtual = [];
 
-    // JSONP Helper
     function executarJSONP(url) {
       const script = document.createElement('script');
       script.src = url;
@@ -220,7 +286,7 @@
         document.getElementById("appContainer").style.display = "flex";
         carregarDadosAba(abaAtual);
       } else {
-        alert("Erro no login: " + (res.message || "Usuário ou senha inválidos."));
+        alert("Erro no login: " + (res.message || "Usuário ou senha incorretos."));
       }
     }
 
@@ -236,7 +302,6 @@
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       
-      // Sincroniza o select do modal com a aba selecionada se for uma das 3 opções
       const selectDestino = document.getElementById("addAbaDestino");
       if (["ATUALIZADA", "Moldes QLX", "Sem local"].includes(nomeAba)) {
         selectDestino.value = nomeAba;
@@ -272,15 +337,16 @@
         const col1 = item["LOCAL"] || item["Local"] || item["col_1"] || "";
         const col2 = item["CÓDIGO"] || item["Código"] || item["col_2"] || "";
         const col3 = item["DESCRIÇÃO"] || item["Descrição"] || item["col_3"] || "";
+        const rIndex = item._rowIndex;
 
         tr.innerHTML = `
           <td>${col1}</td>
           <td>${col2}</td>
           <td>${col3}</td>
           <td>
-            <button class="btn-tbl btn-ferramentaria" onclick="solicitarFerramentaria('${item._rowIndex}')">Ferramentaria</button>
-            <button class="btn-tbl btn-editar">Editar</button>
-            <button class="btn-tbl btn-excluir">Excluir</button>
+            <button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentaria('${rIndex}', '${col1}', '${col2}', '${col3}')">Ferramentaria</button>
+            <button class="btn-tbl btn-editar" onclick="abrirModalEditar('${rIndex}', '${col1}', '${col2}', '${col3}')">Editar</button>
+            <button class="btn-tbl btn-excluir" onclick="excluirMolde('${rIndex}')">Excluir</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -295,6 +361,7 @@
       renderizarTabela(filtrados);
     }
 
+    /* --- ADICIONAR MOLDE --- */
     function abrirModalAdicionar() {
       document.getElementById("modalAdicionarMolde").style.display = "flex";
     }
@@ -317,17 +384,114 @@
         return;
       }
 
-      const url = `${BASE_API}?action=ADICIONAR_MOLDE&sheet=${encodeURIComponent(aba)}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAdicionarMolde`;
+      const url = `${BASE_API}?action=ADICIONAR_MOLDE&sheet=${encodeURIComponent(aba)}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAcao`;
       executarJSONP(url);
     }
 
-    function retornoAdicionarMolde(res) {
+    /* --- EDITAR MOLDE --- */
+    function abrirModalEditar(rowIndex, local, codigo, descricao) {
+      document.getElementById("editRowIndex").value = rowIndex;
+      document.getElementById("editLocal").value = local;
+      document.getElementById("editCodigo").value = codigo;
+      document.getElementById("editDescricao").value = descricao;
+      document.getElementById("modalEditarMolde").style.display = "flex";
+    }
+
+    function fecharModalEditar() {
+      document.getElementById("modalEditarMolde").style.display = "none";
+    }
+
+    function salvarEdicaoMolde() {
+      const rIndex = document.getElementById("editRowIndex").value;
+      const col1 = document.getElementById("editLocal").value.trim();
+      const col2 = document.getElementById("editCodigo").value.trim();
+      const col3 = document.getElementById("editDescricao").value.trim();
+
+      if (!col1 || !col2 || !col3) {
+        alert("Por favor, preencha todos os campos!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=EDITAR_MOLDE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${rIndex}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAcao`;
+      executarJSONP(url);
+    }
+
+    /* --- EXCLUIR MOLDE --- */
+    function excluirMolde(rowIndex) {
+      if (confirm("Tem certeza que deseja excluir este molde?")) {
+        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${rowIndex}&callback=retornoAcao`;
+        executarJSONP(url);
+      }
+    }
+
+    /* --- ENVIAR PARA FERRAMENTARIA --- */
+    function abrirModalFerramentaria(rowIndex, local, codigo, descricao) {
+      document.getElementById("ferrRowIndex").value = rowIndex;
+      document.getElementById("ferrLocal").value = local;
+      document.getElementById("ferrCodigo").value = codigo;
+      document.getElementById("ferrDescricao").value = descricao;
+      
+      // Define data e hora atuai
+      const agora = new Date();
+      document.getElementById("ferrData").value = agora.toISOString().split('T')[0];
+      document.getElementById("ferrHora").value = agora.toTimeString().substring(0,5);
+      
+      if (usuarioLogado) {
+        document.getElementById("ferrSolicitante").value = usuarioLogado.user || "";
+      }
+
+      document.getElementById("modalFerramentaria").style.display = "flex";
+    }
+
+    function fecharModalFerramentaria() {
+      document.getElementById("modalFerramentaria").style.display = "none";
+      document.getElementById("ferrTipos").value = "";
+      document.getElementById("ferrObs").value = "";
+    }
+
+    function confirmarEnvioFerramentaria() {
+      const rIndex = document.getElementById("ferrRowIndex").value;
+      const local = document.getElementById("ferrLocal").value;
+      const codigo = document.getElementById("ferrCodigo").value;
+      const descricao = document.getElementById("ferrDescricao").value;
+      
+      const data = document.getElementById("ferrData").value;
+      const hora = document.getElementById("ferrHora").value;
+      const solicitante = document.getElementById("ferrSolicitante").value.trim();
+      const tipos = document.getElementById("ferrTipos").value.trim();
+      const obs = document.getElementById("ferrObs").value.trim();
+
+      if (!solicitante) {
+        alert("Informe o nome do solicitante!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=SOLICITAR_FERRAMENTARIA` +
+                  `&abaOrigem=${encodeURIComponent(abaAtual)}` +
+                  `&rowIndex=${rIndex}` +
+                  `&col1=${encodeURIComponent(local)}` +
+                  `&col2=${encodeURIComponent(codigo)}` +
+                  `&col3=${encodeURIComponent(descricao)}` +
+                  `&data=${encodeURIComponent(data)}` +
+                  `&hora=${encodeURIComponent(hora)}` +
+                  `&solicitante=${encodeURIComponent(solicitante)}` +
+                  `&tipos=${encodeURIComponent(tipos)}` +
+                  `&obs=${encodeURIComponent(obs)}` +
+                  `&callback=retornoAcao`;
+
+      executarJSONP(url);
+    }
+
+    /* --- CALLBACK GERAL PARA AÇÕES DE SUCESSO OU ERRO --- */
+    function retornoAcao(res) {
       if (res && res.status === "success") {
-        alert("Molde adicionado com sucesso!");
+        alert(res.osNumber ? `Solicitação enviada com sucesso! OS Gerada: ${res.osNumber}` : "Operação realizada com sucesso!");
         fecharModalAdicionar();
+        fecharModalEditar();
+        fecharModalFerramentaria();
         carregarDadosAba(abaAtual);
       } else {
-        alert("Erro ao adicionar molde: " + (res.message || "Erro desconhecido"));
+        alert("Erro na operação: " + (res.message || "Erro desconhecido."));
       }
     }
   </script>
