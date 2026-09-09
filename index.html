@@ -105,13 +105,13 @@
       </div>
     </header>
 
-    <!-- ABAS DINÂMICAS -->
+    <!-- ABAS -->
     <div class="tabs" id="tabContainer">
-      <button class="tab-btn tab-admin active" onclick="trocarAba('ATUALIZADA', this)">Plástico (ATUALIZADA)</button>
-      <button class="tab-btn tab-admin" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
-      <button class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)">Sem Local</button>
-      <button class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
-      <button class="tab-btn tab-ferram" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
+      <button id="tabPlastico" class="tab-btn tab-admin" onclick="trocarAba('ATUALIZADA', this)">Plástico (ATUALIZADA)</button>
+      <button id="tabQLX" class="tab-btn tab-admin" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
+      <button id="tabSemLocal" class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)">Sem Local</button>
+      <button id="tabFerramentaria" class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
+      <button id="tabHistorico" class="tab-btn tab-ferram" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
     </div>
 
     <!-- AÇÕES -->
@@ -246,7 +246,7 @@
     </div>
   </div>
 
-  <!-- MODAL: LIBERAR PARA O PLÁSTICO (Ação Realizada) -->
+  <!-- MODAL: LIBERAR PARA O PLÁSTICO (Com preenchimento da ação realizada) -->
   <div id="modalLiberarPlastico" class="modal">
     <div class="modal-content">
       <h3><i class="fa fa-check-circle"></i> Liberar P/ Plástico</h3>
@@ -269,7 +269,7 @@
 
       <div class="form-group">
         <label for="libAcaoRealizada">Ação / Manutenção Realizada:</label>
-        <textarea id="libAcaoRealizada" class="form-control" rows="3" placeholder="Descreva os reparos ou ajustes feitos..."></textarea>
+        <textarea id="libAcaoRealizada" class="form-control" rows="3" placeholder="Descreva o serviço/manutenção efetuada..."></textarea>
       </div>
 
       <div class="modal-buttons">
@@ -320,22 +320,24 @@
         document.getElementById("loginScreen").style.display = "none";
         document.getElementById("appContainer").style.display = "flex";
 
-        // REGRA DE PERMISSÕES POR USUÁRIO
-        const isFerram = (res.user.toLowerCase() === "ferramentaria" || res.role.toLowerCase() === "ferramentaria");
+        const userLower = String(res.user).toLowerCase();
+        const roleLower = String(res.role).toLowerCase();
+        const isFerram = (userLower === "ferramentaria" || roleLower === "ferramentaria");
 
         if (isFerram) {
-          // Esconde abas de admin/fábrica
+          // Oculta abas que não pertencem ao perfil ferramentaria
           document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "none");
           document.getElementById("btnAddMolde").style.display = "none";
-          // Seleciona diretamente a aba Ferramentaria
-          const btnFerram = document.querySelector(".tab-ferram");
+          
+          // Entra DIRETO na aba Ferramentaria
+          const btnFerram = document.getElementById("tabFerramentaria");
           trocarAba('ferramentaria', btnFerram);
         } else {
-          // Usuário normal/Admin vê tudo
           document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "inline-block");
           document.getElementById("btnAddMolde").style.display = "flex";
-          const btnAtual = document.querySelector(".tab-admin");
-          trocarAba('ATUALIZADA', btnAtual);
+          
+          const btnPlastico = document.getElementById("tabPlastico");
+          trocarAba('ATUALIZADA', btnPlastico);
         }
 
       } else {
@@ -457,7 +459,6 @@
         const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
         const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
 
-        // Se for na aba Ferramentaria, exibe o botão "Liberar P/ Plástico"
         let btnAcaoPrincipal = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentaria(${index})">Ferramentaria</button>`;
         if (abaAtual === "ferramentaria") {
           btnAcaoPrincipal = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberar(${index})">Liberar P/ Plástico</button>`;
@@ -485,7 +486,7 @@
       renderizarTabela(filtrados);
     }
 
-    /* --- LIBERAR PARA PLÁSTICO (MODAL DE AÇÃO) --- */
+    /* --- LIBERAR PARA PLÁSTICO (ABRE O MODAL PARA DIGITAR A AÇÃO) --- */
     function abrirModalLiberar(index) {
       const item = dadosAbaAtual[index];
       if (!item) return;
@@ -516,7 +517,7 @@
       const acaoRealizada = document.getElementById("libAcaoRealizada").value.trim();
 
       if (!acaoRealizada) {
-        alert("Por favor, descreva a ação ou manutenção realizada!");
+        alert("Por favor, preencha o campo de Ação / Manutenção Realizada!");
         return;
       }
 
