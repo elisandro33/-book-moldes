@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #121824; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; }
+    body { background-color: #121824; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
     
     /* TELA DE LOGIN */
     .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: #121824; }
@@ -27,32 +27,36 @@
     .btn-primary:hover { background-color: #1d4ed8; }
     
     /* SISTEMA PRINCIPAL */
-    #appContainer { display: none; padding: 20px; flex-direction: column; flex-grow: 1; }
-    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 20px; }
+    #appContainer { display: none; padding: 20px; flex-direction: column; flex-grow: 1; width: 100%; max-width: 100%; box-sizing: border-border-box; }
+    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
     header h1 { font-size: 22px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
     .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; color: #cbd5e1; }
     .btn-logout { padding: 6px 14px; background-color: #991b1b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
     .btn-logout:hover { background-color: #7f1d1d; }
 
     /* NAVEGAÇÃO POR ABAS */
-    .tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
+    .tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; width: 100%; }
     .tab-btn { padding: 10px 18px; background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; white-space: nowrap; transition: all 0.2s; }
     .tab-btn.active { background-color: #1d4ed8; color: #fff; border-color: #2563eb; }
 
     /* BARRA DE AÇÕES */
-    .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
-    .search-box { position: relative; flex-grow: 1; max-width: 400px; }
+    .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; width: 100%; }
+    .search-box { position: relative; flex-grow: 1; max-width: 400px; min-width: 250px; }
     .search-box input { width: 100%; padding: 10px 12px 10px 35px; background-color: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #fff; font-size: 14px; outline: none; }
     .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; }
-    .btn-add { padding: 10px 18px; background-color: #059669; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    .btn-add { padding: 10px 18px; background-color: #059669; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
     .btn-add:hover { background-color: #047857; }
 
-    /* TABELA DE DADOS */
-    .table-container { overflow-x: auto; background-color: #1e293b; border-radius: 8px; border: 1px solid #334155; }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+    /* TABELA DE DADOS RESPONSIVA */
+    .table-container { width: 100%; overflow-x: auto; background-color: #1e293b; border-radius: 8px; border: 1px solid #334155; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 800px; }
     th { background-color: #0f172a; color: #64748b; padding: 14px; font-weight: 700; text-transform: uppercase; font-size: 12px; border-bottom: 1px solid #334155; white-space: nowrap; }
     td { padding: 14px; border-bottom: 1px solid #334155; color: #cbd5e1; white-space: nowrap; }
     tr:hover { background-color: #26334d; }
+
+    /* LARGURAS DAS COLUNAS */
+    .col-acoes { text-align: center; min-width: 220px; }
+    .btn-group-acoes { display: inline-flex; gap: 4px; flex-wrap: nowrap; }
 
     /* BADGES / TAGS DE LOCALIZAÇÃO */
     .badge-aba { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -62,7 +66,7 @@
     .badge-semlocal { background-color: #374151; color: #d1d5db; border: 1px solid #6b7280; }
 
     /* BOTOES DE AÇÃO DA TABELA */
-    .btn-tbl { padding: 6px 12px; border: none; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer; margin-right: 5px; }
+    .btn-tbl { padding: 6px 10px; border: none; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; }
     .btn-ferramentaria { background-color: #1d4ed8; color: #fff; }
     .btn-liberar { background-color: #059669; color: #fff; }
     .btn-editar { background-color: #ca8a04; color: #fff; }
@@ -70,7 +74,7 @@
 
     /* MODAIS */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 100; }
-    .modal-content { background-color: #1e293b; padding: 25px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .modal-content { background-color: #1e293b; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
     .modal-content h3 { margin-bottom: 20px; color: #f8fafc; font-size: 18px; display: flex; align-items: center; gap: 10px; }
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
     .btn-cancelar { padding: 8px 16px; background-color: #475569; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
@@ -139,7 +143,7 @@
             <th>Código</th>
             <th>Descrição</th>
             <th>Aba / Origem</th>
-            <th>Ações</th>
+            <th class="col-acoes">Ações</th>
           </tr>
         </thead>
         <tbody id="tblBody">
@@ -256,7 +260,7 @@
     </div>
   </div>
 
-  <!-- MODAL: LIBERAR PARA O PLÁSTICO (Ação Realizada) -->
+  <!-- MODAL: LIBERAR PARA O PLÁSTICO -->
   <div id="modalLiberarPlastico" class="modal">
     <div class="modal-content">
       <h3><i class="fa fa-check-circle"></i> Liberar P/ Plástico</h3>
@@ -338,7 +342,6 @@
         const roleLower = String(res.role).toLowerCase();
         const isFerram = (userLower === "ferramentaria" || roleLower === "ferramentaria");
 
-        // Carrega todas as abas em segundo plano para permitir busca global imediata
         carregarTodasAbasCache();
 
         if (isFerram) {
@@ -380,7 +383,7 @@
 
     function trocarAba(nomeAba, btn) {
       abaAtual = nomeAba;
-      document.getElementById("txtBusca").value = ""; // Limpa a busca ao trocar de aba
+      document.getElementById("txtBusca").value = "";
       
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
       if (btn) btn.classList.add("active");
@@ -448,7 +451,6 @@
       const tbody = document.getElementById("tblBody");
       tbody.innerHTML = "";
 
-      // MODO HISTÓRICO DE MANUTENÇÃO
       if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
         if (!dados || dados.length === 0) {
           thead.innerHTML = `<tr><th>Informação</th></tr>`;
@@ -474,14 +476,13 @@
         return;
       }
 
-      // MODO ABAS PADRÃO
       thead.innerHTML = `
         <tr>
           <th>Local / Molde N°</th>
           <th>Código</th>
           <th>Descrição</th>
           <th>Aba / Origem</th>
-          <th>Ações</th>
+          <th class="col-acoes">Ações</th>
         </tr>
       `;
 
@@ -510,17 +511,18 @@
           <td>${col2}</td>
           <td>${col3}</td>
           <td>${abaBadgeHTML}</td>
-          <td>
-            ${btnAcaoPrincipal}
-            <button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Editar</button>
-            <button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')">Excluir</button>
+          <td class="col-acoes">
+            <div class="btn-group-acoes">
+              ${btnAcaoPrincipal}
+              <button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Editar</button>
+              <button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')">Excluir</button>
+            </div>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    /* --- PESQUISA GLOBAL EM TODAS AS ABAS --- */
     function filtrarTabelaGlobal() {
       const termo = document.getElementById("txtBusca").value.trim().toLowerCase();
       
@@ -549,7 +551,6 @@
       renderizarTabela(resultados, true);
     }
 
-    /* --- LIBERAR PARA PLÁSTICO --- */
     function abrirModalLiberarObj(rowIndex) {
       document.getElementById("libRowIndex").value = rowIndex;
       
@@ -592,7 +593,6 @@
       executarJSONP(url);
     }
 
-    /* --- ADICIONAR MOLDE --- */
     function abrirModalAdicionar() {
       document.getElementById("modalAdicionarMolde").style.display = "flex";
     }
@@ -619,7 +619,6 @@
       executarJSONP(url);
     }
 
-    /* --- EDITAR MOLDE --- */
     function abrirModalEditarObj(aba, rowIndex, local, codigo, descricao) {
       document.getElementById("editAbaOrigem").value = aba;
       document.getElementById("editRowIndex").value = rowIndex;
@@ -649,7 +648,6 @@
       executarJSONP(url);
     }
 
-    /* --- EXCLUIR MOLDE --- */
     function excluirMoldeObj(aba, rowIndex, codigo) {
       if (confirm(`Tem certeza que deseja excluir o molde '${codigo}' da aba ${aba}?`)) {
         const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(aba)}&rowIndex=${rowIndex}&callback=retornoAcao`;
@@ -657,7 +655,6 @@
       }
     }
 
-    /* --- ENVIAR PARA FERRAMENTARIA --- */
     function abrirModalFerramentariaObj(aba, rowIndex, local, codigo, descricao) {
       document.getElementById("ferrAbaOrigem").value = aba;
       document.getElementById("ferrRowIndex").value = rowIndex;
@@ -716,7 +713,6 @@
       executarJSONP(url);
     }
 
-    /* --- CALLBACK GERAL PARA AÇÕES --- */
     function retornoAcao(res) {
       if (res && res.status === "success") {
         alert(res.osNumber ? `Solicitação enviada com sucesso! OS Gerada: ${res.osNumber}` : "Operação realizada com sucesso!");
@@ -725,7 +721,6 @@
         fecharModalFerramentaria();
         fecharModalLiberar();
         
-        // Recarrega o cache de todas as abas e atualiza a aba ativa
         carregarTodasAbasCache();
         carregarDadosAba(abaAtual);
       } else {
