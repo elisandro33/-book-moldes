@@ -41,7 +41,7 @@
 
     /* BARRA DE AÇÕES */
     .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
-    .search-box { position: relative; flex-grow: 1; max-width: 300px; }
+    .search-box { position: relative; flex-grow: 1; max-width: 400px; }
     .search-box input { width: 100%; padding: 10px 12px 10px 35px; background-color: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #fff; font-size: 14px; outline: none; }
     .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; }
     .btn-add { padding: 10px 18px; background-color: #059669; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
@@ -53,6 +53,13 @@
     th { background-color: #0f172a; color: #64748b; padding: 14px; font-weight: 700; text-transform: uppercase; font-size: 12px; border-bottom: 1px solid #334155; white-space: nowrap; }
     td { padding: 14px; border-bottom: 1px solid #334155; color: #cbd5e1; white-space: nowrap; }
     tr:hover { background-color: #26334d; }
+
+    /* BADGES / TAGS DE LOCALIZAÇÃO */
+    .badge-aba { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-plastico { background-color: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
+    .badge-ferram { background-color: #854d0e; color: #fef08a; border: 1px solid #eab308; }
+    .badge-qlx { background-color: #581c87; color: #e9d5ff; border: 1px solid #a855f7; }
+    .badge-semlocal { background-color: #374151; color: #d1d5db; border: 1px solid #6b7280; }
 
     /* BOTOES DE AÇÃO DA TABELA */
     .btn-tbl { padding: 6px 12px; border: none; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer; margin-right: 5px; }
@@ -118,7 +125,7 @@
     <div class="actions-bar">
       <div class="search-box">
         <i class="fa fa-search"></i>
-        <input type="text" id="txtBusca" placeholder="Buscar molde, código..." onkeyup="filtrarTabela()">
+        <input type="text" id="txtBusca" placeholder="Pesquisar em TODAS as abas..." onkeyup="filtrarTabelaGlobal()">
       </div>
       <button class="btn-add" id="btnAddMolde" onclick="abrirModalAdicionar()"><i class="fa fa-plus"></i> Adicionar Molde</button>
     </div>
@@ -131,11 +138,12 @@
             <th>Local / Molde N°</th>
             <th>Código</th>
             <th>Descrição</th>
+            <th>Aba / Origem</th>
             <th>Ações</th>
           </tr>
         </thead>
         <tbody id="tblBody">
-          <tr><td colspan="4" style="text-align:center;">Selecione uma aba...</td></tr>
+          <tr><td colspan="5" style="text-align:center;">Selecione uma aba...</td></tr>
         </tbody>
       </table>
     </div>
@@ -182,6 +190,7 @@
     <div class="modal-content">
       <h3><i class="fa fa-pencil"></i> Editar Molde</h3>
       <input type="hidden" id="editRowIndex">
+      <input type="hidden" id="editAbaOrigem">
       
       <div class="form-group">
         <label for="editLocal">Local / Molde N°:</label>
@@ -210,6 +219,7 @@
     <div class="modal-content">
       <h3><i class="fa fa-wrench"></i> Solicitar Ferramentaria</h3>
       <input type="hidden" id="ferrRowIndex">
+      <input type="hidden" id="ferrAbaOrigem">
       <input type="hidden" id="ferrLocal">
       <input type="hidden" id="ferrCodigo">
       <input type="hidden" id="ferrDescricao">
@@ -246,7 +256,7 @@
     </div>
   </div>
 
-  <!-- MODAL: LIBERAR PARA O PLÁSTICO (Com preenchimento da ação realizada) -->
+  <!-- MODAL: LIBERAR PARA O PLÁSTICO (Ação Realizada) -->
   <div id="modalLiberarPlastico" class="modal">
     <div class="modal-content">
       <h3><i class="fa fa-check-circle"></i> Liberar P/ Plástico</h3>
@@ -269,7 +279,7 @@
 
       <div class="form-group">
         <label for="libAcaoRealizada">Ação / Manutenção Realizada:</label>
-        <textarea id="libAcaoRealizada" class="form-control" rows="3" placeholder="Descreva o serviço/manutenção efetuada..."></textarea>
+        <textarea id="libAcaoRealizada" class="form-control" rows="3" placeholder="Descreva os reparos ou ajustes feitos..."></textarea>
       </div>
 
       <div class="modal-buttons">
@@ -285,6 +295,10 @@
     let usuarioLogado = null;
     let abaAtual = "ATUALIZADA";
     let dadosAbaAtual = [];
+    
+    // CACHE DAS ABAS PARA PESQUISA GLOBAL
+    const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
+    let cacheTodasAbas = {};
 
     function executarJSONP(url) {
       const script = document.createElement('script');
@@ -324,12 +338,13 @@
         const roleLower = String(res.role).toLowerCase();
         const isFerram = (userLower === "ferramentaria" || roleLower === "ferramentaria");
 
+        // Carrega todas as abas em segundo plano para permitir busca global imediata
+        carregarTodasAbasCache();
+
         if (isFerram) {
-          // Oculta abas que não pertencem ao perfil ferramentaria
           document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "none");
           document.getElementById("btnAddMolde").style.display = "none";
           
-          // Entra DIRETO na aba Ferramentaria
           const btnFerram = document.getElementById("tabFerramentaria");
           trocarAba('ferramentaria', btnFerram);
         } else {
@@ -345,15 +360,28 @@
       }
     }
 
+    function carregarTodasAbasCache() {
+      TODAS_AS_ABAS.forEach(aba => {
+        const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(aba)}&callback=retornoCache_${aba.replace(/[^a-zA-Z0-9]/g, '')}`;
+        window[`retornoCache_${aba.replace(/[^a-zA-Z0-9]/g, '')}`] = function(res) {
+          cacheTodasAbas[aba] = Array.isArray(res) ? res : [];
+        };
+        executarJSONP(url);
+      });
+    }
+
     function logout() {
       usuarioLogado = null;
       document.getElementById("appContainer").style.display = "none";
       document.getElementById("loginScreen").style.display = "flex";
       document.getElementById("loginPass").value = "";
+      document.getElementById("txtBusca").value = "";
     }
 
     function trocarAba(nomeAba, btn) {
       abaAtual = nomeAba;
+      document.getElementById("txtBusca").value = ""; // Limpa a busca ao trocar de aba
+      
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
       if (btn) btn.classList.add("active");
       
@@ -367,7 +395,7 @@
 
     function carregarDadosAba(nomeAba) {
       const tbody = document.getElementById("tblBody");
-      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Carregando dados de ${nomeAba}...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Carregando dados de ${nomeAba}...</td></tr>`;
       
       const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(nomeAba)}&callback=retornoCarregarDados`;
       executarJSONP(url);
@@ -375,6 +403,7 @@
 
     function retornoCarregarDados(res) {
       dadosAbaAtual = Array.isArray(res) ? res : [];
+      cacheTodasAbas[abaAtual] = dadosAbaAtual;
       renderizarTabela(dadosAbaAtual);
     }
 
@@ -384,11 +413,11 @@
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
-        .replace(/[^a-z0-0]/g, "");
+        .replace(/[^a-z0-9]/g, "");
     }
 
     function obterValorColuna(item, nomesPossiveis, indicePadrao) {
-      const keys = Object.keys(item).filter(k => k !== '_rowIndex');
+      const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_origemAba');
 
       for (let key of keys) {
         let keyNorm = normalizarString(key);
@@ -406,20 +435,28 @@
       return "";
     }
 
-    function renderizarTabela(dados) {
+    function formatarNomeAba(nomeAba) {
+      if (nomeAba === "ATUALIZADA") return `<span class="badge-aba badge-plastico">Plástico (ATUALIZADA)</span>`;
+      if (nomeAba === "ferramentaria") return `<span class="badge-aba badge-ferram">Ferramentaria</span>`;
+      if (nomeAba === "Moldes QLX") return `<span class="badge-aba badge-qlx">Moldes QLX</span>`;
+      if (nomeAba === "Sem local") return `<span class="badge-aba badge-semlocal">Sem Local</span>`;
+      return `<span class="badge-aba badge-semlocal">${nomeAba}</span>`;
+    }
+
+    function renderizarTabela(dados, ehPesquisa = false) {
       const thead = document.getElementById("tblHead");
       const tbody = document.getElementById("tblBody");
       tbody.innerHTML = "";
 
       // MODO HISTÓRICO DE MANUTENÇÃO
-      if (abaAtual === "HISTORICO_MANUTENCAO") {
+      if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
         if (!dados || dados.length === 0) {
           thead.innerHTML = `<tr><th>Informação</th></tr>`;
           tbody.innerHTML = `<tr><td style="text-align:center;">Nenhum histórico encontrado.</td></tr>`;
           return;
         }
 
-        const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex');
+        const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex' && k !== '_origemAba');
         let headerHTML = "<tr>";
         colunas.forEach(col => headerHTML += `<th>${col}</th>`);
         headerHTML += "</tr>";
@@ -437,61 +474,84 @@
         return;
       }
 
-      // MODO ABAS PADRÃO (Plástico, QLX, Sem Local, Ferramentaria)
+      // MODO ABAS PADRÃO
       thead.innerHTML = `
         <tr>
           <th>Local / Molde N°</th>
           <th>Código</th>
           <th>Descrição</th>
+          <th>Aba / Origem</th>
           <th>Ações</th>
         </tr>
       `;
 
       if (!dados || dados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
         return;
       }
 
-      dados.forEach((item, index) => {
+      dados.forEach((item) => {
         const tr = document.createElement("tr");
         
         const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
         const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
         const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
+        
+        const origemAba = item._origemAba || abaAtual;
+        const abaBadgeHTML = formatarNomeAba(origemAba);
 
-        let btnAcaoPrincipal = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentaria(${index})">Ferramentaria</button>`;
-        if (abaAtual === "ferramentaria") {
-          btnAcaoPrincipal = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberar(${index})">Liberar P/ Plástico</button>`;
+        let btnAcaoPrincipal = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentariaObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Ferramentaria</button>`;
+        if (origemAba === "ferramentaria") {
+          btnAcaoPrincipal = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberarObj(${item._rowIndex})">Liberar P/ Plástico</button>`;
         }
 
         tr.innerHTML = `
           <td>${col1}</td>
           <td>${col2}</td>
           <td>${col3}</td>
+          <td>${abaBadgeHTML}</td>
           <td>
             ${btnAcaoPrincipal}
-            <button class="btn-tbl btn-editar" onclick="abrirModalEditar(${index})">Editar</button>
-            <button class="btn-tbl btn-excluir" onclick="excluirMolde(${index})">Excluir</button>
+            <button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Editar</button>
+            <button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')">Excluir</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function filtrarTabela() {
-      const termo = document.getElementById("txtBusca").value.toLowerCase();
-      const filtrados = dadosAbaAtual.filter(item => {
-        return Object.values(item).some(val => String(val).toLowerCase().includes(termo));
+    /* --- PESQUISA GLOBAL EM TODAS AS ABAS --- */
+    function filtrarTabelaGlobal() {
+      const termo = document.getElementById("txtBusca").value.trim().toLowerCase();
+      
+      if (!termo) {
+        renderizarTabela(dadosAbaAtual);
+        return;
+      }
+
+      let resultados = [];
+
+      TODAS_AS_ABAS.forEach(aba => {
+        const listaDaAba = cacheTodasAbas[aba] || (aba === abaAtual ? dadosAbaAtual : []);
+        
+        listaDaAba.forEach(item => {
+          const atende = Object.keys(item).some(k => {
+            if (k === '_rowIndex' || k === '_origemAba') return false;
+            return String(item[k]).toLowerCase().includes(termo);
+          });
+
+          if (atende) {
+            resultados.push({ ...item, _origemAba: aba });
+          }
+        });
       });
-      renderizarTabela(filtrados);
+
+      renderizarTabela(resultados, true);
     }
 
-    /* --- LIBERAR PARA PLÁSTICO (ABRE O MODAL PARA DIGITAR A AÇÃO) --- */
-    function abrirModalLiberar(index) {
-      const item = dadosAbaAtual[index];
-      if (!item) return;
-
-      document.getElementById("libRowIndex").value = item._rowIndex;
+    /* --- LIBERAR PARA PLÁSTICO --- */
+    function abrirModalLiberarObj(rowIndex) {
+      document.getElementById("libRowIndex").value = rowIndex;
       
       const agora = new Date();
       document.getElementById("libDataSaida").value = agora.toISOString().split('T')[0];
@@ -560,21 +620,12 @@
     }
 
     /* --- EDITAR MOLDE --- */
-    function abrirModalEditar(index) {
-      const item = dadosAbaAtual[index];
-      if (!item) {
-        alert("Item não encontrado!");
-        return;
-      }
-
-      const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
-      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
-      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
-
-      document.getElementById("editRowIndex").value = item._rowIndex;
-      document.getElementById("editLocal").value = col1;
-      document.getElementById("editCodigo").value = col2;
-      document.getElementById("editDescricao").value = col3;
+    function abrirModalEditarObj(aba, rowIndex, local, codigo, descricao) {
+      document.getElementById("editAbaOrigem").value = aba;
+      document.getElementById("editRowIndex").value = rowIndex;
+      document.getElementById("editLocal").value = local;
+      document.getElementById("editCodigo").value = codigo;
+      document.getElementById("editDescricao").value = descricao;
       document.getElementById("modalEditarMolde").style.display = "flex";
     }
 
@@ -583,6 +634,7 @@
     }
 
     function salvarEdicaoMolde() {
+      const aba = document.getElementById("editAbaOrigem").value || abaAtual;
       const rIndex = document.getElementById("editRowIndex").value;
       const col1 = document.getElementById("editLocal").value.trim();
       const col2 = document.getElementById("editCodigo").value.trim();
@@ -593,36 +645,25 @@
         return;
       }
 
-      const url = `${BASE_API}?action=EDITAR_MOLDE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${rIndex}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAcao`;
+      const url = `${BASE_API}?action=EDITAR_MOLDE&sheet=${encodeURIComponent(aba)}&rowIndex=${rIndex}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAcao`;
       executarJSONP(url);
     }
 
     /* --- EXCLUIR MOLDE --- */
-    function excluirMolde(index) {
-      const item = dadosAbaAtual[index];
-      if (!item) return;
-
-      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
-
-      if (confirm(`Tem certeza que deseja excluir o molde '${col2}'?`)) {
-        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${item._rowIndex}&callback=retornoAcao`;
+    function excluirMoldeObj(aba, rowIndex, codigo) {
+      if (confirm(`Tem certeza que deseja excluir o molde '${codigo}' da aba ${aba}?`)) {
+        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(aba)}&rowIndex=${rowIndex}&callback=retornoAcao`;
         executarJSONP(url);
       }
     }
 
     /* --- ENVIAR PARA FERRAMENTARIA --- */
-    function abrirModalFerramentaria(index) {
-      const item = dadosAbaAtual[index];
-      if (!item) return;
-
-      const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
-      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
-      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
-
-      document.getElementById("ferrRowIndex").value = item._rowIndex;
-      document.getElementById("ferrLocal").value = col1;
-      document.getElementById("ferrCodigo").value = col2;
-      document.getElementById("ferrDescricao").value = col3;
+    function abrirModalFerramentariaObj(aba, rowIndex, local, codigo, descricao) {
+      document.getElementById("ferrAbaOrigem").value = aba;
+      document.getElementById("ferrRowIndex").value = rowIndex;
+      document.getElementById("ferrLocal").value = local;
+      document.getElementById("ferrCodigo").value = codigo;
+      document.getElementById("ferrDescricao").value = descricao;
       
       const agora = new Date();
       document.getElementById("ferrData").value = agora.toISOString().split('T')[0];
@@ -642,6 +683,7 @@
     }
 
     function confirmarEnvioFerramentaria() {
+      const abaOrigem = document.getElementById("ferrAbaOrigem").value || abaAtual;
       const rIndex = document.getElementById("ferrRowIndex").value;
       const local = document.getElementById("ferrLocal").value;
       const codigo = document.getElementById("ferrCodigo").value;
@@ -659,7 +701,7 @@
       }
 
       const url = `${BASE_API}?action=SOLICITAR_FERRAMENTARIA` +
-                  `&abaOrigem=${encodeURIComponent(abaAtual)}` +
+                  `&abaOrigem=${encodeURIComponent(abaOrigem)}` +
                   `&rowIndex=${rIndex}` +
                   `&col1=${encodeURIComponent(local)}` +
                   `&col2=${encodeURIComponent(codigo)}` +
@@ -682,6 +724,9 @@
         fecharModalEditar();
         fecharModalFerramentaria();
         fecharModalLiberar();
+        
+        // Recarrega o cache de todas as abas e atualiza a aba ativa
+        carregarTodasAbasCache();
         carregarDadosAba(abaAtual);
       } else {
         alert("Erro na operação: " + (res && res.message ? res.message : "Erro desconhecido."));
