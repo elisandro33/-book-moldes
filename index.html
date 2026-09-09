@@ -4,674 +4,330 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GESTÃO DE MOLDES</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    :root {
-      --bg-color: #1e222d;
-      --card-bg: #2a2e3d;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
-      --text-main: #f3f4f6;
-      --text-muted: #9ca3af;
-      --border-color: #374151;
-      --danger: #ef4444;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --info: #0284c7;
-    }
-
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; }
-
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
-    .header h1 { font-size: 22px; font-weight: 600; }
-    .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
+    body { background-color: #121824; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; }
     
-    .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-    .tab-btn { background-color: var(--card-bg); color: var(--text-muted); border: 1px solid var(--border-color); padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: 0.2s; }
-    .tab-btn.active, .tab-btn:hover { background-color: var(--accent); color: white; border-color: var(--accent); }
-
-    .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; flex-wrap: wrap; }
-    .search-box { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--card-bg); color: white; width: 250px; outline: none; }
+    /* TELA DE LOGIN */
+    .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: #121824; }
+    .login-box { background-color: #1e293b; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+    .login-box h2 { margin-bottom: 20px; font-size: 22px; color: #f8fafc; }
+    .login-box p { margin-bottom: 20px; font-size: 14px; color: #94a3b8; }
     
-    .btn { padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; }
-    .btn-primary { background-color: var(--accent); color: white; }
-    .btn-primary:hover { background-color: var(--accent-hover); }
-    .btn-danger { background-color: var(--danger); color: white; }
-    .btn-success { background-color: var(--success); color: white; }
-    .btn-warning { background-color: var(--warning); color: black; }
-    .btn-info { background-color: var(--info); color: white; }
-    .btn-cancel { background-color: #4b5563; color: white; }
+    .form-group { text-align: left; margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #cbd5e1; font-weight: 600; }
+    .form-control { width: 100%; padding: 10px 12px; background-color: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #fff; font-size: 14px; outline: none; }
+    .form-control:focus { border-color: #3b82f6; }
+    
+    .password-wrapper { position: relative; }
+    .password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; }
+    
+    .btn-primary { width: 100%; padding: 12px; background-color: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 15px; transition: background 0.2s; margin-top: 10px; }
+    .btn-primary:hover { background-color: #1d4ed8; }
+    
+    /* SISTEMA PRINCIPAL */
+    #appContainer { display: none; padding: 20px; flex-direction: column; flex-grow: 1; }
+    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 20px; }
+    header h1 { font-size: 22px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
+    .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; color: #cbd5e1; }
+    .btn-logout { padding: 6px 14px; background-color: #991b1b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .btn-logout:hover { background-color: #7f1d1d; }
 
-    .table-container { background-color: var(--card-bg); border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); }
+    /* NAVEGAÇÃO POR ABAS */
+    .tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
+    .tab-btn { padding: 10px 18px; background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; white-space: nowrap; transition: all 0.2s; }
+    .tab-btn.active { background-color: #1d4ed8; color: #fff; border-color: #2563eb; }
+
+    /* BARRA DE AÇÕES */
+    .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
+    .search-box { position: relative; flex-grow: 1; max-width: 300px; }
+    .search-box input { width: 100%; padding: 10px 12px 10px 35px; background-color: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #fff; font-size: 14px; outline: none; }
+    .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; }
+    .btn-add { padding: 10px 18px; background-color: #059669; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    .btn-add:hover { background-color: #047857; }
+
+    /* TABELA DE DADOS */
+    .table-container { overflow-x: auto; background-color: #1e293b; border-radius: 8px; border: 1px solid #334155; }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-    th, td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
-    th { background-color: rgba(0,0,0,0.2); color: var(--text-muted); font-weight: 600; }
-    tr:hover { background-color: rgba(255,255,255,0.02); }
+    th { background-color: #0f172a; color: #64748b; padding: 14px; font-weight: 700; text-transform: uppercase; font-size: 12px; border-bottom: 1px solid #334155; }
+    td { padding: 14px; border-bottom: 1px solid #334155; color: #cbd5e1; }
+    tr:hover { background-color: #26334d; }
 
-    .action-btns-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+    /* BOTOES DE AÇÃO DA TABELA */
+    .btn-tbl { padding: 6px 12px; border: none; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer; margin-right: 5px; }
+    .btn-ferramentaria { background-color: #1d4ed8; color: #fff; }
+    .btn-qlx { background-color: #d97706; color: #fff; }
+    .btn-editar { background-color: #ca8a04; color: #fff; }
+    .btn-excluir { background-color: #dc2626; color: #fff; }
 
-    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .modal { background-color: var(--card-bg); border-radius: 10px; padding: 24px; width: 100%; max-width: 500px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    .modal h2 { margin-bottom: 16px; font-size: 18px; }
-    
-    .field-group { margin-bottom: 12px; }
-    .field-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-    .field-group input, .field-group textarea, .field-group select { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-color); color: white; outline: none; }
-
-    .checkbox-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
-    .checkbox-group label { font-size: 13px; color: white; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-
-    #status-msg { margin-top: 10px; font-size: 13px; text-align: right; }
+    /* MODAL */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 100; }
+    .modal-content { background-color: #1e293b; padding: 25px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .modal-content h3 { margin-bottom: 20px; color: #f8fafc; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .btn-cancelar { padding: 8px 16px; background-color: #475569; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-salvar { padding: 8px 16px; background-color: #10b981; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
   </style>
 </head>
 <body>
 
   <!-- TELA DE LOGIN -->
-  <div class="overlay" id="screen-login">
-    <div class="modal" style="max-width: 360px; text-align: center;">
-      <h2 style="margin-bottom: 8px;">🔑 Acesso ao Sistema</h2>
-      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Digite seu usuário e senha para acessar</p>
+  <div id="loginScreen" class="login-container">
+    <div class="login-box">
+      <h2>🔑 Acesso ao Sistema</h2>
+      <p>Digite seu usuário e senha</p>
       
-      <div class="field-group" style="text-align: left;">
-        <label>Usuário</label>
-        <input type="text" id="login-user" placeholder="Ex: ferramentaria">
-      </div>
-      
-      <div class="field-group" style="text-align: left;">
-        <label>Senha</label>
-        <input type="password" id="login-pass" placeholder="••••••••">
+      <div class="form-group">
+        <label for="loginUser">Usuário</label>
+        <input type="text" id="loginUser" class="form-control" placeholder="Digite seu usuário..." autocomplete="off">
       </div>
 
-      <div id="login-err" style="color: var(--danger); font-size: 12px; margin-bottom: 12px; display: none;"></div>
+      <div class="form-group">
+        <label for="loginPass">Senha</label>
+        <div class="password-wrapper">
+          <input type="password" id="loginPass" class="form-control" placeholder="••••••••">
+          <i class="fa fa-eye password-toggle" onclick="toggleSenha()"></i>
+        </div>
+      </div>
 
-      <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 10px;" onclick="efetuarLogin()">Entrar</button>
+      <button onclick="efetuarLogin()" class="btn-primary">Entrar</button>
     </div>
   </div>
 
-  <!-- INTERFACE PRINCIPAL -->
-  <div id="screen-app" style="display: none;">
-    <div class="header">
-      <h1>GESTÃO DE MOLDES</h1>
+  <!-- SISTEMA PRINCIPAL -->
+  <div id="appContainer">
+    <header>
+      <h1>Gestão de Moldes</h1>
       <div class="user-info">
-        <span>Usuário: <b id="lbl-user">-</b> (<span id="lbl-role">-</span>)</span>
-        <button class="btn btn-danger" onclick="logout()">Sair</button>
+        <span>Usuário: <strong id="lblUsuario">--</strong> (<span id="lblRole">--</span>)</span>
+        <button onclick="logout()" class="btn-logout">Sair</button>
       </div>
+    </header>
+
+    <!-- ABAS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="trocarAba('ATUALIZADA', this)">Plástico (ATUALIZADA)</button>
+      <button class="tab-btn" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
+      <button class="tab-btn" onclick="trocarAba('Sem local', this)">Sem Local</button>
+      <button class="tab-btn" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
+      <button class="tab-btn" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
     </div>
 
-    <!-- ABAS DA PLANILHA -->
-    <div class="nav-tabs">
-      <button class="tab-btn active" id="tab-ATUALIZADA" onclick="trocarAba('ATUALIZADA', this)">Plástico (ATUALIZADA)</button>
-      <button class="tab-btn" id="tab-Step" onclick="trocarAba('Transferências e Step Bay Step', this)">Transferências / Step</button>
-      <button class="tab-btn" id="tab-SemLocal" onclick="trocarAba('Sem local', this)">Sem Local</button>
-      <button class="tab-btn" id="tab-QLX" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
-      <button class="tab-btn" id="tab-ferramentaria" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
-      <button class="tab-btn" id="tab-HISTORICO" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
-    </div>
-
+    <!-- AÇÕES -->
     <div class="actions-bar">
-      <div style="display: flex; gap: 10px; align-items: center;">
-        <input type="text" class="search-box" id="inp-search" placeholder="Buscar molde, código..." oninput="filtrarTabela()">
-        <button class="btn btn-success" id="btn-add-molde" onclick="abrirModalNovoMolde()">➕ Adicionar Molde</button>
+      <div class="search-box">
+        <i class="fa fa-search"></i>
+        <input type="text" id="txtBusca" placeholder="Buscar molde, código..." onkeyup="filtrarTabela()">
       </div>
-      <div id="status-msg"></div>
+      <button class="btn-add" onclick="abrirModalAdicionar()"><i class="fa fa-plus"></i> Adicionar Molde</button>
     </div>
 
-    <!-- TABELA DE DADOS -->
+    <!-- TABELA -->
     <div class="table-container">
-      <table id="tbl-data">
-        <thead id="tbl-head"></thead>
-        <tbody id="tbl-body"></tbody>
+      <table id="tblDados">
+        <thead>
+          <tr id="tblHeader">
+            <th>Local</th>
+            <th>Código</th>
+            <th>Descrição</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tblBody">
+          <tr><td colspan="4" style="text-align:center;">Selecione uma aba...</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
 
-  <!-- MODAL DE SOLICITAÇÃO DE MANUTENÇÃO (OS) -->
-  <div class="overlay" id="modal-os" style="display: none;">
-    <div class="modal">
-      <h2>🔧 Solicitação de Manutenção (OS)</h2>
+  <!-- MODAL: ADICIONAR MOLDE -->
+  <div id="modalAdicionarMolde" class="modal">
+    <div class="modal-content">
+      <h3><i class="fa fa-plus"></i> Adicionar Molde</h3>
       
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="field-group">
-          <label>Data Entrada</label>
-          <input type="date" id="os-data">
-        </div>
-        <div class="field-group">
-          <label>Hora Entrada</label>
-          <input type="time" id="os-hora">
-        </div>
-      </div>
-
-      <div class="field-group">
-        <label>Solicitante</label>
-        <input type="text" id="os-solicitante" placeholder="Nome do solicitante">
-      </div>
-
-      <div class="field-group">
-        <label>Tipo de Serviço</label>
-        <div class="checkbox-group">
-          <label><input type="checkbox" name="os-tipo" value="Crítico"> Crítico</label>
-          <label><input type="checkbox" name="os-tipo" value="Corretiva"> Corretiva</label>
-          <label><input type="checkbox" name="os-tipo" value="Melhoria"> Melhoria</label>
-          <label><input type="checkbox" name="os-tipo" value="Preventiva"> Preventiva</label>
-          <label><input type="checkbox" name="os-tipo" value="Modificação"> Modificação</label>
-        </div>
-      </div>
-
-      <div class="field-group">
-        <label>Detalhamento do Problema / Observações</label>
-        <textarea id="os-obs" rows="3"></textarea>
-      </div>
-
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
-        <button class="btn btn-cancel" onclick="fecharModalOS()">Cancelar</button>
-        <button class="btn btn-primary" onclick="confirmarEnvioFerramentaria()">Confirmar e Gerar OS</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL DE LIBERAÇÃO DA FERRAMENTARIA -->
-  <div class="overlay" id="modal-liberar" style="display: none;">
-    <div class="modal">
-      <h2>✅ Liberar Molde para Plástico</h2>
-      
-      <div class="field-group">
-        <label>Ação / Correção Realizada na Ferramenta</label>
-        <textarea id="liberar-acao" rows="4" placeholder="Descreva a ação final realizada para liberação..."></textarea>
-      </div>
-
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
-        <button class="btn btn-cancel" onclick="fecharModalLiberar()">Cancelar</button>
-        <button class="btn btn-success" onclick="confirmarLiberacaoPlastico()">Confirmar Liberação</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL ADICIONAR / EDITAR MOLDE -->
-  <div class="overlay" id="modal-molde" style="display: none;">
-    <div class="modal">
-      <h2 id="modal-molde-title">✏️ Editar Molde</h2>
-      
-      <div class="field-group" id="group-molde-aba" style="display: none;">
-        <label>Aba / Destino</label>
-        <select id="molde-destino-aba">
+      <!-- CAMPO DE ESCOLHA DA ABA DESTINO -->
+      <div class="form-group">
+        <label for="addAbaDestino">Destino (Aba):</label>
+        <select id="addAbaDestino" class="form-control">
           <option value="ATUALIZADA">Plástico (ATUALIZADA)</option>
           <option value="Moldes QLX">Moldes QLX</option>
           <option value="Sem local">Sem Local</option>
         </select>
       </div>
 
-      <div class="field-group">
-        <label>Local</label>
-        <input type="text" id="molde-local" placeholder="Ex: A1, B2...">
+      <div class="form-group">
+        <label for="addLocal">Local:</label>
+        <input type="text" id="addLocal" class="form-control" placeholder="Ex: A1, B2...">
       </div>
 
-      <div class="field-group">
-        <label>Código</label>
-        <input type="text" id="molde-codigo" placeholder="Código do molde">
+      <div class="form-group">
+        <label for="addCodigo">Código:</label>
+        <input type="text" id="addCodigo" class="form-control" placeholder="Código do molde">
       </div>
 
-      <div class="field-group">
-        <label>Descrição</label>
-        <input type="text" id="molde-desc" placeholder="Descrição da peça / molde">
+      <div class="form-group">
+        <label for="addDescricao">Descrição:</label>
+        <input type="text" id="addDescricao" class="form-control" placeholder="Descrição da peça / molde">
       </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
-        <button class="btn btn-cancel" onclick="fecharModalMolde()">Cancelar</button>
-        <button class="btn btn-success" onclick="salvarMolde()">Salvar</button>
+      <div class="modal-buttons">
+        <button onclick="fecharModalAdicionar()" class="btn-cancelar">Cancelar</button>
+        <button onclick="salvarNovoMolde()" class="btn-salvar">Salvar</button>
       </div>
     </div>
   </div>
 
   <script>
-    const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec"; 
-
-    let currentUser = "";
-    let userRole = "";
+    const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
+    
+    let usuarioLogado = null;
     let abaAtual = "ATUALIZADA";
-    let dadosBrutos = [];
-    let itemSelecionado = null;
-    let itemSelecionadoOS = null;
-    let itemSelecionadoLiberacao = null;
+    let dadosAbaAtual = [];
 
-    function chamarAPI(params) {
-      return new Promise((resolve, reject) => {
-        const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
-        window[callbackName] = function(data) {
-          delete window[callbackName];
-          document.body.removeChild(script);
-          resolve(data);
-        };
-
-        params.callback = callbackName;
-        const queryString = Object.keys(params)
-          .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key]))
-          .join('&');
-
-        const script = document.createElement('script');
-        script.src = BASE_API + '?' + queryString;
-        script.onerror = () => reject(new Error('Erro na requisição com o servidor'));
-        document.body.appendChild(script);
-      });
+    // JSONP Helper
+    function executarJSONP(url) {
+      const script = document.createElement('script');
+      script.src = url;
+      document.body.appendChild(script);
+      script.onload = () => document.body.removeChild(script);
     }
 
-    async function efetuarLogin() {
-      const user = document.getElementById('login-user').value.trim();
-      const pass = document.getElementById('login-pass').value.trim();
-      const errDiv = document.getElementById('login-err');
+    function toggleSenha() {
+      const passInput = document.getElementById("loginPass");
+      passInput.type = passInput.type === "password" ? "text" : "password";
+    }
 
-      if (!user || !pass) {
-        errDiv.innerText = "Preencha usuário e senha.";
-        errDiv.style.display = "block";
+    function efetuarLogin() {
+      const u = document.getElementById("loginUser").value.trim();
+      const p = document.getElementById("loginPass").value.trim();
+
+      if (!u || !p) {
+        alert("Informe o usuário e a senha!");
         return;
       }
 
-      errDiv.style.display = "none";
-      
-      try {
-        const res = await chamarAPI({ action: "LOGIN", user: user, pass: pass });
-        if (res && res.status === "success") {
-          currentUser = res.user;
-          userRole = res.role;
-          
-          document.getElementById('lbl-user').innerText = currentUser;
-          document.getElementById('lbl-role').innerText = userRole;
-          document.getElementById('screen-login').style.display = "none";
-          document.getElementById('screen-app').style.display = "block";
-
-          configurarAcessoPorUsuario();
-        } else {
-          errDiv.innerText = res.message || "Usuário ou senha incorretos.";
-          errDiv.style.display = "block";
-        }
-      } catch (e) {
-        errDiv.innerText = "Erro ao conectar com o servidor.";
-        errDiv.style.display = "block";
-      }
+      const url = `${BASE_API}?action=LOGIN&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}&callback=retornoLogin`;
+      executarJSONP(url);
     }
 
-    function configurarAcessoPorUsuario() {
-      const isFerramentariaUser = currentUser.toLowerCase().includes('ferramentaria') || userRole === 'ferramentaria';
-
-      if (isFerramentariaUser) {
-        document.getElementById('tab-ATUALIZADA').style.display = 'none';
-        document.getElementById('tab-Step').style.display = 'none';
-        document.getElementById('tab-SemLocal').style.display = 'none';
-        document.getElementById('tab-QLX').style.display = 'none';
-        document.getElementById('btn-add-molde').style.display = 'none';
-
-        trocarAba('ferramentaria', document.getElementById('tab-ferramentaria'));
+    function retornoLogin(res) {
+      if (res && res.status === "success") {
+        usuarioLogado = res;
+        document.getElementById("lblUsuario").innerText = res.user;
+        document.getElementById("lblRole").innerText = res.role;
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appContainer").style.display = "flex";
+        carregarDadosAba(abaAtual);
       } else {
-        document.getElementById('tab-ATUALIZADA').style.display = 'inline-block';
-        document.getElementById('tab-Step').style.display = 'inline-block';
-        document.getElementById('tab-SemLocal').style.display = 'inline-block';
-        document.getElementById('tab-QLX').style.display = 'inline-block';
-        document.getElementById('btn-add-molde').style.display = 'inline-block';
-
-        trocarAba('ATUALIZADA', document.getElementById('tab-ATUALIZADA'));
+        alert("Erro no login: " + (res.message || "Usuário ou senha inválidos."));
       }
     }
 
     function logout() {
-      currentUser = "";
-      userRole = "";
-      document.getElementById('screen-app').style.display = "none";
-      document.getElementById('screen-login').style.display = "flex";
+      usuarioLogado = null;
+      document.getElementById("appContainer").style.display = "none";
+      document.getElementById("loginScreen").style.display = "flex";
+      document.getElementById("loginPass").value = "";
     }
 
     function trocarAba(nomeAba, btn) {
       abaAtual = nomeAba;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
       
-      if (btn) {
-        btn.classList.add('active');
-      } else {
-        const btnMap = {
-          'ATUALIZADA': 'tab-ATUALIZADA',
-          'Transferências e Step Bay Step': 'tab-Step',
-          'Sem local': 'tab-SemLocal',
-          'Moldes QLX': 'tab-QLX',
-          'ferramentaria': 'tab-ferramentaria',
-          'HISTORICO_MANUTENCAO': 'tab-HISTORICO'
-        };
-        const el = document.getElementById(btnMap[nomeAba]);
-        if (el) el.classList.add('active');
+      // Sincroniza o select do modal com a aba selecionada se for uma das 3 opções
+      const selectDestino = document.getElementById("addAbaDestino");
+      if (["ATUALIZADA", "Moldes QLX", "Sem local"].includes(nomeAba)) {
+        selectDestino.value = nomeAba;
       }
+
       carregarDadosAba(nomeAba);
     }
 
-    async function carregarDadosAba(nomeAba) {
-      const status = document.getElementById('status-msg');
-      status.innerText = "Carregando dados...";
-      status.style.color = "var(--text-muted)";
+    function carregarDadosAba(nomeAba) {
+      const tbody = document.getElementById("tblBody");
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Carregando dados de ${nomeAba}...</td></tr>`;
+      
+      const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(nomeAba)}&callback=retornoCarregarDados`;
+      executarJSONP(url);
+    }
 
-      try {
-        const res = await chamarAPI({ sheet: nomeAba, role: userRole });
-        dadosBrutos = res || [];
-        renderizarTabela(dadosBrutos);
-        status.innerText = "";
-      } catch (e) {
-        status.innerText = "Erro ao carregar dados.";
-        status.style.color = "var(--danger)";
-      }
+    function retornoCarregarDados(res) {
+      dadosAbaAtual = Array.isArray(res) ? res : [];
+      renderizarTabela(dadosAbaAtual);
     }
 
     function renderizarTabela(dados) {
-      const head = document.getElementById('tbl-head');
-      const body = document.getElementById('tbl-body');
-      head.innerHTML = "";
-      body.innerHTML = "";
+      const tbody = document.getElementById("tblBody");
+      tbody.innerHTML = "";
 
-      if (!dados || dados.length === 0) {
-        body.innerHTML = "<tr><td colspan='10' style='text-align:center;'>Nenhum registro encontrado.</td></tr>";
+      if (dados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
         return;
       }
 
-      const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex');
+      dados.forEach(item => {
+        const tr = document.createElement("tr");
+        const col1 = item["LOCAL"] || item["Local"] || item["col_1"] || "";
+        const col2 = item["CÓDIGO"] || item["Código"] || item["col_2"] || "";
+        const col3 = item["DESCRIÇÃO"] || item["Descrição"] || item["col_3"] || "";
 
-      let trHead = "<tr>";
-      colunas.forEach(c => trHead += `<th>${c}</th>`);
-      if (userRole !== 'nivel1') trHead += "<th>Ações</th>";
-      trHead += "</tr>";
-      head.innerHTML = trHead;
-
-      dados.forEach((row) => {
-        let trBody = "<tr>";
-        colunas.forEach(c => trBody += `<td>${row[c] !== undefined ? row[c] : ''}</td>`);
-
-        if (userRole !== 'nivel1') {
-          trBody += `<td><div class="action-btns-cell">`;
-          
-          if (abaAtual !== 'ferramentaria' && abaAtual !== 'HISTORICO_MANUTENCAO') {
-            trBody += `<button class="btn btn-primary" onclick="abrirModalOSPorRowIndex(${row._rowIndex})">🔧 Ferramentaria</button>`;
-          } else if (abaAtual === 'ferramentaria') {
-            trBody += `<button class="btn btn-success" onclick="liberarParaPlasticoPorRowIndex(${row._rowIndex})">✅ Liberar p/ Plástico</button>`;
-          }
-
-          // Transferências QLX / Plástico
-          if (abaAtual === 'ATUALIZADA') {
-            trBody += `<button class="btn btn-warning" onclick="transferirMoldesQLX(${row._rowIndex}, 'QLX')">➡️ P/ QLX</button>`;
-          } else if (abaAtual === 'Moldes QLX') {
-            trBody += `<button class="btn btn-warning" onclick="transferirMoldesQLX(${row._rowIndex}, 'PLASTICO')">⬅️ P/ Plástico</button>`;
-          }
-
-          // Editar e Excluir
-          if (abaAtual !== 'HISTORICO_MANUTENCAO') {
-            trBody += `<button class="btn btn-warning" onclick="abrirModalEditarMolde(${row._rowIndex})">✏️ Editar</button>`;
-            trBody += `<button class="btn btn-danger" onclick="excluirMolde(${row._rowIndex})">🗑️ Excluir</button>`;
-          }
-
-          trBody += `</div></td>`;
-        }
-
-        trBody += "</tr>";
-        body.innerHTML += trBody;
+        tr.innerHTML = `
+          <td>${col1}</td>
+          <td>${col2}</td>
+          <td>${col3}</td>
+          <td>
+            <button class="btn-tbl btn-ferramentaria" onclick="solicitarFerramentaria('${item._rowIndex}')">Ferramentaria</button>
+            <button class="btn-tbl btn-editar">Editar</button>
+            <button class="btn-tbl btn-excluir">Excluir</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
       });
     }
 
     function filtrarTabela() {
-      const q = document.getElementById('inp-search').value.toLowerCase();
-      const filtrados = dadosBrutos.filter(item => {
-        return Object.values(item).some(v => v.toString().toLowerCase().includes(q));
+      const termo = document.getElementById("txtBusca").value.toLowerCase();
+      const filtrados = dadosAbaAtual.filter(item => {
+        return Object.values(item).some(val => String(val).toLowerCase().includes(termo));
       });
       renderizarTabela(filtrados);
     }
 
-    // --- NOVO MOLDE / EDITAR MOLDE ---
-    function abrirModalNovoMolde() {
-      itemSelecionado = null;
-      document.getElementById('modal-molde-title').innerText = "➕ Adicionar Molde";
-      document.getElementById('group-molde-aba').style.display = "none";
-      document.getElementById('molde-local').value = "";
-      document.getElementById('molde-codigo').value = "";
-      document.getElementById('molde-desc').value = "";
-      document.getElementById('modal-molde').style.display = "flex";
+    function abrirModalAdicionar() {
+      document.getElementById("modalAdicionarMolde").style.display = "flex";
     }
 
-    function abrirModalEditarMolde(rowIndex) {
-      itemSelecionado = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
-      if (!itemSelecionado) return;
+    function fecharModalAdicionar() {
+      document.getElementById("modalAdicionarMolde").style.display = "none";
+      document.getElementById("addLocal").value = "";
+      document.getElementById("addCodigo").value = "";
+      document.getElementById("addDescricao").value = "";
+    }
 
-      const keys = Object.keys(itemSelecionado).filter(k => k !== '_rowIndex');
+    function salvarNovoMolde() {
+      const aba = document.getElementById("addAbaDestino").value;
+      const col1 = document.getElementById("addLocal").value.trim();
+      const col2 = document.getElementById("addCodigo").value.trim();
+      const col3 = document.getElementById("addDescricao").value.trim();
 
-      document.getElementById('modal-molde-title').innerText = "✏️ Editar Molde";
-      document.getElementById('group-molde-aba').style.display = "block";
-      
-      const selAba = document.getElementById('molde-destino-aba');
-      if (['ATUALIZADA', 'Moldes QLX', 'Sem local'].includes(abaAtual)) {
-        selAba.value = abaAtual;
+      if (!col1 || !col2 || !col3) {
+        alert("Por favor, preencha todos os campos!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=ADICIONAR_MOLDE&sheet=${encodeURIComponent(aba)}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAdicionarMolde`;
+      executarJSONP(url);
+    }
+
+    function retornoAdicionarMolde(res) {
+      if (res && res.status === "success") {
+        alert("Molde adicionado com sucesso!");
+        fecharModalAdicionar();
+        carregarDadosAba(abaAtual);
       } else {
-        selAba.value = 'ATUALIZADA';
-      }
-
-      document.getElementById('molde-local').value = itemSelecionado[keys[0]] || "";
-      document.getElementById('molde-codigo').value = itemSelecionado[keys[1]] || "";
-      document.getElementById('molde-desc').value = itemSelecionado[keys[2]] || "";
-      document.getElementById('modal-molde').style.display = "flex";
-    }
-
-    function fecharModalMolde() {
-      document.getElementById('modal-molde').style.display = "none";
-      itemSelecionado = null;
-    }
-
-    async function salvarMolde() {
-      const local = document.getElementById('molde-local').value.trim();
-      const codigo = document.getElementById('molde-codigo').value.trim();
-      const desc = document.getElementById('molde-desc').value.trim();
-
-      if (!codigo || !desc) {
-        alert("Preencha ao menos Código e Descrição.");
-        return;
-      }
-
-      fecharModalMolde();
-
-      const action = itemSelecionado ? "EDITAR_MOLDE" : "ADICIONAR_MOLDE";
-      const novaAba = itemSelecionado ? document.getElementById('molde-destino-aba').value : abaAtual;
-
-      const payload = {
-        action: action,
-        aba: abaAtual,
-        novaAba: novaAba,
-        local: local,
-        codigo: codigo,
-        descricao: desc,
-        rowIndex: itemSelecionado ? itemSelecionado._rowIndex : null
-      };
-
-      try {
-        const res = await chamarAPI(payload);
-        if (res && res.status === "success") {
-          alert("✅ Molde salvo com sucesso!");
-          carregarDadosAba(abaAtual);
-        } else {
-          alert("Erro: " + (res.message || "Erro desconhecido"));
-        }
-      } catch (e) {
-        alert("Erro na requisição: " + e.message);
-      }
-    }
-
-    async function excluirMolde(rowIndex) {
-      if (!confirm("Tem certeza de que deseja excluir este molde?")) return;
-
-      try {
-        const res = await chamarAPI({
-          action: "EXCLUIR_MOLDE",
-          aba: abaAtual,
-          rowIndex: rowIndex
-        });
-
-        if (res && res.status === "success") {
-          alert("✅ Molde excluído com sucesso!");
-          carregarDadosAba(abaAtual);
-        } else {
-          alert("Erro ao excluir: " + (res.message || "Erro no servidor"));
-        }
-      } catch (e) {
-        alert("Erro na requisição: " + e.message);
-      }
-    }
-
-    async function transferirMoldesQLX(rowIndex, destino) {
-      const item = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
-      if (!item) return;
-
-      const acaoTxt = destino === 'QLX' ? "transferir para Moldes QLX" : "retornar para Plástico (ATUALIZADA)";
-      if (!confirm(`Deseja realmente ${acaoTxt}?`)) return;
-
-      try {
-        const res = await chamarAPI({
-          action: "TRANSFERIR_QLX",
-          origem: abaAtual,
-          destino: destino,
-          rowIndex: rowIndex
-        });
-
-        if (res && res.status === "success") {
-          alert("✅ Transferência realizada com sucesso!");
-          carregarDadosAba(abaAtual);
-        } else {
-          alert("Erro na transferência: " + (res.message || "Erro no servidor"));
-        }
-      } catch (e) {
-        alert("Erro na requisição: " + e.message);
-      }
-    }
-
-    // --- SOLICITAÇÃO DE OS ---
-    function abrirModalOSPorRowIndex(rowIndex) {
-      itemSelecionadoOS = dadosBrutos.find(item => Number(item._rowIndex) === Number(rowIndex));
-      
-      if (!itemSelecionadoOS) {
-        alert("Erro ao localizar o item selecionado.");
-        return;
-      }
-
-      const agora = new Date();
-      document.getElementById('os-data').value = agora.toISOString().split('T')[0];
-      document.getElementById('os-hora').value = agora.toTimeString().split(' ')[0].substring(0, 5);
-      document.getElementById('os-solicitante').value = currentUser || "Elisandro";
-      document.getElementById('os-obs').value = '';
-      document.querySelectorAll('input[name="os-tipo"]').forEach(ck => ck.checked = false);
-
-      document.getElementById('modal-os').style.display = 'flex';
-    }
-
-    function fecharModalOS() {
-      document.getElementById('modal-os').style.display = 'none';
-      itemSelecionadoOS = null;
-    }
-
-    async function confirmarEnvioFerramentaria() {
-      if (!itemSelecionadoOS || itemSelecionadoOS._rowIndex === undefined || itemSelecionadoOS._rowIndex === null) {
-        alert("Erro: Nenhum item válido selecionado para OS.");
-        return;
-      }
-
-      const keys = Object.keys(itemSelecionadoOS).filter(k => k !== '_rowIndex');
-
-      let tipos = [];
-      document.querySelectorAll('input[name="os-tipo"]:checked').forEach(ck => tipos.push(ck.value));
-
-      const dataVal = document.getElementById('os-data').value;
-      const horaVal = document.getElementById('os-hora').value;
-      const solicitanteVal = document.getElementById('os-solicitante').value.trim();
-      const obsVal = document.getElementById('os-obs').value.trim();
-
-      const payload = {
-        action: "SOLICITAR_FERRAMENTARIA",
-        abaOrigem: abaAtual,
-        rowIndex: itemSelecionadoOS._rowIndex,
-        col1: itemSelecionadoOS[keys[0]] || "",
-        col2: itemSelecionadoOS[keys[1]] || "",
-        col3: itemSelecionadoOS[keys[2]] || "",
-        data: dataVal,
-        hora: horaVal,
-        solicitante: solicitanteVal,
-        tipos: tipos.join(", "),
-        obs: obsVal
-      };
-
-      fecharModalOS();
-
-      const status = document.getElementById('status-msg');
-      if (status) status.innerText = "Gerando OS...";
-
-      try {
-        const res = await chamarAPI(payload);
-
-        if (res && res.status === "success") {
-          alert(`✅ Ordem de Serviço Nº ${res.osNumber} criada com sucesso!`);
-          trocarAba('ferramentaria', document.getElementById('tab-ferramentaria'));
-        } else {
-          alert("Erro ao gerar OS: " + (res.message || "Erro desconhecido no servidor"));
-        }
-      } catch (e) {
-        alert("Erro de conexão ao gerar OS: " + e.message);
-      }
-    }
-
-    // --- LIBERAÇÃO DE FERRAMENTARIA ---
-    function liberarParaPlasticoPorRowIndex(rowIndex) {
-      itemSelecionadoLiberacao = dadosBrutos.find(i => Number(i._rowIndex) === Number(rowIndex));
-      
-      if (!itemSelecionadoLiberacao) {
-        alert("Erro ao localizar o item selecionado.");
-        return;
-      }
-
-      document.getElementById('liberar-acao').value = "";
-      document.getElementById('modal-liberar').style.display = 'flex';
-    }
-
-    function fecharModalLiberar() {
-      document.getElementById('modal-liberar').style.display = 'none';
-      itemSelecionadoLiberacao = null;
-    }
-
-    async function confirmarLiberacaoPlastico() {
-      if (!itemSelecionadoLiberacao || itemSelecionadoLiberacao._rowIndex === undefined) {
-        alert("Erro: Nenhum item selecionado para liberação.");
-        return;
-      }
-
-      const acaoRealizada = document.getElementById('liberar-acao').value.trim();
-
-      if (!acaoRealizada) {
-        alert("Por favor, descreva a ação ou correção realizada antes de liberar.");
-        return;
-      }
-
-      const keys = Object.keys(itemSelecionadoLiberacao).filter(k => k !== '_rowIndex');
-
-      const payload = {
-        action: "LIBERAR_PLASTICO",
-        abaOrigem: abaAtual,
-        rowIndex: itemSelecionadoLiberacao._rowIndex,
-        col1: itemSelecionadoLiberacao[keys[0]] || "",
-        col2: itemSelecionadoLiberacao[keys[1]] || "",
-        col3: itemSelecionadoLiberacao[keys[2]] || "",
-        acaoRealizada: acaoRealizada,
-        liberadoPor: currentUser
-      };
-
-      fecharModalLiberar();
-
-      const status = document.getElementById('status-msg');
-      if (status) status.innerText = "Liberando molde...";
-
-      try {
-        const res = await chamarAPI(payload);
-
-        if (res && res.status === "success") {
-          alert("✅ Molde liberado para o Plástico e registrado no histórico!");
-          carregarDadosAba(abaAtual);
-        } else {
-          alert("Erro ao liberar ferramenta: " + (res.message || "Erro desconhecido"));
-        }
-      } catch (e) {
-        alert("Erro ao conectar com o servidor: " + e.message);
+        alert("Erro ao adicionar molde: " + (res.message || "Erro desconhecido"));
       }
     }
   </script>
