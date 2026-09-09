@@ -105,13 +105,13 @@
       </div>
     </header>
 
-    <!-- ABAS -->
-    <div class="tabs">
-      <button class="tab-btn active" onclick="trocarAba('ATUALIZADA', this)">Plástico (ATUALIZADA)</button>
-      <button class="tab-btn" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
-      <button class="tab-btn" onclick="trocarAba('Sem local', this)">Sem Local</button>
-      <button class="tab-btn" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
-      <button class="tab-btn" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
+    <!-- ABAS DINÂMICAS -->
+    <div class="tabs" id="tabContainer">
+      <button class="tab-btn tab-admin active" onclick="trocarAba('ATUALIZADA', this)">Plástico (ATUALIZADA)</button>
+      <button class="tab-btn tab-admin" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
+      <button class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)">Sem Local</button>
+      <button class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
+      <button class="tab-btn tab-ferram" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
     </div>
 
     <!-- AÇÕES -->
@@ -120,7 +120,7 @@
         <i class="fa fa-search"></i>
         <input type="text" id="txtBusca" placeholder="Buscar molde, código..." onkeyup="filtrarTabela()">
       </div>
-      <button class="btn-add" onclick="abrirModalAdicionar()"><i class="fa fa-plus"></i> Adicionar Molde</button>
+      <button class="btn-add" id="btnAddMolde" onclick="abrirModalAdicionar()"><i class="fa fa-plus"></i> Adicionar Molde</button>
     </div>
 
     <!-- TABELA -->
@@ -205,7 +205,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ENVIAR PARA FERRAMENTARIA -->
+  <!-- MODAL: SOLICITAR FERRAMENTARIA -->
   <div id="modalFerramentaria" class="modal">
     <div class="modal-content">
       <h3><i class="fa fa-wrench"></i> Solicitar Ferramentaria</h3>
@@ -242,6 +242,39 @@
       <div class="modal-buttons">
         <button onclick="fecharModalFerramentaria()" class="btn-cancelar">Cancelar</button>
         <button onclick="confirmarEnvioFerramentaria()" class="btn-salvar">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LIBERAR PARA O PLÁSTICO (Ação Realizada) -->
+  <div id="modalLiberarPlastico" class="modal">
+    <div class="modal-content">
+      <h3><i class="fa fa-check-circle"></i> Liberar P/ Plástico</h3>
+      <input type="hidden" id="libRowIndex">
+      
+      <div class="form-group">
+        <label for="libDataSaida">Data de Saída:</label>
+        <input type="date" id="libDataSaida" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="libHoraSaida">Hora de Saída:</label>
+        <input type="time" id="libHoraSaida" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="libTecnico">Técnico / Responsável:</label>
+        <input type="text" id="libTecnico" class="form-control" placeholder="Nome do responsável">
+      </div>
+
+      <div class="form-group">
+        <label for="libAcaoRealizada">Ação / Manutenção Realizada:</label>
+        <textarea id="libAcaoRealizada" class="form-control" rows="3" placeholder="Descreva os reparos ou ajustes feitos..."></textarea>
+      </div>
+
+      <div class="modal-buttons">
+        <button onclick="fecharModalLiberar()" class="btn-cancelar">Cancelar</button>
+        <button onclick="confirmarLiberacaoPlastico()" class="btn-salvar">Confirmar Liberação</button>
       </div>
     </div>
   </div>
@@ -286,7 +319,25 @@
         document.getElementById("lblRole").innerText = res.role;
         document.getElementById("loginScreen").style.display = "none";
         document.getElementById("appContainer").style.display = "flex";
-        carregarDadosAba(abaAtual);
+
+        // REGRA DE PERMISSÕES POR USUÁRIO
+        const isFerram = (res.user.toLowerCase() === "ferramentaria" || res.role.toLowerCase() === "ferramentaria");
+
+        if (isFerram) {
+          // Esconde abas de admin/fábrica
+          document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "none");
+          document.getElementById("btnAddMolde").style.display = "none";
+          // Seleciona diretamente a aba Ferramentaria
+          const btnFerram = document.querySelector(".tab-ferram");
+          trocarAba('ferramentaria', btnFerram);
+        } else {
+          // Usuário normal/Admin vê tudo
+          document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "inline-block");
+          document.getElementById("btnAddMolde").style.display = "flex";
+          const btnAtual = document.querySelector(".tab-admin");
+          trocarAba('ATUALIZADA', btnAtual);
+        }
+
       } else {
         alert("Erro no login: " + (res.message || "Usuário ou senha incorretos."));
       }
@@ -302,7 +353,7 @@
     function trocarAba(nomeAba, btn) {
       abaAtual = nomeAba;
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
+      if (btn) btn.classList.add("active");
       
       const selectDestino = document.getElementById("addAbaDestino");
       if (["ATUALIZADA", "Moldes QLX", "Sem local"].includes(nomeAba)) {
@@ -358,7 +409,7 @@
       const tbody = document.getElementById("tblBody");
       tbody.innerHTML = "";
 
-      // MODO HISTÓRICO DE MANUTENÇÃO (Sem botões de ação e com cabeçalhos dinâmicos)
+      // MODO HISTÓRICO DE MANUTENÇÃO
       if (abaAtual === "HISTORICO_MANUTENCAO") {
         if (!dados || dados.length === 0) {
           thead.innerHTML = `<tr><th>Informação</th></tr>`;
@@ -409,7 +460,7 @@
         // Se for na aba Ferramentaria, exibe o botão "Liberar P/ Plástico"
         let btnAcaoPrincipal = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentaria(${index})">Ferramentaria</button>`;
         if (abaAtual === "ferramentaria") {
-          btnAcaoPrincipal = `<button class="btn-tbl btn-liberar" onclick="liberarParaPlastico(${index})">Liberar P/ Plástico</button>`;
+          btnAcaoPrincipal = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberar(${index})">Liberar P/ Plástico</button>`;
         }
 
         tr.innerHTML = `
@@ -434,17 +485,50 @@
       renderizarTabela(filtrados);
     }
 
-    /* --- LIBERAR PARA PLÁSTICO --- */
-    function liberarParaPlastico(index) {
+    /* --- LIBERAR PARA PLÁSTICO (MODAL DE AÇÃO) --- */
+    function abrirModalLiberar(index) {
       const item = dadosAbaAtual[index];
       if (!item) return;
 
-      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
-
-      if (confirm(`Deseja liberar o molde '${col2}' da Ferramentaria de volta para Plástico?`)) {
-        const url = `${BASE_API}?action=LIBERAR_FERRAMENTARIA&rowIndex=${item._rowIndex}&callback=retornoAcao`;
-        executarJSONP(url);
+      document.getElementById("libRowIndex").value = item._rowIndex;
+      
+      const agora = new Date();
+      document.getElementById("libDataSaida").value = agora.toISOString().split('T')[0];
+      document.getElementById("libHoraSaida").value = agora.toTimeString().substring(0,5);
+      
+      if (usuarioLogado) {
+        document.getElementById("libTecnico").value = usuarioLogado.user || "";
       }
+
+      document.getElementById("modalLiberarPlastico").style.display = "flex";
+    }
+
+    function fecharModalLiberar() {
+      document.getElementById("modalLiberarPlastico").style.display = "none";
+      document.getElementById("libAcaoRealizada").value = "";
+    }
+
+    function confirmarLiberacaoPlastico() {
+      const rIndex = document.getElementById("libRowIndex").value;
+      const dataSaida = document.getElementById("libDataSaida").value;
+      const horaSaida = document.getElementById("libHoraSaida").value;
+      const tecnico = document.getElementById("libTecnico").value.trim();
+      const acaoRealizada = document.getElementById("libAcaoRealizada").value.trim();
+
+      if (!acaoRealizada) {
+        alert("Por favor, descreva a ação ou manutenção realizada!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=LIBERAR_FERRAMENTARIA` +
+                  `&rowIndex=${rIndex}` +
+                  `&dataSaida=${encodeURIComponent(dataSaida)}` +
+                  `&horaSaida=${encodeURIComponent(horaSaida)}` +
+                  `&tecnico=${encodeURIComponent(tecnico)}` +
+                  `&acaoRealizada=${encodeURIComponent(acaoRealizada)}` +
+                  `&callback=retornoAcao`;
+
+      executarJSONP(url);
     }
 
     /* --- ADICIONAR MOLDE --- */
@@ -596,6 +680,7 @@
         fecharModalAdicionar();
         fecharModalEditar();
         fecharModalFerramentaria();
+        fecharModalLiberar();
         carregarDadosAba(abaAtual);
       } else {
         alert("Erro na operação: " + (res && res.message ? res.message : "Erro desconhecido."));
