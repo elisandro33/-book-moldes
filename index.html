@@ -127,7 +127,7 @@
       <table>
         <thead>
           <tr>
-            <th>Local</th>
+            <th>Local / Molde N°</th>
             <th>Código</th>
             <th>Descrição</th>
             <th>Ações</th>
@@ -155,8 +155,8 @@
       </div>
 
       <div class="form-group">
-        <label for="addLocal">Local:</label>
-        <input type="text" id="addLocal" class="form-control" placeholder="Ex: A1, B2...">
+        <label for="addLocal">Local / Molde N°:</label>
+        <input type="text" id="addLocal" class="form-control" placeholder="Ex: A1, MOD-058...">
       </div>
 
       <div class="form-group">
@@ -183,7 +183,7 @@
       <input type="hidden" id="editRowIndex">
       
       <div class="form-group">
-        <label for="editLocal">Local:</label>
+        <label for="editLocal">Local / Molde N°:</label>
         <input type="text" id="editLocal" class="form-control">
       </div>
 
@@ -347,9 +347,10 @@
 
       dados.forEach((item, index) => {
         const tr = document.createElement("tr");
-        const col1 = obterValorColuna(item, ["LOCAL", "Local", "col_1"]);
-        const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "col_2"]);
-        const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "col_3"]);
+        
+        const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "col_1"]);
+        const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo", "col_2"]);
+        const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao", "col_3"]);
 
         tr.innerHTML = `
           <td>${col1}</td>
@@ -408,9 +409,9 @@
         return;
       }
 
-      const col1 = obterValorColuna(item, ["LOCAL", "Local", "col_1"]);
-      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "col_2"]);
-      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "col_3"]);
+      const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "col_1"]);
+      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo", "col_2"]);
+      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao", "col_3"]);
 
       document.getElementById("editRowIndex").value = item._rowIndex;
       document.getElementById("editLocal").value = col1;
@@ -443,7 +444,7 @@
       const item = dadosAbaAtual[index];
       if (!item) return;
 
-      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "col_2"]);
+      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo", "col_2"]);
 
       if (confirm(`Tem certeza que deseja excluir o molde '${col2}'?`)) {
         const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${item._rowIndex}&callback=retornoAcao`;
@@ -456,9 +457,9 @@
       const item = dadosAbaAtual[index];
       if (!item) return;
 
-      const col1 = obterValorColuna(item, ["LOCAL", "Local", "col_1"]);
-      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "col_2"]);
-      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "col_3"]);
+      const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "col_1"]);
+      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo", "col_2"]);
+      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao", "col_3"]);
 
       document.getElementById("ferrRowIndex").value = item._rowIndex;
       document.getElementById("ferrLocal").value = col1;
