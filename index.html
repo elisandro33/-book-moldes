@@ -127,9 +127,9 @@
       <table>
         <thead>
           <tr>
-            <th>Local / Molde N°</th>
-            <th>Código</th>
-            <th>Descrição</th>
+            <th id="thCol1">Local / Molde N°</th>
+            <th id="thCol2">Código</th>
+            <th id="thCol3">Descrição</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -324,15 +324,35 @@
       renderizarTabela(dadosAbaAtual);
     }
 
-    function obterValorColuna(item, nomesPossiveis) {
-      for (let key of Object.keys(item)) {
-        let keyNorm = key.trim().toLowerCase();
+    // Função para normalizar texto (remove acentos, espaços extras e símbolos)
+    function normalizarString(str) {
+      if (!str) return "";
+      return String(str)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-0]/g, "");
+    }
+
+    // Função melhorada que lê a primeira, segunda e terceira coluna dinamicamente caso o cabeçalho não combine exato
+    function obterValorColuna(item, nomesPossiveis, indicePadrao) {
+      const keys = Object.keys(item).filter(k => k !== '_rowIndex');
+
+      // 1. Procura por nome equivalente (ignorando acentos e símbolos)
+      for (let key of keys) {
+        let keyNorm = normalizarString(key);
         for (let nome of nomesPossiveis) {
-          if (keyNorm === nome.toLowerCase()) {
+          if (keyNorm === normalizarString(nome)) {
             return item[key] || "";
           }
         }
       }
+
+      // 2. Se não encontrou pelo nome, usa a posição/índice da coluna no objeto
+      if (typeof indicePadrao === 'number' && keys[indicePadrao] !== undefined) {
+        return item[keys[indicePadrao]] || "";
+      }
+
       return "";
     }
 
@@ -348,9 +368,10 @@
       dados.forEach((item, index) => {
         const tr = document.createElement("tr");
         
-        const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "col_1"]);
-        const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo", "col_2"]);
-        const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao", "col_3"]);
+        // Pega os valores por nomes flexíveis ou por índice (0=Local/Molde, 1=Código, 2=Descrição)
+        const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
+        const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
+        const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
 
         tr.innerHTML = `
           <td>${col1}</td>
@@ -409,9 +430,9 @@
         return;
       }
 
-      const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "col_1"]);
-      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo", "col_2"]);
-      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao", "col_3"]);
+      const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
+      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
+      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
 
       document.getElementById("editRowIndex").value = item._rowIndex;
       document.getElementById("editLocal").value = col1;
@@ -444,7 +465,7 @@
       const item = dadosAbaAtual[index];
       if (!item) return;
 
-      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo", "col_2"]);
+      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
 
       if (confirm(`Tem certeza que deseja excluir o molde '${col2}'?`)) {
         const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(abaAtual)}&rowIndex=${item._rowIndex}&callback=retornoAcao`;
@@ -457,9 +478,9 @@
       const item = dadosAbaAtual[index];
       if (!item) return;
 
-      const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "col_1"]);
-      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo", "col_2"]);
-      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao", "col_3"]);
+      const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
+      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
+      const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
 
       document.getElementById("ferrRowIndex").value = item._rowIndex;
       document.getElementById("ferrLocal").value = col1;
