@@ -50,13 +50,14 @@
     /* TABELA DE DADOS */
     .table-container { overflow-x: auto; background-color: #1e293b; border-radius: 8px; border: 1px solid #334155; }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-    th { background-color: #0f172a; color: #64748b; padding: 14px; font-weight: 700; text-transform: uppercase; font-size: 12px; border-bottom: 1px solid #334155; }
-    td { padding: 14px; border-bottom: 1px solid #334155; color: #cbd5e1; }
+    th { background-color: #0f172a; color: #64748b; padding: 14px; font-weight: 700; text-transform: uppercase; font-size: 12px; border-bottom: 1px solid #334155; white-space: nowrap; }
+    td { padding: 14px; border-bottom: 1px solid #334155; color: #cbd5e1; white-space: nowrap; }
     tr:hover { background-color: #26334d; }
 
     /* BOTOES DE AÇÃO DA TABELA */
     .btn-tbl { padding: 6px 12px; border: none; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer; margin-right: 5px; }
     .btn-ferramentaria { background-color: #1d4ed8; color: #fff; }
+    .btn-liberar { background-color: #059669; color: #fff; }
     .btn-editar { background-color: #ca8a04; color: #fff; }
     .btn-excluir { background-color: #dc2626; color: #fff; }
 
@@ -125,11 +126,11 @@
     <!-- TABELA -->
     <div class="table-container">
       <table>
-        <thead>
+        <thead id="tblHead">
           <tr>
-            <th id="thCol1">Local / Molde N°</th>
-            <th id="thCol2">Código</th>
-            <th id="thCol3">Descrição</th>
+            <th>Local / Molde N°</th>
+            <th>Código</th>
+            <th>Descrição</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -313,7 +314,7 @@
 
     function carregarDadosAba(nomeAba) {
       const tbody = document.getElementById("tblBody");
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Carregando dados de ${nomeAba}...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Carregando dados de ${nomeAba}...</td></tr>`;
       
       const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(nomeAba)}&callback=retornoCarregarDados`;
       executarJSONP(url);
@@ -324,7 +325,6 @@
       renderizarTabela(dadosAbaAtual);
     }
 
-    // Função para normalizar texto (remove acentos, espaços extras e símbolos)
     function normalizarString(str) {
       if (!str) return "";
       return String(str)
@@ -334,11 +334,9 @@
         .replace(/[^a-z0-0]/g, "");
     }
 
-    // Função melhorada que lê a primeira, segunda e terceira coluna dinamicamente caso o cabeçalho não combine exato
     function obterValorColuna(item, nomesPossiveis, indicePadrao) {
       const keys = Object.keys(item).filter(k => k !== '_rowIndex');
 
-      // 1. Procura por nome equivalente (ignorando acentos e símbolos)
       for (let key of keys) {
         let keyNorm = normalizarString(key);
         for (let nome of nomesPossiveis) {
@@ -348,7 +346,6 @@
         }
       }
 
-      // 2. Se não encontrou pelo nome, usa a posição/índice da coluna no objeto
       if (typeof indicePadrao === 'number' && keys[indicePadrao] !== undefined) {
         return item[keys[indicePadrao]] || "";
       }
@@ -357,8 +354,45 @@
     }
 
     function renderizarTabela(dados) {
+      const thead = document.getElementById("tblHead");
       const tbody = document.getElementById("tblBody");
       tbody.innerHTML = "";
+
+      // MODO HISTÓRICO DE MANUTENÇÃO (Sem botões de ação e com cabeçalhos dinâmicos)
+      if (abaAtual === "HISTORICO_MANUTENCAO") {
+        if (!dados || dados.length === 0) {
+          thead.innerHTML = `<tr><th>Informação</th></tr>`;
+          tbody.innerHTML = `<tr><td style="text-align:center;">Nenhum histórico encontrado.</td></tr>`;
+          return;
+        }
+
+        const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex');
+        let headerHTML = "<tr>";
+        colunas.forEach(col => headerHTML += `<th>${col}</th>`);
+        headerHTML += "</tr>";
+        thead.innerHTML = headerHTML;
+
+        dados.forEach(item => {
+          const tr = document.createElement("tr");
+          let rowHTML = "";
+          colunas.forEach(col => {
+            rowHTML += `<td>${item[col] || ""}</td>`;
+          });
+          tr.innerHTML = rowHTML;
+          tbody.appendChild(tr);
+        });
+        return;
+      }
+
+      // MODO ABAS PADRÃO (Plástico, QLX, Sem Local, Ferramentaria)
+      thead.innerHTML = `
+        <tr>
+          <th>Local / Molde N°</th>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th>Ações</th>
+        </tr>
+      `;
 
       if (!dados || dados.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
@@ -368,17 +402,22 @@
       dados.forEach((item, index) => {
         const tr = document.createElement("tr");
         
-        // Pega os valores por nomes flexíveis ou por índice (0=Local/Molde, 1=Código, 2=Descrição)
         const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
         const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
         const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
+
+        // Se for na aba Ferramentaria, exibe o botão "Liberar P/ Plástico"
+        let btnAcaoPrincipal = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentaria(${index})">Ferramentaria</button>`;
+        if (abaAtual === "ferramentaria") {
+          btnAcaoPrincipal = `<button class="btn-tbl btn-liberar" onclick="liberarParaPlastico(${index})">Liberar P/ Plástico</button>`;
+        }
 
         tr.innerHTML = `
           <td>${col1}</td>
           <td>${col2}</td>
           <td>${col3}</td>
           <td>
-            <button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentaria(${index})">Ferramentaria</button>
+            ${btnAcaoPrincipal}
             <button class="btn-tbl btn-editar" onclick="abrirModalEditar(${index})">Editar</button>
             <button class="btn-tbl btn-excluir" onclick="excluirMolde(${index})">Excluir</button>
           </td>
@@ -393,6 +432,19 @@
         return Object.values(item).some(val => String(val).toLowerCase().includes(termo));
       });
       renderizarTabela(filtrados);
+    }
+
+    /* --- LIBERAR PARA PLÁSTICO --- */
+    function liberarParaPlastico(index) {
+      const item = dadosAbaAtual[index];
+      if (!item) return;
+
+      const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
+
+      if (confirm(`Deseja liberar o molde '${col2}' da Ferramentaria de volta para Plástico?`)) {
+        const url = `${BASE_API}?action=LIBERAR_FERRAMENTARIA&rowIndex=${item._rowIndex}&callback=retornoAcao`;
+        executarJSONP(url);
+      }
     }
 
     /* --- ADICIONAR MOLDE --- */
@@ -537,7 +589,7 @@
       executarJSONP(url);
     }
 
-    /* --- CALLBACK GERAL PARA AÇÕES DE SUCESSO OU ERRO --- */
+    /* --- CALLBACK GERAL PARA AÇÕES --- */
     function retornoAcao(res) {
       if (res && res.status === "success") {
         alert(res.osNumber ? `Solicitação enviada com sucesso! OS Gerada: ${res.osNumber}` : "Operação realizada com sucesso!");
