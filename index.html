@@ -87,12 +87,24 @@
     
     tr:hover { background-color: #26334d; }
 
-    /* LARGURAS DAS COLUNAS */
-    th:nth-child(1), td:nth-child(1) { width: 160px; }
-    th:nth-child(2), td:nth-child(2) { width: 180px; }
-    th:nth-child(3), td:nth-child(3) { width: 400px; }
-    th:nth-child(4), td:nth-child(4) { width: 200px; }
-    th:nth-child(5), td:nth-child(5) { width: 260px; text-align: center; }
+    /* LARGURAS DAS COLUNAS PARA ABAS PADRÃO */
+    .table-container:not(.table-historico) th:nth-child(1), .table-container:not(.table-historico) td:nth-child(1) { width: 160px; }
+    .table-container:not(.table-historico) th:nth-child(2), .table-container:not(.table-historico) td:nth-child(2) { width: 180px; }
+    .table-container:not(.table-historico) th:nth-child(3), .table-container:not(.table-historico) td:nth-child(3) { width: 400px; }
+    .table-container:not(.table-historico) th:nth-child(4), .table-container:not(.table-historico) td:nth-child(4) { width: 200px; }
+    .table-container:not(.table-historico) th:nth-child(5), .table-container:not(.table-historico) td:nth-child(5) { width: 260px; text-align: center; }
+
+    /* AJUSTE DINÂMICO DE LARGURA PARA A ABA HISTÓRICO MANUTENÇÃO */
+    .table-container.table-historico table {
+      table-layout: auto !important;
+      min-width: 1600px !important;
+    }
+    .table-container.table-historico th, 
+    .table-container.table-historico td {
+      width: auto !important;
+      white-space: nowrap !important;
+      overflow: visible !important;
+    }
 
     .col-acoes { text-align: center; }
     .btn-group-acoes { display: flex; justify-content: center; gap: 6px; flex-wrap: nowrap; }
@@ -174,7 +186,7 @@
     </div>
 
     <!-- TABELA -->
-    <div class="table-container">
+    <div class="table-container" id="tblContainer">
       <table>
         <thead id="tblHead">
           <tr>
@@ -436,6 +448,13 @@
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
       if (btn) btn.classList.add("active");
       
+      const container = document.getElementById("tblContainer");
+      if (nomeAba === "HISTORICO_MANUTENCAO") {
+        container.classList.add("table-historico");
+      } else {
+        container.classList.remove("table-historico");
+      }
+
       const selectDestino = document.getElementById("addAbaDestino");
       if (["ATUALIZADA", "Moldes QLX", "Sem local"].includes(nomeAba)) {
         selectDestino.value = nomeAba;
