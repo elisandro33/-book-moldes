@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #121824; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    body { background-color: #121824; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; overflow-x: auto; }
     
     /* TELA DE LOGIN */
     .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: #121824; }
@@ -47,16 +47,55 @@
     .btn-add { padding: 10px 18px; background-color: #059669; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
     .btn-add:hover { background-color: #047857; }
 
-    /* TABELA DE DADOS RESPONSIVA */
-    .table-container { width: 100%; overflow-x: auto; background-color: #1e293b; border-radius: 8px; border: 1px solid #334155; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 800px; }
-    th { background-color: #0f172a; color: #64748b; padding: 14px; font-weight: 700; text-transform: uppercase; font-size: 12px; border-bottom: 1px solid #334155; white-space: nowrap; }
-    td { padding: 14px; border-bottom: 1px solid #334155; color: #cbd5e1; white-space: nowrap; }
+    /* TABELA DE DADOS RESPONSIVA E FIXA */
+    .table-container { 
+      width: 100%; 
+      max-width: 100%;
+      overflow-x: auto; 
+      -webkit-overflow-scrolling: touch;
+      background-color: #1e293b; 
+      border-radius: 8px; 
+      border: 1px solid #334155; 
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); 
+    }
+    
+    table { 
+      width: 100%; 
+      min-width: 1100px;
+      table-layout: fixed; 
+      border-collapse: collapse; 
+      text-align: left; 
+      font-size: 14px; 
+    }
+    
+    th, td { 
+      padding: 12px 10px; 
+      border-bottom: 1px solid #334155; 
+      color: #cbd5e1; 
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+    }
+    
+    th { 
+      background-color: #0f172a; 
+      color: #64748b; 
+      font-weight: 700; 
+      text-transform: uppercase; 
+      font-size: 12px; 
+    }
+    
     tr:hover { background-color: #26334d; }
 
-    /* COLUNA DE AÇÕES AJUSTADA */
-    .col-acoes { text-align: center; min-width: 220px; }
-    .btn-group-acoes { display: inline-flex; gap: 4px; flex-wrap: nowrap; }
+    /* LARGURAS DAS COLUNAS */
+    th:nth-child(1), td:nth-child(1) { width: 160px; }
+    th:nth-child(2), td:nth-child(2) { width: 180px; }
+    th:nth-child(3), td:nth-child(3) { width: 400px; }
+    th:nth-child(4), td:nth-child(4) { width: 200px; }
+    th:nth-child(5), td:nth-child(5) { width: 260px; text-align: center; }
+
+    .col-acoes { text-align: center; }
+    .btn-group-acoes { display: flex; justify-content: center; gap: 6px; flex-wrap: nowrap; }
 
     /* BADGES / TAGS DE LOCALIZAÇÃO */
     .badge-aba { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -197,6 +236,16 @@
       <input type="hidden" id="editAbaOrigem">
       
       <div class="form-group">
+        <label for="editAbaDestino">Aba / Destino:</label>
+        <select id="editAbaDestino" class="form-control">
+          <option value="ATUALIZADA">Plástico (ATUALIZADA)</option>
+          <option value="Moldes QLX">Moldes QLX</option>
+          <option value="Sem local">Sem Local</option>
+          <option value="ferramentaria">Ferramentaria</option>
+        </select>
+      </div>
+
+      <div class="form-group">
         <label for="editLocal">Local / Molde N°:</label>
         <input type="text" id="editLocal" class="form-control">
       </div>
@@ -300,7 +349,6 @@
     let abaAtual = "ATUALIZADA";
     let dadosAbaAtual = [];
     
-    // CACHE DAS ABAS PARA PESQUISA GLOBAL
     const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
     let cacheTodasAbas = {};
 
@@ -621,6 +669,7 @@
 
     function abrirModalEditarObj(aba, rowIndex, local, codigo, descricao) {
       document.getElementById("editAbaOrigem").value = aba;
+      document.getElementById("editAbaDestino").value = aba;
       document.getElementById("editRowIndex").value = rowIndex;
       document.getElementById("editLocal").value = local;
       document.getElementById("editCodigo").value = codigo;
@@ -633,7 +682,8 @@
     }
 
     function salvarEdicaoMolde() {
-      const aba = document.getElementById("editAbaOrigem").value || abaAtual;
+      const abaOrigem = document.getElementById("editAbaOrigem").value || abaAtual;
+      const abaDestino = document.getElementById("editAbaDestino").value;
       const rIndex = document.getElementById("editRowIndex").value;
       const col1 = document.getElementById("editLocal").value.trim();
       const col2 = document.getElementById("editCodigo").value.trim();
@@ -644,7 +694,7 @@
         return;
       }
 
-      const url = `${BASE_API}?action=EDITAR_MOLDE&sheet=${encodeURIComponent(aba)}&rowIndex=${rIndex}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAcao`;
+      const url = `${BASE_API}?action=EDITAR_MOLDE&sheet=${encodeURIComponent(abaOrigem)}&novaAba=${encodeURIComponent(abaDestino)}&rowIndex=${rIndex}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAcao`;
       executarJSONP(url);
     }
 
