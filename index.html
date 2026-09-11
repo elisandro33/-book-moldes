@@ -47,7 +47,7 @@
     .btn-add { padding: 10px 18px; background-color: #059669; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
     .btn-add:hover { background-color: #047857; }
 
-    /* TABELA DE DADOS RESPONSIVA E FIXA */
+    /* TABELA DE DADOS */
     .table-container { 
       width: 100%; 
       max-width: 100%;
@@ -86,6 +86,13 @@
     }
     
     tr:hover { background-color: #26334d; }
+
+    /* DESTAQUE PARA PRAZO VENCIDO */
+    .prazo-vencido {
+      background-color: rgba(220, 38, 38, 0.25) !important;
+      color: #fca5a5 !important;
+      font-weight: bold;
+    }
 
     /* LARGURAS DAS COLUNAS PARA ABAS PADRÃO */
     .table-container:not(.table-historico) th:nth-child(1), .table-container:not(.table-historico) td:nth-child(1) { width: 160px; }
@@ -297,6 +304,11 @@
       <div class="form-group">
         <label for="ferrHora">Hora Entrada:</label>
         <input type="time" id="ferrHora" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="ferrPrazo">Prazo Estimado (Data):</label>
+        <input type="date" id="ferrPrazo" class="form-control">
       </div>
 
       <div class="form-group">
@@ -513,6 +525,29 @@
       return `<span class="badge-aba badge-semlocal">${nomeAba}</span>`;
     }
 
+    function estaVencido(dataPrazoStr, status) {
+      if (!dataPrazoStr) return false;
+      const statusUpper = String(status || "").toUpperCase();
+      if (statusUpper.includes("CONCLUÍDO") || statusUpper.includes("CONCLUIDO")) return false;
+
+      let dataPrazo;
+      if (dataPrazoStr.includes("-")) {
+        const partes = dataPrazoStr.split("-");
+        dataPrazo = new Date(partes[0], partes[1] - 1, partes[2]);
+      } else if (dataPrazoStr.includes("/")) {
+        const partes = dataPrazoStr.split("/");
+        dataPrazo = new Date(partes[2], partes[1] - 1, partes[0]);
+      } else {
+        dataPrazo = new Date(dataPrazoStr);
+      }
+
+      if (isNaN(dataPrazo.getTime())) return false;
+
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      return dataPrazo < hoje;
+    }
+
     function renderizarTabela(dados, ehPesquisa = false) {
       const thead = document.getElementById("tblHead");
       const tbody = document.getElementById("tblBody");
@@ -527,15 +562,30 @@
 
         const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex' && k !== '_origemAba');
         let headerHTML = "<tr>";
-        colunas.forEach(col => headerHTML += `<th>${col}</th>`);
+        colunas.forEach(col => {
+          let nomeExibicao = col;
+          if (col.toUpperCase() === "COL_12") {
+            nomeExibicao = "STATUS";
+          }
+          headerHTML += `<th>${nomeExibicao}</th>`;
+        });
         headerHTML += "</tr>";
         thead.innerHTML = headerHTML;
 
         dados.forEach(item => {
           const tr = document.createElement("tr");
+          
+          const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
+          const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
+          
+          if (estaVencido(valPrazo, valStatus)) {
+            tr.classList.add("prazo-vencido");
+          }
+
           let rowHTML = "";
           colunas.forEach(col => {
-            rowHTML += `<td>${item[col] || ""}</td>`;
+            let valor = item[col] || "";
+            rowHTML += `<td>${valor}</td>`;
           });
           tr.innerHTML = rowHTML;
           tbody.appendChild(tr);
@@ -734,6 +784,7 @@
       const agora = new Date();
       document.getElementById("ferrData").value = agora.toISOString().split('T')[0];
       document.getElementById("ferrHora").value = agora.toTimeString().substring(0,5);
+      document.getElementById("ferrPrazo").value = "";
       
       if (usuarioLogado) {
         document.getElementById("ferrSolicitante").value = usuarioLogado.user || "";
@@ -746,6 +797,7 @@
       document.getElementById("modalFerramentaria").style.display = "none";
       document.getElementById("ferrTipos").value = "";
       document.getElementById("ferrObs").value = "";
+      document.getElementById("ferrPrazo").value = "";
     }
 
     function confirmarEnvioFerramentaria() {
@@ -757,6 +809,7 @@
       
       const data = document.getElementById("ferrData").value;
       const hora = document.getElementById("ferrHora").value;
+      const prazo = document.getElementById("ferrPrazo").value;
       const solicitante = document.getElementById("ferrSolicitante").value.trim();
       const tipos = document.getElementById("ferrTipos").value.trim();
       const obs = document.getElementById("ferrObs").value.trim();
@@ -774,6 +827,7 @@
                   `&col3=${encodeURIComponent(descricao)}` +
                   `&data=${encodeURIComponent(data)}` +
                   `&hora=${encodeURIComponent(hora)}` +
+                  `&prazo=${encodeURIComponent(prazo)}` +
                   `&solicitante=${encodeURIComponent(solicitante)}` +
                   `&tipos=${encodeURIComponent(tipos)}` +
                   `&obs=${encodeURIComponent(obs)}` +
