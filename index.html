@@ -94,12 +94,25 @@
       font-weight: bold;
     }
 
-    /* LARGURAS DAS COLUNAS PARA ABAS PADRÃO */
-    .table-container:not(.table-historico) th:nth-child(1), .table-container:not(.table-historico) td:nth-child(1) { width: 160px; }
-    .table-container:not(.table-historico) th:nth-child(2), .table-container:not(.table-historico) td:nth-child(2) { width: 180px; }
-    .table-container:not(.table-historico) th:nth-child(3), .table-container:not(.table-historico) td:nth-child(3) { width: 400px; }
-    .table-container:not(.table-historico) th:nth-child(4), .table-container:not(.table-historico) td:nth-child(4) { width: 200px; }
-    .table-container:not(.table-historico) th:nth-child(5), .table-container:not(.table-historico) td:nth-child(5) { width: 260px; text-align: center; }
+    /* LARGURAS DAS COLUNAS PARA ABAS PADRÃO (SEM FERRAMENTARIA) */
+    .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(1), 
+    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(1) { width: 160px; }
+    .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(2), 
+    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(2) { width: 180px; }
+    .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(3), 
+    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(3) { width: 400px; }
+    .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(4), 
+    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(4) { width: 180px; }
+    .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(5), 
+    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(5) { width: 260px; text-align: center; }
+
+    /* LARGURAS DAS COLUNAS PARA ABA FERRAMENTARIA (COM COLUNA PRAZO) */
+    .table-container.table-ferram-view th:nth-child(1), .table-container.table-ferram-view td:nth-child(1) { width: 140px; }
+    .table-container.table-ferram-view th:nth-child(2), .table-container.table-ferram-view td:nth-child(2) { width: 160px; }
+    .table-container.table-ferram-view th:nth-child(3), .table-container.table-ferram-view td:nth-child(3) { width: 340px; }
+    .table-container.table-ferram-view th:nth-child(4), .table-container.table-ferram-view td:nth-child(4) { width: 150px; }
+    .table-container.table-ferram-view th:nth-child(5), .table-container.table-ferram-view td:nth-child(5) { width: 130px; }
+    .table-container.table-ferram-view th:nth-child(6), .table-container.table-ferram-view td:nth-child(6) { width: 260px; text-align: center; }
 
     /* AJUSTE DINÂMICO DE LARGURA PARA A ABA HISTÓRICO MANUTENÇÃO */
     .table-container.table-historico table {
@@ -461,10 +474,12 @@
       if (btn) btn.classList.add("active");
       
       const container = document.getElementById("tblContainer");
+      container.classList.remove("table-historico", "table-ferram-view");
+      
       if (nomeAba === "HISTORICO_MANUTENCAO") {
         container.classList.add("table-historico");
-      } else {
-        container.classList.remove("table-historico");
+      } else if (nomeAba === "ferramentaria") {
+        container.classList.add("table-ferram-view");
       }
 
       const selectDestino = document.getElementById("addAbaDestino");
@@ -477,7 +492,8 @@
 
     function carregarDadosAba(nomeAba) {
       const tbody = document.getElementById("tblBody");
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Carregando dados de ${nomeAba}...</td></tr>`;
+      const colCount = (nomeAba === "ferramentaria") ? 6 : 5;
+      tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;">Carregando dados de ${nomeAba}...</td></tr>`;
       
       const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(nomeAba)}&callback=retornoCarregarDados`;
       executarJSONP(url);
@@ -517,12 +533,16 @@
       return "";
     }
 
-    function formatarNomeAba(nomeAba) {
-      if (nomeAba === "ATUALIZADA") return `<span class="badge-aba badge-plastico">Plástico (ATUALIZADA)</span>`;
-      if (nomeAba === "ferramentaria") return `<span class="badge-aba badge-ferram">Ferramentaria</span>`;
-      if (nomeAba === "Moldes QLX") return `<span class="badge-aba badge-qlx">Moldes QLX</span>`;
-      if (nomeAba === "Sem local") return `<span class="badge-aba badge-semlocal">Sem Local</span>`;
-      return `<span class="badge-aba badge-semlocal">${nomeAba}</span>`;
+    function formatarDataExibicao(val) {
+      if (!val) return "--";
+      if (val.includes("T")) val = val.split("T")[0];
+      if (val.includes("-")) {
+        const p = val.split("-");
+        if (p.length === 3 && p[0].length === 4) {
+          return `${p[2]}/${p[1]}/${p[0]}`;
+        }
+      }
+      return val;
     }
 
     function estaVencido(dataPrazoStr, status) {
@@ -531,14 +551,16 @@
       if (statusUpper.includes("CONCLUÍDO") || statusUpper.includes("CONCLUIDO")) return false;
 
       let dataPrazo;
-      if (dataPrazoStr.includes("-")) {
-        const partes = dataPrazoStr.split("-");
+      let strLimp = String(dataPrazoStr).split("T")[0];
+      
+      if (strLimp.includes("-")) {
+        const partes = strLimp.split("-");
         dataPrazo = new Date(partes[0], partes[1] - 1, partes[2]);
-      } else if (dataPrazoStr.includes("/")) {
-        const partes = dataPrazoStr.split("/");
+      } else if (strLimp.includes("/")) {
+        const partes = strLimp.split("/");
         dataPrazo = new Date(partes[2], partes[1] - 1, partes[0]);
       } else {
-        dataPrazo = new Date(dataPrazoStr);
+        dataPrazo = new Date(strLimp);
       }
 
       if (isNaN(dataPrazo.getTime())) return false;
@@ -546,6 +568,14 @@
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
       return dataPrazo < hoje;
+    }
+
+    function formatarNomeAba(nomeAba) {
+      if (nomeAba === "ATUALIZADA") return `<span class="badge-aba badge-plastico">Plástico (ATUALIZADA)</span>`;
+      if (nomeAba === "ferramentaria") return `<span class="badge-aba badge-ferram">Ferramentaria</span>`;
+      if (nomeAba === "Moldes QLX") return `<span class="badge-aba badge-qlx">Moldes QLX</span>`;
+      if (nomeAba === "Sem local") return `<span class="badge-aba badge-semlocal">Sem Local</span>`;
+      return `<span class="badge-aba badge-semlocal">${nomeAba}</span>`;
     }
 
     function renderizarTabela(dados, ehPesquisa = false) {
@@ -585,6 +615,9 @@
           let rowHTML = "";
           colunas.forEach(col => {
             let valor = item[col] || "";
+            if (col.toUpperCase().includes("PRAZO")) {
+              valor = formatarDataExibicao(valor);
+            }
             rowHTML += `<td>${valor}</td>`;
           });
           tr.innerHTML = rowHTML;
@@ -593,18 +626,22 @@
         return;
       }
 
+      const exibirPrazo = (abaAtual === "ferramentaria");
+
       thead.innerHTML = `
         <tr>
           <th>Local / Molde N°</th>
           <th>Código</th>
           <th>Descrição</th>
           <th>Aba / Origem</th>
+          ${exibirPrazo ? '<th>Prazo</th>' : ''}
           <th class="col-acoes">Ações</th>
         </tr>
       `;
 
       if (!dados || dados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
+        const colSpan = exibirPrazo ? 6 : 5;
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
         return;
       }
 
@@ -614,6 +651,12 @@
         const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
         const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
         const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
+        const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
+        const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
+
+        if (estaVencido(valPrazo, valStatus)) {
+          tr.classList.add("prazo-vencido");
+        }
         
         const origemAba = item._origemAba || abaAtual;
         const abaBadgeHTML = formatarNomeAba(origemAba);
@@ -623,11 +666,14 @@
           btnAcaoPrincipal = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberarObj(${item._rowIndex})">Liberar P/ Plástico</button>`;
         }
 
+        const tdPrazoHTML = exibirPrazo ? `<td>${formatarDataExibicao(valPrazo)}</td>` : '';
+
         tr.innerHTML = `
           <td>${col1}</td>
           <td>${col2}</td>
           <td>${col3}</td>
           <td>${abaBadgeHTML}</td>
+          ${tdPrazoHTML}
           <td class="col-acoes">
             <div class="btn-group-acoes">
               ${btnAcaoPrincipal}
