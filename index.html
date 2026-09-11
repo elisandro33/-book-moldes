@@ -197,7 +197,7 @@
 
     <!-- ABAS -->
     <div class="tabs" id="tabContainer">
-      <button id="tabPlastico" class="tab-btn tab-admin" onclick="trocarAba('ATUALIZADA', this)">Plástico (ATUALIZADA)</button>
+      <button id="tabPlastico" class="tab-btn tab-admin" onclick="trocarAba('ATUALIZADA', this)">Plástico</button>
       <button id="tabQLX" class="tab-btn tab-admin" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
       <button id="tabSemLocal" class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)">Sem Local</button>
       <button id="tabFerramentaria" class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
@@ -240,7 +240,7 @@
       <div class="form-group">
         <label for="addAbaDestino">Destino (Aba):</label>
         <select id="addAbaDestino" class="form-control">
-          <option value="ATUALIZADA">Plástico (ATUALIZADA)</option>
+          <option value="ATUALIZADA">Plástico</option>
           <option value="Moldes QLX">Moldes QLX</option>
           <option value="Sem local">Sem Local</option>
         </select>
@@ -278,7 +278,7 @@
       <div class="form-group" id="grpEditAbaDestino">
         <label for="editAbaDestino">Aba / Destino:</label>
         <select id="editAbaDestino" class="form-control">
-          <option value="ATUALIZADA">Plástico (ATUALIZADA)</option>
+          <option value="ATUALIZADA">Plástico</option>
           <option value="Moldes QLX">Moldes QLX</option>
           <option value="Sem local">Sem Local</option>
           <option value="ferramentaria">Ferramentaria</option>
@@ -616,7 +616,7 @@
     }
 
     function formatarNomeAba(nomeAba) {
-      if (nomeAba === "ATUALIZADA") return `<span class="badge-aba badge-plastico">Plástico (ATUALIZADA)</span>`;
+      if (nomeAba === "ATUALIZADA") return `<span class="badge-aba badge-plastico">Plástico</span>`;
       if (nomeAba === "ferramentaria") return `<span class="badge-aba badge-ferram">Ferramentaria</span>`;
       if (nomeAba === "Moldes QLX") return `<span class="badge-aba badge-qlx">Moldes QLX</span>`;
       if (nomeAba === "Sem local") return `<span class="badge-aba badge-semlocal">Sem Local</span>`;
