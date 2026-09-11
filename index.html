@@ -794,28 +794,33 @@
     }
 
     function confirmarLiberacaoPlastico() {
-      const rIndex = document.getElementById("libRowIndex").value;
-      const dataSaida = document.getElementById("libDataSaida").value;
-      const horaSaida = document.getElementById("libHoraSaida").value;
-      const tecnico = document.getElementById("libTecnico").value.trim();
-      const acaoRealizada = document.getElementById("libAcaoRealizada").value.trim();
+  const rIndex = document.getElementById("libRowIndex").value;
+  const dataSaida = document.getElementById("libDataSaida").value;
+  const horaSaida = document.getElementById("libHoraSaida").value;
+  const tecnico = document.getElementById("libTecnico").value.trim();
+  const acaoRealizada = document.getElementById("libAcaoRealizada").value.trim();
 
-      if (!acaoRealizada) {
-        alert("Por favor, preencha o campo de Ação / Manutenção Realizada!");
-        return;
-      }
+  if (!rIndex) {
+    alert("Erro: Linha do registro não foi informada!");
+    return;
+  }
 
-      const url = `${BASE_API}?action=LIBERAR_FERRAMENTARIA` +
-                  `&rowIndex=${rIndex}` +
-                  `&dataSaida=${encodeURIComponent(dataSaida)}` +
-                  `&horaSaida=${encodeURIComponent(horaSaida)}` +
-                  `&tecnico=${encodeURIComponent(tecnico)}` +
-                  `&acaoRealizada=${encodeURIComponent(acaoRealizada)}` +
-                  `&callback=retornoAcao`;
+  if (!acaoRealizada) {
+    alert("Por favor, preencha o campo de Ação / Manutenção Realizada!");
+    return;
+  }
 
-      executarJSONP(url);
-    }
+  const url = `${BASE_API}?action=LIBERAR_FERRAMENTARIA` +
+              `&rowIndex=${encodeURIComponent(rIndex)}` +
+              `&dataSaida=${encodeURIComponent(dataSaida)}` +
+              `&horaSaida=${encodeURIComponent(horaSaida)}` +
+              `&tecnico=${encodeURIComponent(tecnico)}` +
+              `&liberadoPor=${encodeURIComponent(tecnico)}` +
+              `&acaoRealizada=${encodeURIComponent(acaoRealizada)}` +
+              `&callback=retornoAcao`;
 
+  executarJSONP(url);
+}
     function abrirModalAdicionar() {
       document.getElementById("modalAdicionarMolde").style.display = "flex";
     }
