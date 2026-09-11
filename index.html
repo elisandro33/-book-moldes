@@ -23,9 +23,14 @@
     .password-wrapper { position: relative; }
     .password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; }
     
-    .btn-primary { width: 100%; padding: 12px; background-color: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 15px; transition: background 0.2s; margin-top: 10px; }
+    .btn-primary { width: 100%; padding: 12px; background-color: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 15px; transition: background 0.2s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-primary:hover { background-color: #1d4ed8; }
+    .btn-primary:disabled { background-color: #334155; cursor: not-allowed; opacity: 0.8; }
     
+    .login-status { margin-top: 15px; font-size: 13px; font-weight: 600; min-height: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .login-status.loading { color: #38bdf8; }
+    .login-status.error { color: #f87171; }
+
     /* SISTEMA PRINCIPAL */
     #appContainer { display: none; padding: 20px; flex-direction: column; flex-grow: 1; width: 100%; max-width: 100%; box-sizing: border-box; }
     header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
@@ -94,7 +99,7 @@
       font-weight: bold;
     }
 
-    /* LARGURAS DAS COLUNAS PARA ABAS PADRÃO (SEM FERRAMENTARIA) */
+    /* LARGURAS DAS COLUNAS PARA ABAS PADRÃO */
     .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(1), 
     .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(1) { width: 160px; }
     .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(2), 
@@ -106,7 +111,7 @@
     .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(5), 
     .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(5) { width: 260px; text-align: center; }
 
-    /* LARGURAS DAS COLUNAS PARA ABA FERRAMENTARIA (COM COLUNA PRAZO) */
+    /* LARGURAS DAS COLUNAS PARA ABA FERRAMENTARIA */
     .table-container.table-ferram-view th:nth-child(1), .table-container.table-ferram-view td:nth-child(1) { width: 140px; }
     .table-container.table-ferram-view th:nth-child(2), .table-container.table-ferram-view td:nth-child(2) { width: 160px; }
     .table-container.table-ferram-view th:nth-child(3), .table-container.table-ferram-view td:nth-child(3) { width: 340px; }
@@ -114,7 +119,7 @@
     .table-container.table-ferram-view th:nth-child(5), .table-container.table-ferram-view td:nth-child(5) { width: 130px; }
     .table-container.table-ferram-view th:nth-child(6), .table-container.table-ferram-view td:nth-child(6) { width: 260px; text-align: center; }
 
-    /* AJUSTE DINÂMICO DE LARGURA PARA A ABA HISTÓRICO MANUTENÇÃO */
+    /* AJUSTE PARA ABA HISTÓRICO MANUTENÇÃO */
     .table-container.table-historico table {
       table-layout: auto !important;
       min-width: 1600px !important;
@@ -129,14 +134,14 @@
     .col-acoes { text-align: center; }
     .btn-group-acoes { display: flex; justify-content: center; gap: 6px; flex-wrap: nowrap; }
 
-    /* BADGES / TAGS DE LOCALIZAÇÃO */
+    /* BADGES DE LOCALIZAÇÃO */
     .badge-aba { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
     .badge-plastico { background-color: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
     .badge-ferram { background-color: #854d0e; color: #fef08a; border: 1px solid #eab308; }
     .badge-qlx { background-color: #581c87; color: #e9d5ff; border: 1px solid #a855f7; }
     .badge-semlocal { background-color: #374151; color: #d1d5db; border: 1px solid #6b7280; }
 
-    /* BOTOES DE AÇÃO DA TABELA */
+    /* BOTOES DE AÇÃO */
     .btn-tbl { padding: 6px 10px; border: none; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; }
     .btn-ferramentaria { background-color: #1d4ed8; color: #fff; }
     .btn-liberar { background-color: #059669; color: #fff; }
@@ -173,7 +178,10 @@
         </div>
       </div>
 
-      <button onclick="efetuarLogin()" class="btn-primary">Entrar</button>
+      <button id="btnLogin" onclick="efetuarLogin()" class="btn-primary">Entrar</button>
+
+      <!-- MENSAGEM DE STATUS DO LOGIN -->
+      <div id="loginStatus" class="login-status"></div>
     </div>
   </div>
 
@@ -267,7 +275,7 @@
       <input type="hidden" id="editRowIndex">
       <input type="hidden" id="editAbaOrigem">
       
-      <div class="form-group">
+      <div class="form-group" id="grpEditAbaDestino">
         <label for="editAbaDestino">Aba / Destino:</label>
         <select id="editAbaDestino" class="form-control">
           <option value="ATUALIZADA">Plástico (ATUALIZADA)</option>
@@ -392,7 +400,10 @@
     function executarJSONP(url) {
       const script = document.createElement('script');
       script.src = url;
-      script.onerror = () => alert("Erro de conexão ao acessar o servidor Google Apps Script.");
+      script.onerror = () => {
+        restaurarEstadoLogin();
+        mostrarStatusLogin("Erro de conexão ao acessar o servidor Google Apps Script.", "error");
+      };
       document.body.appendChild(script);
       script.onload = () => document.body.removeChild(script);
     }
@@ -402,14 +413,35 @@
       passInput.type = passInput.type === "password" ? "text" : "password";
     }
 
+    function mostrarStatusLogin(msg, tipo) {
+      const statusDiv = document.getElementById("loginStatus");
+      statusDiv.className = `login-status ${tipo}`;
+      if (tipo === "loading") {
+        statusDiv.innerHTML = `<i class="fa fa-circle-notch fa-spin"></i> ${msg}`;
+      } else {
+        statusDiv.innerHTML = msg;
+      }
+    }
+
+    function restaurarEstadoLogin() {
+      const btn = document.getElementById("btnLogin");
+      btn.disabled = false;
+      btn.innerHTML = "Entrar";
+    }
+
     function efetuarLogin() {
       const u = document.getElementById("loginUser").value.trim();
       const p = document.getElementById("loginPass").value.trim();
 
       if (!u || !p) {
-        alert("Informe o usuário e a senha!");
+        mostrarStatusLogin("Informe o usuário e a senha!", "error");
         return;
       }
+
+      const btn = document.getElementById("btnLogin");
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa fa-circle-notch fa-spin"></i> Autenticando...`;
+      mostrarStatusLogin("Autenticando, aguarde...", "loading");
 
       const url = `${BASE_API}?action=LOGIN&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}&callback=retornoLogin`;
       executarJSONP(url);
@@ -423,9 +455,14 @@
         document.getElementById("loginScreen").style.display = "none";
         document.getElementById("appContainer").style.display = "flex";
 
-        const userLower = String(res.user).toLowerCase();
-        const roleLower = String(res.role).toLowerCase();
-        const isFerram = (userLower === "ferramentaria" || roleLower === "ferramentaria");
+        restaurarEstadoLogin();
+        document.getElementById("loginStatus").innerHTML = "";
+
+        const uName = String(res.user).toLowerCase();
+        const uRole = String(res.role).toLowerCase();
+        
+        const isFerram = (uName === "ferramentaria" || uRole === "ferramentaria");
+        const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
 
         carregarTodasAbasCache();
 
@@ -437,14 +474,20 @@
           trocarAba('ferramentaria', btnFerram);
         } else {
           document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "inline-block");
-          document.getElementById("btnAddMolde").style.display = "flex";
+          
+          if (isNivel1) {
+            document.getElementById("btnAddMolde").style.display = "none";
+          } else {
+            document.getElementById("btnAddMolde").style.display = "flex";
+          }
           
           const btnPlastico = document.getElementById("tabPlastico");
           trocarAba('ATUALIZADA', btnPlastico);
         }
 
       } else {
-        alert("Erro no login: " + (res.message || "Usuário ou senha incorretos."));
+        restaurarEstadoLogin();
+        mostrarStatusLogin("Erro no login: " + (res.message || "Usuário ou senha incorretos."), "error");
       }
     }
 
@@ -464,6 +507,8 @@
       document.getElementById("loginScreen").style.display = "flex";
       document.getElementById("loginPass").value = "";
       document.getElementById("txtBusca").value = "";
+      document.getElementById("loginStatus").innerHTML = "";
+      restaurarEstadoLogin();
     }
 
     function trocarAba(nomeAba, btn) {
@@ -583,6 +628,13 @@
       const tbody = document.getElementById("tblBody");
       tbody.innerHTML = "";
 
+      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase() : "";
+      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase() : "";
+      
+      const isFerram = (uName === "ferramentaria" || uRole === "ferramentaria");
+      const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
+      const isAdmin  = (uName === "admin" || uRole === "admin");
+
       if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
         if (!dados || dados.length === 0) {
           thead.innerHTML = `<tr><th>Informação</th></tr>`;
@@ -661,10 +713,18 @@
         const origemAba = item._origemAba || abaAtual;
         const abaBadgeHTML = formatarNomeAba(origemAba);
 
-        let btnAcaoPrincipal = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentariaObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Ferramentaria</button>`;
-        if (origemAba === "ferramentaria") {
-          btnAcaoPrincipal = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberarObj(${item._rowIndex})">Liberar P/ Plástico</button>`;
+        let btnAcaoPrincipalHTML = "";
+        
+        if (!isNivel1) {
+          if (origemAba === "ferramentaria") {
+            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberarObj(${item._rowIndex})">Liberar P/ Plástico</button>`;
+          } else if (!isFerram) {
+            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentariaObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Ferramentaria</button>`;
+          }
         }
+
+        const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Editar</button>` : '';
+        const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')">Excluir</button>` : '';
 
         const tdPrazoHTML = exibirPrazo ? `<td>${formatarDataExibicao(valPrazo)}</td>` : '';
 
@@ -676,9 +736,9 @@
           ${tdPrazoHTML}
           <td class="col-acoes">
             <div class="btn-group-acoes">
-              ${btnAcaoPrincipal}
-              <button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Editar</button>
-              <button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')">Excluir</button>
+              ${btnAcaoPrincipalHTML}
+              ${btnEditarHTML}
+              ${btnExcluirHTML}
             </div>
           </td>
         `;
@@ -789,6 +849,16 @@
       document.getElementById("editLocal").value = local;
       document.getElementById("editCodigo").value = codigo;
       document.getElementById("editDescricao").value = descricao;
+
+      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase() : "";
+      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase() : "";
+      const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
+
+      const grpAba = document.getElementById("grpEditAbaDestino");
+      if (grpAba) {
+        grpAba.style.display = isNivel1 ? "none" : "block";
+      }
+
       document.getElementById("modalEditarMolde").style.display = "flex";
     }
 
