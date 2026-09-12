@@ -28,7 +28,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
     
-    /* TELA DE LOGIN */
+    /* TELA DE LOGIN ORIGINAL */
     .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: var(--bg-dark); padding: 16px; }
     .login-box { background-color: var(--card-dark); padding: 32px 24px; border-radius: 16px; width: 100%; max-width: 400px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center; }
     .login-box h2 { margin-bottom: 8px; font-size: 22px; color: var(--text-main); font-weight: 700; }
@@ -60,7 +60,7 @@
     .btn-logout { padding: 8px 14px; background-color: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
     .btn-logout:hover { background-color: var(--danger-red); color: #fff; }
 
-    /* KPI CARDS DETALHADOS */
+    /* KPI CARDS */
     .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
     .kpi-card { background: var(--card-dark); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; }
     .kpi-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
@@ -100,43 +100,14 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
     }
     
-    table { 
-      width: 100%; 
-      min-width: 900px;
-      table-layout: fixed; 
-      border-collapse: collapse; 
-      text-align: left; 
-      font-size: 14px; 
-    }
-    
-    th, td { 
-      padding: 14px 16px; 
-      border-bottom: 1px solid var(--border-color); 
-      color: var(--text-main); 
-      white-space: nowrap; 
-      overflow: hidden; 
-      text-overflow: ellipsis; 
-    }
-    
-    th { 
-      background-color: #151e2e; 
-      color: var(--text-muted); 
-      font-weight: 600; 
-      text-transform: uppercase; 
-      font-size: 11px; 
-      letter-spacing: 0.5px;
-    }
-    
+    table { width: 100%; min-width: 900px; table-layout: fixed; border-collapse: collapse; text-align: left; font-size: 14px; }
+    th, td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    th { background-color: #151e2e; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
     tr:hover { background-color: rgba(255, 255, 255, 0.02); }
 
-    /* DESTAQUE PARA PRAZO VENCIDO */
-    .prazo-vencido {
-      background-color: rgba(239, 68, 68, 0.15) !important;
-      color: #fca5a5 !important;
-      font-weight: 600;
-    }
+    .prazo-vencido { background-color: rgba(239, 68, 68, 0.15) !important; color: #fca5a5 !important; font-weight: 600; }
 
-    /* LARGURAS DAS COLUNAS PARA ABAS PADRÃO */
+    /* LARGURAS DAS COLUNAS */
     .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(1), 
     .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(1) { width: 160px; }
     .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(2), 
@@ -148,7 +119,6 @@
     .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(5), 
     .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(5) { width: 260px; text-align: center; }
 
-    /* LARGURAS DAS COLUNAS PARA ABA FERRAMENTARIA */
     .table-container.table-ferram-view th:nth-child(1), .table-container.table-ferram-view td:nth-child(1) { width: 140px; }
     .table-container.table-ferram-view th:nth-child(2), .table-container.table-ferram-view td:nth-child(2) { width: 160px; }
     .table-container.table-ferram-view th:nth-child(3), .table-container.table-ferram-view td:nth-child(3) { width: 340px; }
@@ -156,29 +126,18 @@
     .table-container.table-ferram-view th:nth-child(5), .table-container.table-ferram-view td:nth-child(5) { width: 130px; }
     .table-container.table-ferram-view th:nth-child(6), .table-container.table-ferram-view td:nth-child(6) { width: 260px; text-align: center; }
 
-    /* AJUSTE PARA ABA HISTÓRICO MANUTENÇÃO */
-    .table-container.table-historico table {
-      table-layout: auto !important;
-      min-width: 1600px !important;
-    }
-    .table-container.table-historico th, 
-    .table-container.table-historico td {
-      width: auto !important;
-      white-space: nowrap !important;
-      overflow: visible !important;
-    }
+    .table-container.table-historico table { table-layout: auto !important; min-width: 1600px !important; }
+    .table-container.table-historico th, .table-container.table-historico td { width: auto !important; white-space: nowrap !important; overflow: visible !important; }
 
     .col-acoes { text-align: center; }
     .btn-group-acoes { display: flex; justify-content: center; gap: 6px; flex-wrap: nowrap; }
 
-    /* BADGES DE LOCALIZAÇÃO */
     .badge-aba { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     .badge-plastico { background-color: rgba(37, 99, 235, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
     .badge-ferram { background-color: rgba(245, 158, 11, 0.2); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.4); }
     .badge-qlx { background-color: rgba(168, 85, 247, 0.2); color: #e9d5ff; border: 1px solid rgba(168, 85, 247, 0.4); }
     .badge-semlocal { background-color: rgba(107, 114, 128, 0.2); color: #e5e7eb; border: 1px solid rgba(107, 114, 128, 0.4); }
 
-    /* BOTOES DE AÇÃO */
     .btn-tbl { padding: 6px 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; transition: opacity 0.2s; }
     .btn-tbl:hover { opacity: 0.9; }
     .btn-ferramentaria { background-color: var(--primary-blue); color: #fff; }
@@ -197,29 +156,30 @@
   </head>
   <body>
 
-	<!-- TELA DE LOGIN -->
-	<div id="loginScreen" class="login-container">
+	<!-- TELA DE LOGIN ORIGINAL (COM USUÁRIO E SENHA) -->
+	<div class="login-container" id="loginPage">
 	  <div class="login-box">
-		<h2>🔑 Acesso ao Sistema</h2>
-		<p>Digite seu usuário e senha para acessar</p>
+		<h2>SISTEMA DE MOLDES</h2>
+		<p>Digite seu Usuário e Senha para acessar</p>
 
 		<div class="form-group">
-		  <label for="loginUser">Usuário</label>
-		  <input type="text" id="loginUser" class="form-control" placeholder="Digite seu usuário..." autocomplete="off">
+		  <label for="userInput">Usuário</label>
+		  <input type="text" id="userInput" class="form-control" placeholder="Digite seu usuário">
 		</div>
 
 		<div class="form-group">
-		  <label for="loginPass">Senha</label>
+		  <label for="passInput">Senha</label>
 		  <div class="password-wrapper">
-			<input type="password" id="loginPass" class="form-control" placeholder="••••••••">
-			<i class="fa fa-eye password-toggle" onclick="toggleSenha()"></i>
+			<input type="password" id="passInput" class="form-control" placeholder="••••••••">
+			<i class="fas fa-eye password-toggle" id="togglePass"></i>
 		  </div>
 		</div>
 
-		<button id="btnLogin" onclick="efetuarLogin()" class="btn-primary">Entrar</button>
+		<button class="btn-primary" id="btnLogin">
+		  <i class="fas fa-sign-in-alt"></i> Entrar
+		</button>
 
-		<!-- MENSAGEM DE STATUS DO LOGIN -->
-		<div id="loginStatus" class="login-status"></div>
+		<div class="login-status" id="loginStatus"></div>
 	  </div>
 	</div>
 
@@ -276,13 +236,9 @@
 	  <div class="table-container" id="mainTableContainer">
 		<table>
 		  <thead>
-			<tr id="tableHeader">
-			  <!-- Gerado via JavaScript -->
-			</tr>
+			<tr id="tableHeader"></tr>
 		  </thead>
-		  <tbody id="tableBody">
-			<!-- Gerado via JavaScript -->
-		  </tbody>
+		  <tbody id="tableBody"></tbody>
 		</table>
 	  </div>
 	</div>
@@ -346,7 +302,10 @@
 	</div>
 
 <script>
-    // DADOS INICIAIS E SESSÃO
+    // INTEGRAÇÃO COM GOOGLE APPS SCRIPT / PLANILHA
+    // Mantenha a URL do seu script aqui para realizar a autenticação e gravação dos dados
+    const SCRIPT_URL = "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI";
+
     let moldes = JSON.parse(localStorage.getItem('moldes_db')) || [
       { id: 1, codigo: 'M-001', ferramenta: 'Molde Cofrinho', obs: 'Pronto para uso', localizacao: 'PLASTICO', dataEnvio: '', motivo: '', prazo: '', historico: [] },
       { id: 2, codigo: 'M-002', ferramenta: 'Molde Caixa 4x2', obs: 'Ajustar bucha', localizacao: 'FERRAMENTARIA', dataEnvio: '2026-03-01', motivo: 'Quebra de cavidade', prazo: '2026-03-10', historico: [] }
@@ -356,13 +315,14 @@
     let idMoldeEmEdicao = null;
     let idMoldeEmAcao = null;
 
-    // ELEMENTOS DOM
+    // ELEMENTOS DA TELA DE LOGIN
     const loginPage = document.getElementById('loginPage');
     const appContainer = document.getElementById('appContainer');
-    const pinInput = document.getElementById('pinInput');
+    const userInput = document.getElementById('userInput');
+    const passInput = document.getElementById('passInput');
     const btnLogin = document.getElementById('btnLogin');
     const btnLogout = document.getElementById('btnLogout');
-    const togglePin = document.getElementById('togglePin');
+    const togglePass = document.getElementById('togglePass');
     const loginStatus = document.getElementById('loginStatus');
 
     const mainTableContainer = document.getElementById('mainTableContainer');
@@ -373,37 +333,70 @@
     const modalMolde = document.getElementById('modalMolde');
     const modalManutencao = document.getElementById('modalManutencao');
 
-    // SISTEMA DE LOGIN SIMPLES (PIN: 1234)
-    btnLogin.addEventListener('click', autenticar);
-    pinInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') autenticar(); });
+    // EXIBIR / OCULTAR SENHA
+    togglePass.addEventListener('click', () => {
+      const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passInput.setAttribute('type', type);
+      togglePass.classList.toggle('fa-eye-slash');
+    });
 
-    function autenticar() {
-      const pin = pinInput.value;
-      if (pin === '1234') {
-        loginStatus.className = 'login-status loading';
-        loginStatus.innerText = 'Autenticando...';
+    // SISTEMA DE LOGIN INTEGRADO À PLANILHA / APPS SCRIPT
+    btnLogin.addEventListener('click', autenticar);
+    passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') autenticar(); });
+
+    async function autenticar() {
+      const usuario = userInput.value.trim();
+      const senha = passInput.value.trim();
+
+      if (!usuario || !senha) {
+        loginStatus.className = 'login-status error';
+        loginStatus.innerText = 'Preencha usuário e senha.';
+        return;
+      }
+
+      loginStatus.className = 'login-status loading';
+      loginStatus.innerText = 'Verificando usuário...';
+      btnLogin.disabled = true;
+
+      // SE HOUVER URL CONFIGURADA, VALIDA NA PLANILHA, SENÃO USA VALIDAÇÃO LOCAL
+      if (SCRIPT_URL && SCRIPT_URL !== "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI") {
+        try {
+          const response = await fetch(`${SCRIPT_URL}?action=login&usuario=${encodeURIComponent(usuario)}&senha=${encodeURIComponent(senha)}`);
+          const data = await response.json();
+
+          if (data.sucesso) {
+            document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${data.nome || usuario}`;
+            loginPage.style.display = 'none';
+            appContainer.style.display = 'flex';
+            renderizarSistema();
+          } else {
+            loginStatus.className = 'login-status error';
+            loginStatus.innerText = data.mensagem || 'Usuário ou senha incorretos.';
+          }
+        } catch (err) {
+          loginStatus.className = 'login-status error';
+          loginStatus.innerText = 'Erro de conexão com a planilha.';
+        } finally {
+          btnLogin.disabled = false;
+        }
+      } else {
+        // AUTENTICAÇÃO DE TESTE LOCAL
         setTimeout(() => {
+          document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${usuario}`;
           loginPage.style.display = 'none';
           appContainer.style.display = 'flex';
           renderizarSistema();
-        }, 600);
-      } else {
-        loginStatus.className = 'login-status error';
-        loginStatus.innerText = 'PIN incorreto. Tente novamente.';
+          btnLogin.disabled = false;
+        }, 500);
       }
     }
 
     btnLogout.addEventListener('click', () => {
       appContainer.style.display = 'none';
       loginPage.style.display = 'flex';
-      pinInput.value = '';
+      userInput.value = '';
+      passInput.value = '';
       loginStatus.innerText = '';
-    });
-
-    togglePin.addEventListener('click', () => {
-      const type = pinInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      pinInput.setAttribute('type', type);
-      togglePin.classList.toggle('fa-eye-slash');
     });
 
     // TROCA DE ABAS
@@ -416,16 +409,13 @@
       });
     });
 
-    // BUSCA NA TABELA
     searchInput.addEventListener('input', renderizarTabela);
 
-    // PERSISTÊNCIA DE DADOS
     function salvarDados() {
       localStorage.setItem('moldes_db', JSON.stringify(moldes));
       atualizarKPIs();
     }
 
-    // ATUALIZAÇÃO DOS KPIS
     function atualizarKPIs() {
       document.getElementById('kpiPlastico').innerText = moldes.filter(m => m.localizacao === 'PLASTICO').length;
       document.getElementById('kpiFerram').innerText = moldes.filter(m => m.localizacao === 'FERRAMENTARIA').length;
@@ -436,7 +426,6 @@
       document.getElementById('kpiVencidas').innerText = vencidas;
     }
 
-    // RENDERIZAÇÃO GERAL
     function renderizarSistema() {
       atualizarKPIs();
       renderizarTabela();
@@ -495,7 +484,6 @@
         return;
       }
 
-      // CONFIGURAÇÃO DAS ABAS PADRÃO E FERRAMENTARIA
       if (abaAtual === 'FERRAMENTARIA') {
         mainTableContainer.classList.add('table-ferram-view');
         tableHeader.innerHTML = `
@@ -637,7 +625,7 @@
       renderizarSistema();
     });
 
-    // MANUTENÇÃO / ENVIAR PARA FERRAMENTARIA
+    // MANUTENÇÃO
     function abrirModalManutencao(id) {
       idMoldeEmAcao = id;
       document.getElementById('inputMotivo').value = '';
@@ -670,7 +658,7 @@
       renderizarSistema();
     });
 
-    // LIBERAR MOLDE DA FERRAMENTARIA
+    // LIBERAR MOLDE
     function liberarMolde(id) {
       const molde = moldes.find(m => m.id === id);
       if (!molde) return;
