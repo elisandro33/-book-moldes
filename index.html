@@ -302,396 +302,412 @@
 	</div>
 
 <script>
-    // INTEGRAÇÃO COM GOOGLE APPS SCRIPT / PLANILHA
-    // Mantenha a URL do seu script aqui para realizar a autenticação e gravação dos dados
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
+  // COLE AQUI A URL DE IMPLANTAÇÃO (DEPLOY) DO SEU GOOGLE APPS SCRIPT
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
 
-    let moldes = JSON.parse(localStorage.getItem('moldes_db')) || [
-      { id: 1, codigo: 'M-001', ferramenta: 'Molde Cofrinho', obs: 'Pronto para uso', localizacao: 'PLASTICO', dataEnvio: '', motivo: '', prazo: '', historico: [] },
-      { id: 2, codigo: 'M-002', ferramenta: 'Molde Caixa 4x2', obs: 'Ajustar bucha', localizacao: 'FERRAMENTARIA', dataEnvio: '2026-03-01', motivo: 'Quebra de cavidade', prazo: '2026-03-10', historico: [] }
-    ];
+  let moldes = [];
+  let abaAtual = 'PLASTICO';
+  let idMoldeEmEdicao = null;
+  let idMoldeEmAcao = null;
 
-    let abaAtual = 'PLASTICO';
-    let idMoldeEmEdicao = null;
-    let idMoldeEmAcao = null;
+  // ELEMENTOS DOM
+  const loginPage = document.getElementById('loginPage');
+  const appContainer = document.getElementById('appContainer');
+  const userInput = document.getElementById('userInput');
+  const passInput = document.getElementById('passInput');
+  const btnLogin = document.getElementById('btnLogin');
+  const btnLogout = document.getElementById('btnLogout');
+  const togglePass = document.getElementById('togglePass');
+  const loginStatus = document.getElementById('loginStatus');
 
-    // ELEMENTOS DA TELA DE LOGIN
-    const loginPage = document.getElementById('loginPage');
-    const appContainer = document.getElementById('appContainer');
-    const userInput = document.getElementById('userInput');
-    const passInput = document.getElementById('passInput');
-    const btnLogin = document.getElementById('btnLogin');
-    const btnLogout = document.getElementById('btnLogout');
-    const togglePass = document.getElementById('togglePass');
-    const loginStatus = document.getElementById('loginStatus');
+  const mainTableContainer = document.getElementById('mainTableContainer');
+  const tableHeader = document.getElementById('tableHeader');
+  const tableBody = document.getElementById('tableBody');
+  const searchInput = document.getElementById('searchInput');
 
-    const mainTableContainer = document.getElementById('mainTableContainer');
-    const tableHeader = document.getElementById('tableHeader');
-    const tableBody = document.getElementById('tableBody');
-    const searchInput = document.getElementById('searchInput');
+  const modalMolde = document.getElementById('modalMolde');
+  const modalManutencao = document.getElementById('modalManutencao');
 
-    const modalMolde = document.getElementById('modalMolde');
-    const modalManutencao = document.getElementById('modalManutencao');
-
-    // EXIBIR / OCULTAR SENHA
-    togglePass.addEventListener('click', () => {
-      const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      passInput.setAttribute('type', type);
-      togglePass.classList.toggle('fa-eye-slash');
+  // FUNÇÃO AUXILIAR PARA REQUISIÇÕES JSONP (Evita bloqueios de CORS do Apps Script)
+  function fetchJSONP(url) {
+    return new Promise((resolve, reject) => {
+      const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
+      window[callbackName] = function(data) {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        resolve(data);
+      };
+      const script = document.createElement('script');
+      script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
+      script.onerror = function() {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        reject(new Error('Falha na conexão JSONP'));
+      };
+      document.body.appendChild(script);
     });
+  }
 
-    // SISTEMA DE LOGIN INTEGRADO À PLANILHA / APPS SCRIPT
-    btnLogin.addEventListener('click', autenticar);
-    passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') autenticar(); });
+  // EXIBIR / OCULTAR SENHA
+  togglePass.addEventListener('click', () => {
+    const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passInput.setAttribute('type', type);
+    togglePass.classList.toggle('fa-eye-slash');
+  });
 
-    async function autenticar() {
-      const usuario = userInput.value.trim();
-      const senha = passInput.value.trim();
+  // AUTENTICAÇÃO NA PLANILHA
+  btnLogin.addEventListener('click', autenticar);
+  passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') autenticar(); });
 
-      if (!usuario || !senha) {
-        loginStatus.className = 'login-status error';
-        loginStatus.innerText = 'Preencha usuário e senha.';
-        return;
-      }
+  async function autenticar() {
+    const usuario = userInput.value.trim();
+    const senha = passInput.value.trim();
 
-      loginStatus.className = 'login-status loading';
-      loginStatus.innerText = 'Verificando usuário...';
-      btnLogin.disabled = true;
+    if (!usuario || !senha) {
+      loginStatus.className = 'login-status error';
+      loginStatus.innerText = 'Preencha usuário e senha.';
+      return;
+    }
 
-      // SE HOUVER URL CONFIGURADA, VALIDA NA PLANILHA, SENÃO USA VALIDAÇÃO LOCAL
-      if (SCRIPT_URL && SCRIPT_URL !== "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI") {
-        try {
-          const response = await fetch(`${SCRIPT_URL}?action=login&usuario=${encodeURIComponent(usuario)}&senha=${encodeURIComponent(senha)}`);
-          const data = await response.json();
+    loginStatus.className = 'login-status loading';
+    loginStatus.innerText = 'Verificando na planilha...';
+    btnLogin.disabled = true;
 
-          if (data.sucesso) {
-            document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${data.nome || usuario}`;
-            loginPage.style.display = 'none';
-            appContainer.style.display = 'flex';
-            renderizarSistema();
-          } else {
-            loginStatus.className = 'login-status error';
-            loginStatus.innerText = data.mensagem || 'Usuário ou senha incorretos.';
-          }
-        } catch (err) {
-          loginStatus.className = 'login-status error';
-          loginStatus.innerText = 'Erro de conexão com a planilha.';
-        } finally {
-          btnLogin.disabled = false;
-        }
+    try {
+      const url = `${SCRIPT_URL}?action=login&usuario=${encodeURIComponent(usuario)}&senha=${encodeURIComponent(senha)}`;
+      const data = await fetchJSONP(url);
+
+      if (data.sucesso) {
+        document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${data.nome || usuario}`;
+        loginPage.style.display = 'none';
+        appContainer.style.display = 'flex';
+        carregarDadosDaPlanilha();
       } else {
-        // AUTENTICAÇÃO DE TESTE LOCAL
-        setTimeout(() => {
-          document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${usuario}`;
-          loginPage.style.display = 'none';
-          appContainer.style.display = 'flex';
-          renderizarSistema();
-          btnLogin.disabled = false;
-        }, 500);
+        loginStatus.className = 'login-status error';
+        loginStatus.innerText = data.mensagem || 'Usuário ou senha incorretos.';
       }
+    } catch (err) {
+      loginStatus.className = 'login-status error';
+      loginStatus.innerText = 'Erro de conexão com a planilha.';
+    } finally {
+      btnLogin.disabled = false;
     }
+  }
 
-    btnLogout.addEventListener('click', () => {
-      appContainer.style.display = 'none';
-      loginPage.style.display = 'flex';
-      userInput.value = '';
-      passInput.value = '';
-      loginStatus.innerText = '';
+  btnLogout.addEventListener('click', () => {
+    appContainer.style.display = 'none';
+    loginPage.style.display = 'flex';
+    userInput.value = '';
+    passInput.value = '';
+    loginStatus.innerText = '';
+  });
+
+  // CARREGAR DADOS DA PLANILHA
+  async function carregarDadosDaPlanilha() {
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Carregando dados da planilha...</td></tr>`;
+    try {
+      const url = `${SCRIPT_URL}?action=getMoldes`;
+      const data = await fetchJSONP(url);
+      if (Array.isArray(data)) {
+        moldes = data;
+      } else if (data.moldes) {
+        moldes = data.moldes;
+      }
+      renderizarSistema();
+    } catch (error) {
+      alert('Erro ao carregar os moldes da planilha.');
+    }
+  }
+
+  // TROCA DE ABAS
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      abaAtual = e.target.getAttribute('data-aba');
+      renderizarSistema();
     });
+  });
 
-    // TROCA DE ABAS
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        abaAtual = e.target.getAttribute('data-aba');
-        renderizarSistema();
-      });
-    });
+  searchInput.addEventListener('input', renderizarTabela);
 
-    searchInput.addEventListener('input', renderizarTabela);
+  function atualizarKPIs() {
+    document.getElementById('kpiPlastico').innerText = moldes.filter(m => m.localizacao === 'PLASTICO').length;
+    document.getElementById('kpiFerram').innerText = moldes.filter(m => m.localizacao === 'FERRAMENTARIA').length;
+    document.getElementById('kpiQlx').innerText = moldes.filter(m => m.localizacao === 'QLX').length;
 
-    function salvarDados() {
-      localStorage.setItem('moldes_db', JSON.stringify(moldes));
-      atualizarKPIs();
-    }
+    const hoje = new Date().toISOString().split('T')[0];
+    const vencidas = moldes.filter(m => m.localizacao === 'FERRAMENTARIA' && m.prazo && m.prazo < hoje).length;
+    document.getElementById('kpiVencidas').innerText = vencidas;
+  }
 
-    function atualizarKPIs() {
-      document.getElementById('kpiPlastico').innerText = moldes.filter(m => m.localizacao === 'PLASTICO').length;
-      document.getElementById('kpiFerram').innerText = moldes.filter(m => m.localizacao === 'FERRAMENTARIA').length;
-      document.getElementById('kpiQlx').innerText = moldes.filter(m => m.localizacao === 'QLX').length;
+  function renderizarSistema() {
+    atualizarKPIs();
+    renderizarTabela();
+  }
 
-      const hoje = new Date().toISOString().split('T')[0];
-      const vencidas = moldes.filter(m => m.localizacao === 'FERRAMENTARIA' && m.prazo && m.prazo < hoje).length;
-      document.getElementById('kpiVencidas').innerText = vencidas;
-    }
+  function renderizarTabela() {
+    const termoBusca = searchInput.value.toLowerCase();
+    tableBody.innerHTML = '';
+    mainTableContainer.className = 'table-container';
 
-    function renderizarSistema() {
-      atualizarKPIs();
-      renderizarTabela();
-    }
+    if (abaAtual === 'HISTORICO') {
+      mainTableContainer.classList.add('table-historico');
+      tableHeader.innerHTML = `
+        <th>Código</th>
+        <th>Ferramenta</th>
+        <th>Origem</th>
+        <th>Data Envio</th>
+        <th>Motivo</th>
+        <th>Prazo</th>
+        <th>Data Retorno</th>
+      `;
 
-    function renderizarTabela() {
-      const termoBusca = searchInput.value.toLowerCase();
-      tableBody.innerHTML = '';
-      mainTableContainer.className = 'table-container';
-
-      if (abaAtual === 'HISTORICO') {
-        mainTableContainer.classList.add('table-historico');
-        tableHeader.innerHTML = `
-          <th>Código</th>
-          <th>Ferramenta</th>
-          <th>Origem</th>
-          <th>Data Envio</th>
-          <th>Motivo</th>
-          <th>Prazo</th>
-          <th>Data Retorno</th>
-        `;
-
-        let todosHistoricos = [];
-        moldes.forEach(m => {
-          if (m.historico && m.historico.length > 0) {
-            m.historico.forEach(h => {
-              todosHistoricos.push({ ...h, codigo: m.codigo, ferramenta: m.ferramenta });
-            });
-          }
-        });
-
-        const filtrados = todosHistoricos.filter(h => 
-          h.codigo.toLowerCase().includes(termoBusca) || 
-          h.ferramenta.toLowerCase().includes(termoBusca) ||
-          h.motivo.toLowerCase().includes(termoBusca)
-        );
-
-        if (filtrados.length === 0) {
-          tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Nenhum histórico encontrado.</td></tr>`;
-          return;
+      let todosHistoricos = [];
+      moldes.forEach(m => {
+        if (m.historico && m.historico.length > 0) {
+          m.historico.forEach(h => {
+            todosHistoricos.push({ ...h, codigo: m.codigo, ferramenta: m.ferramenta });
+          });
         }
+      });
 
-        filtrados.forEach(item => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td><b>${item.codigo}</b></td>
-            <td>${item.ferramenta}</td>
-            <td><span class="badge-aba badge-${item.origem ? item.origem.toLowerCase() : 'semlocal'}">${item.origem || '-'}</span></td>
-            <td>${item.dataEnvio || '-'}</td>
-            <td>${item.motivo || '-'}</td>
-            <td>${item.prazo || '-'}</td>
-            <td><span style="color: var(--success-green); font-weight:600;">${item.dataRetorno || '-'}</span></td>
-          `;
-          tableBody.appendChild(tr);
-        });
+      const filtrados = todosHistoricos.filter(h => 
+        (h.codigo && h.codigo.toLowerCase().includes(termoBusca)) || 
+        (h.ferramenta && h.ferramenta.toLowerCase().includes(termoBusca)) ||
+        (h.motivo && h.motivo.toLowerCase().includes(termoBusca))
+      );
+
+      if (filtrados.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Nenhum histórico encontrado.</td></tr>`;
         return;
+      }
+
+      filtrados.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${item.codigo}</b></td>
+          <td>${item.ferramenta}</td>
+          <td><span class="badge-aba badge-${item.origem ? item.origem.toLowerCase() : 'semlocal'}">${item.origem || '-'}</span></td>
+          <td>${item.dataEnvio || '-'}</td>
+          <td>${item.motivo || '-'}</td>
+          <td>${item.prazo || '-'}</td>
+          <td><span style="color: var(--success-green); font-weight:600;">${item.dataRetorno || '-'}</span></td>
+        `;
+        tableBody.appendChild(tr);
+      });
+      return;
+    }
+
+    if (abaAtual === 'FERRAMENTARIA') {
+      mainTableContainer.classList.add('table-ferram-view');
+      tableHeader.innerHTML = `
+        <th>Código</th>
+        <th>Ferramenta</th>
+        <th>Motivo</th>
+        <th>Data Envio</th>
+        <th>Prazo</th>
+        <th style="text-align:center;">Ações</th>
+      `;
+    } else {
+      tableHeader.innerHTML = `
+        <th>Código</th>
+        <th>Ferramenta</th>
+        <th>Observação</th>
+        <th>Localização</th>
+        <th style="text-align:center;">Ações</th>
+      `;
+    }
+
+    const moldesFiltrados = moldes.filter(m => {
+      const atendeAba = m.localizacao === abaAtual;
+      const atendeBusca = (m.codigo && m.codigo.toLowerCase().includes(termoBusca)) || 
+                           (m.ferramenta && m.ferramenta.toLowerCase().includes(termoBusca)) ||
+                           (m.obs && m.obs.toLowerCase().includes(termoBusca));
+      return atendeAba && atendeBusca;
+    });
+
+    if (moldesFiltrados.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Nenhum molde encontrado nesta aba.</td></tr>`;
+      return;
+    }
+
+    const hoje = new Date().toISOString().split('T')[0];
+
+    moldesFiltrados.forEach(m => {
+      const tr = document.createElement('tr');
+      const isVencido = abaAtual === 'FERRAMENTARIA' && m.prazo && m.prazo < hoje;
+
+      if (isVencido) {
+        tr.classList.add('prazo-vencido');
       }
 
       if (abaAtual === 'FERRAMENTARIA') {
-        mainTableContainer.classList.add('table-ferram-view');
-        tableHeader.innerHTML = `
-          <th>Código</th>
-          <th>Ferramenta</th>
-          <th>Motivo</th>
-          <th>Data Envio</th>
-          <th>Prazo</th>
-          <th style="text-align:center;">Ações</th>
+        tr.innerHTML = `
+          <td><b>${m.codigo}</b></td>
+          <td>${m.ferramenta}</td>
+          <td>${m.motivo || '-'}</td>
+          <td>${m.dataEnvio || '-'}</td>
+          <td>${m.prazo || '-'}</td>
+          <td class="col-acoes">
+            <div class="btn-group-acoes">
+              <button class="btn-tbl btn-liberar" onclick="liberarMolde(${m.id})"><i class="fas fa-check"></i> Liberar</button>
+              <button class="btn-tbl btn-editar" onclick="abrirModalEdicao(${m.id})"><i class="fas fa-edit"></i></button>
+              <button class="btn-tbl btn-excluir" onclick="excluirMolde(${m.id})"><i class="fas fa-trash"></i></button>
+            </div>
+          </td>
         `;
       } else {
-        tableHeader.innerHTML = `
-          <th>Código</th>
-          <th>Ferramenta</th>
-          <th>Observação</th>
-          <th>Localização</th>
-          <th style="text-align:center;">Ações</th>
+        tr.innerHTML = `
+          <td><b>${m.codigo}</b></td>
+          <td>${m.ferramenta}</td>
+          <td>${m.obs || '-'}</td>
+          <td><span class="badge-aba badge-${m.localizacao ? m.localizacao.toLowerCase() : 'semlocal'}">${m.localizacao}</span></td>
+          <td class="col-acoes">
+            <div class="btn-group-acoes">
+              <button class="btn-tbl btn-ferramentaria" onclick="abrirModalManutencao(${m.id})"><i class="fas fa-tools"></i> Enviar Maint.</button>
+              <button class="btn-tbl btn-editar" onclick="abrirModalEdicao(${m.id})"><i class="fas fa-edit"></i></button>
+              <button class="btn-tbl btn-excluir" onclick="excluirMolde(${m.id})"><i class="fas fa-trash"></i></button>
+            </div>
+          </td>
         `;
       }
-
-      const moldesFiltrados = moldes.filter(m => {
-        const atendeAba = m.localizacao === abaAtual;
-        const atendeBusca = m.codigo.toLowerCase().includes(termoBusca) || 
-                             m.ferramenta.toLowerCase().includes(termoBusca) ||
-                             (m.obs && m.obs.toLowerCase().includes(termoBusca));
-        return atendeAba && atendeBusca;
-      });
-
-      if (moldesFiltrados.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Nenhum molde encontrado nesta aba.</td></tr>`;
-        return;
-      }
-
-      const hoje = new Date().toISOString().split('T')[0];
-
-      moldesFiltrados.forEach(m => {
-        const tr = document.createElement('tr');
-        const isVencido = abaAtual === 'FERRAMENTARIA' && m.prazo && m.prazo < hoje;
-
-        if (isVencido) {
-          tr.classList.add('prazo-vencido');
-        }
-
-        if (abaAtual === 'FERRAMENTARIA') {
-          tr.innerHTML = `
-            <td><b>${m.codigo}</b></td>
-            <td>${m.ferramenta}</td>
-            <td>${m.motivo || '-'}</td>
-            <td>${m.dataEnvio || '-'}</td>
-            <td>${m.prazo || '-'}</td>
-            <td class="col-acoes">
-              <div class="btn-group-acoes">
-                <button class="btn-tbl btn-liberar" onclick="liberarMolde(${m.id})"><i class="fas fa-check"></i> Liberar</button>
-                <button class="btn-tbl btn-editar" onclick="abrirModalEdicao(${m.id})"><i class="fas fa-edit"></i></button>
-                <button class="btn-tbl btn-excluir" onclick="excluirMolde(${m.id})"><i class="fas fa-trash"></i></button>
-              </div>
-            </td>
-          `;
-        } else {
-          tr.innerHTML = `
-            <td><b>${m.codigo}</b></td>
-            <td>${m.ferramenta}</td>
-            <td>${m.obs || '-'}</td>
-            <td><span class="badge-aba badge-${m.localizacao.toLowerCase()}">${m.localizacao}</span></td>
-            <td class="col-acoes">
-              <div class="btn-group-acoes">
-                <button class="btn-tbl btn-ferramentaria" onclick="abrirModalManutencao(${m.id})"><i class="fas fa-tools"></i> Enviar Maint.</button>
-                <button class="btn-tbl btn-editar" onclick="abrirModalEdicao(${m.id})"><i class="fas fa-edit"></i></button>
-                <button class="btn-tbl btn-excluir" onclick="excluirMolde(${m.id})"><i class="fas fa-trash"></i></button>
-              </div>
-            </td>
-          `;
-        }
-        tableBody.appendChild(tr);
-      });
-    }
-
-    // MODAL DE CADASTRO E EDIÇÃO
-    document.getElementById('btnNovoMolde').addEventListener('click', () => {
-      idMoldeEmEdicao = null;
-      document.getElementById('modalTitle').innerText = 'Cadastrar Molde';
-      document.getElementById('inputCodigo').value = '';
-      document.getElementById('inputFerramenta').value = '';
-      document.getElementById('inputObs').value = '';
-      document.getElementById('selectLocal').value = abaAtual === 'HISTORICO' ? 'PLASTICO' : abaAtual;
-      modalMolde.style.display = 'flex';
+      tableBody.appendChild(tr);
     });
+  }
 
-    document.getElementById('btnFecharModal').addEventListener('click', () => { modalMolde.style.display = 'none'; });
+  // MODAL DE CADASTRO E EDIÇÃO
+  document.getElementById('btnNovoMolde').addEventListener('click', () => {
+    idMoldeEmEdicao = null;
+    document.getElementById('modalTitle').innerText = 'Cadastrar Molde';
+    document.getElementById('inputCodigo').value = '';
+    document.getElementById('inputFerramenta').value = '';
+    document.getElementById('inputObs').value = '';
+    document.getElementById('selectLocal').value = abaAtual === 'HISTORICO' ? 'PLASTICO' : abaAtual;
+    modalMolde.style.display = 'flex';
+  });
 
-    function abrirModalEdicao(id) {
-      const molde = moldes.find(m => m.id === id);
-      if (!molde) return;
-      idMoldeEmEdicao = id;
-      document.getElementById('modalTitle').innerText = 'Editar Molde';
-      document.getElementById('inputCodigo').value = molde.codigo;
-      document.getElementById('inputFerramenta').value = molde.ferramenta;
-      document.getElementById('inputObs').value = molde.obs || '';
-      document.getElementById('selectLocal').value = molde.localizacao;
-      modalMolde.style.display = 'flex';
+  document.getElementById('btnFecharModal').addEventListener('click', () => { modalMolde.style.display = 'none'; });
+
+  function abrirModalEdicao(id) {
+    const molde = moldes.find(m => m.id === id);
+    if (!molde) return;
+    idMoldeEmEdicao = id;
+    document.getElementById('modalTitle').innerText = 'Editar Molde';
+    document.getElementById('inputCodigo').value = molde.codigo;
+    document.getElementById('inputFerramenta').value = molde.ferramenta;
+    document.getElementById('inputObs').value = molde.obs || '';
+    document.getElementById('selectLocal').value = molde.localizacao;
+    modalMolde.style.display = 'flex';
+  }
+
+  async function salvarMoldeNaPlanilha(dados) {
+    const params = new URLSearchParams(dados).toString();
+    const url = `${SCRIPT_URL}?action=salvarMolde&${params}`;
+    return await fetchJSONP(url);
+  }
+
+  document.getElementById('btnSalvarMolde').addEventListener('click', async () => {
+    const codigo = document.getElementById('inputCodigo').value.trim();
+    const ferramenta = document.getElementById('inputFerramenta').value.trim();
+    const obs = document.getElementById('inputObs').value.trim();
+    const localizacao = document.getElementById('selectLocal').value;
+
+    if (!codigo || !ferramenta) {
+      alert('Por favor, preencha o código e a ferramenta.');
+      return;
     }
 
-    document.getElementById('btnSalvarMolde').addEventListener('click', () => {
-      const codigo = document.getElementById('inputCodigo').value.trim();
-      const ferramenta = document.getElementById('inputFerramenta').value.trim();
-      const obs = document.getElementById('inputObs').value.trim();
-      const localizacao = document.getElementById('selectLocal').value;
+    const payload = {
+      id: idMoldeEmEdicao || Date.now(),
+      codigo,
+      ferramenta,
+      obs,
+      localizacao
+    };
 
-      if (!codigo || !ferramenta) {
-        alert('Por favor, preencha o código e a ferramenta.');
-        return;
-      }
-
-      if (idMoldeEmEdicao) {
-        const molde = moldes.find(m => m.id === idMoldeEmEdicao);
-        if (molde) {
-          molde.codigo = codigo;
-          molde.ferramenta = ferramenta;
-          molde.obs = obs;
-          molde.localizacao = localizacao;
-        }
-      } else {
-        const novo = {
-          id: Date.now(),
-          codigo,
-          ferramenta,
-          obs,
-          localizacao,
-          dataEnvio: '',
-          motivo: '',
-          prazo: '',
-          historico: []
-        };
-        moldes.push(novo);
-      }
-
-      salvarDados();
+    try {
+      await salvarMoldeNaPlanilha(payload);
       modalMolde.style.display = 'none';
-      renderizarSistema();
-    });
+      carregarDadosDaPlanilha();
+    } catch (e) {
+      alert('Erro ao salvar na planilha.');
+    }
+  });
 
-    // MANUTENÇÃO
-    function abrirModalManutencao(id) {
-      idMoldeEmAcao = id;
-      document.getElementById('inputMotivo').value = '';
-      document.getElementById('inputPrazo').value = '';
-      modalManutencao.style.display = 'flex';
+  // MANUTENÇÃO
+  function abrirModalManutencao(id) {
+    idMoldeEmAcao = id;
+    document.getElementById('inputMotivo').value = '';
+    document.getElementById('inputPrazo').value = '';
+    modalManutencao.style.display = 'flex';
+  }
+
+  document.getElementById('btnFecharModalManut').addEventListener('click', () => { modalManutencao.style.display = 'none'; });
+
+  document.getElementById('btnConfirmarManut').addEventListener('click', async () => {
+    const motivo = document.getElementById('inputMotivo').value.trim();
+    const prazo = document.getElementById('inputPrazo').value;
+
+    if (!motivo) {
+      alert('Informe o motivo da manutenção.');
+      return;
     }
 
-    document.getElementById('btnFecharModalManut').addEventListener('click', () => { modalManutencao.style.display = 'none'; });
-
-    document.getElementById('btnConfirmarManut').addEventListener('click', () => {
-      const motivo = document.getElementById('inputMotivo').value.trim();
-      const prazo = document.getElementById('inputPrazo').value;
-
-      if (!motivo) {
-        alert('Informe o motivo da manutenção.');
-        return;
-      }
-
-      const molde = moldes.find(m => m.id === idMoldeEmAcao);
-      if (molde) {
-        molde.origemAnterior = molde.localizacao;
-        molde.localizacao = 'FERRAMENTARIA';
-        molde.motivo = motivo;
-        molde.prazo = prazo;
-        molde.dataEnvio = new Date().toISOString().split('T')[0];
-      }
-
-      salvarDados();
-      modalManutencao.style.display = 'none';
-      renderizarSistema();
-    });
-
-    // LIBERAR MOLDE
-    function liberarMolde(id) {
-      const molde = moldes.find(m => m.id === id);
-      if (!molde) return;
-
-      const dataHoje = new Date().toISOString().split('T')[0];
-
-      if (!molde.historico) molde.historico = [];
-      molde.historico.push({
-        origem: molde.origemAnterior || 'PLASTICO',
-        dataEnvio: molde.dataEnvio,
-        motivo: molde.motivo,
-        prazo: molde.prazo,
-        dataRetorno: dataHoje
-      });
-
-      molde.localizacao = molde.origemAnterior || 'PLASTICO';
-      molde.motivo = '';
-      molde.prazo = '';
-      molde.dataEnvio = '';
-
-      salvarDados();
-      renderizarSistema();
-    }
-
-    // EXCLUIR MOLDE
-    function excluirMolde(id) {
-      if (confirm('Tem certeza que deseja excluir este molde?')) {
-        moldes = moldes.filter(m => m.id !== id);
-        salvarDados();
-        renderizarSistema();
+    const molde = moldes.find(m => m.id === idMoldeEmAcao);
+    if (molde) {
+      const payload = {
+        id: molde.id,
+        localizacao: 'FERRAMENTARIA',
+        origemAnterior: molde.localizacao,
+        motivo: motivo,
+        prazo: prazo,
+        dataEnvio: new Date().toISOString().split('T')[0]
+      };
+      try {
+        await salvarMoldeNaPlanilha(payload);
+        modalManutencao.style.display = 'none';
+        carregarDadosDaPlanilha();
+      } catch (e) {
+        alert('Erro ao enviar para manutenção.');
       }
     }
+  });
+
+  // LIBERAR MOLDE
+  async function liberarMolde(id) {
+    const molde = moldes.find(m => m.id === id);
+    if (!molde) return;
+
+    const dataHoje = new Date().toISOString().split('T')[0];
+    const payload = {
+      id: molde.id,
+      action: 'liberarMolde',
+      dataRetorno: dataHoje
+    };
+
+    try {
+      const params = new URLSearchParams(payload).toString();
+      await fetchJSONP(`${SCRIPT_URL}?${params}`);
+      carregarDadosDaPlanilha();
+    } catch (e) {
+      alert('Erro ao liberar o molde.');
+    }
+  }
+
+  // EXCLUIR MOLDE
+  async function excluirMolde(id) {
+    if (confirm('Tem certeza que deseja excluir este molde?')) {
+      try {
+        await fetchJSONP(`${SCRIPT_URL}?action=excluirMolde&id=${id}`);
+        carregarDadosDaPlanilha();
+      } catch (e) {
+        alert('Erro ao excluir o molde.');
+      }
+    }
+  }
 </script>
+	
   </body>
 </html>
 
