@@ -198,16 +198,22 @@
   <body>
 
 	<!-- TELA DE LOGIN -->
+	<!-- TELA DE LOGIN COM USUÁRIO E SENHA -->
 	<div class="login-container" id="loginPage">
 	  <div class="login-box">
 		<h2>SISTEMA DE MOLDES</h2>
-		<p>Digite seu PIN para acessar o sistema</p>
+		<p>Digite seu usuário e senha para acessar</p>
 
 		<div class="form-group">
-		  <label for="pinInput">PIN de Acesso</label>
+		  <label for="userInput">Usuário</label>
+		  <input type="text" id="userInput" class="form-control" placeholder="Digite seu usuário">
+		</div>
+
+		<div class="form-group">
+		  <label for="passInput">Senha</label>
 		  <div class="password-wrapper">
-			<input type="password" id="pinInput" class="form-control" placeholder="••••" maxlength="10">
-			<i class="fas fa-eye password-toggle" id="togglePin"></i>
+			<input type="password" id="passInput" class="form-control" placeholder="••••••••">
+			<i class="fas fa-eye password-toggle" id="togglePass"></i>
 		  </div>
 		</div>
 
