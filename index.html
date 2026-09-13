@@ -438,6 +438,7 @@
 
     try {
       const url = `${SCRIPT_URL}?action=login&usuario=${encodeURIComponent(usuario)}&senha=${encodeURIComponent(senha)}`;
+
       const data = await fetchJSONP(url);
 
       if (data.sucesso) {
