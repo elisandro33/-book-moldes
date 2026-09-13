@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GESTÃO DE MOLDES</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
+  <head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>GESTÃO DE MOLDES</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: #121824; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; overflow-x: auto; }
     
@@ -155,239 +155,239 @@
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
     .btn-cancelar { padding: 8px 16px; background-color: #475569; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
     .btn-salvar { padding: 8px 16px; background-color: #10b981; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-  </style>
-</head>
-<body>
+</style>
+  </head>
+  <body>
 
-  <!-- TELA DE LOGIN -->
-  <div id="loginScreen" class="login-container">
-    <div class="login-box">
-      <h2>🔑 Acesso ao Sistema</h2>
-      <p>Digite seu usuário e senha para acessar</p>
-      
-      <div class="form-group">
-        <label for="loginUser">Usuário</label>
-        <input type="text" id="loginUser" class="form-control" placeholder="Digite seu usuário..." autocomplete="off">
-      </div>
+	<!-- TELA DE LOGIN (MANTIDA) -->
+	<div id="loginScreen" class="login-container">
+	  <div class="login-box">
+		<h2>🔑 Acesso ao Sistema</h2>
+		<p>Digite seu usuário e senha para acessar</p>
 
-      <div class="form-group">
-        <label for="loginPass">Senha</label>
-        <div class="password-wrapper">
-          <input type="password" id="loginPass" class="form-control" placeholder="••••••••">
-          <i class="fa fa-eye password-toggle" onclick="toggleSenha()"></i>
-        </div>
-      </div>
+		<div class="form-group">
+		  <label for="loginUser">Usuário</label>
+		  <input type="text" id="loginUser" class="form-control" placeholder="Digite seu usuário..." autocomplete="off">
+		</div>
 
-      <button id="btnLogin" onclick="efetuarLogin()" class="btn-primary">Entrar</button>
+		<div class="form-group">
+		  <label for="loginPass">Senha</label>
+		  <div class="password-wrapper">
+			<input type="password" id="loginPass" class="form-control" placeholder="••••••••">
+			<i class="fa fa-eye password-toggle" onclick="toggleSenha()"></i>
+		  </div>
+		</div>
 
-      <!-- MENSAGEM DE STATUS DO LOGIN -->
-      <div id="loginStatus" class="login-status"></div>
-    </div>
-  </div>
+		<button id="btnLogin" onclick="efetuarLogin()" class="btn-primary">Entrar</button>
 
-  <!-- SISTEMA PRINCIPAL -->
-  <div id="appContainer">
-    <header>
-      <h1>Gestão de Moldes</h1>
-      <div class="user-info">
-        <span>Usuário: <strong id="lblUsuario">--</strong> (<span id="lblRole">--</span>)</span>
-        <button onclick="logout()" class="btn-logout">Sair</button>
-      </div>
-    </header>
+		<!-- MENSAGEM DE STATUS DO LOGIN -->
+		<div id="loginStatus" class="login-status"></div>
+	  </div>
+	</div>
 
-    <!-- ABAS -->
-    <div class="tabs" id="tabContainer">
-      <button id="tabPlastico" class="tab-btn tab-admin" onclick="trocarAba('ATUALIZADA', this)">Plástico</button>
-      <button id="tabQLX" class="tab-btn tab-admin" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
-      <button id="tabSemLocal" class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)">Sem Local</button>
-      <button id="tabFerramentaria" class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
-      <button id="tabHistorico" class="tab-btn tab-ferram" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
-    </div>
+	<!-- SISTEMA PRINCIPAL -->
+	<div id="appContainer">
+	  <header>
+		<h1>Gestão de Moldes</h1>
+		<div class="user-info">
+		  <span>Usuário: <strong id="lblUsuario">--</strong> (<span id="lblRole">--</span>)</span>
+		  <button onclick="logout()" class="btn-logout">Sair</button>
+		</div>
+	  </header>
 
-    <!-- AÇÕES -->
-    <div class="actions-bar">
-      <div class="search-box">
-        <i class="fa fa-search"></i>
-        <input type="text" id="txtBusca" placeholder="Pesquisar em TODAS as abas..." onkeyup="filtrarTabelaGlobal()">
-      </div>
-      <button class="btn-add" id="btnAddMolde" onclick="abrirModalAdicionar()"><i class="fa fa-plus"></i> Adicionar Molde</button>
-    </div>
+	  <!-- ABAS -->
+	  <div class="tabs" id="tabContainer">
+		<button id="tabPlastico" class="tab-btn tab-admin" onclick="trocarAba('ATUALIZADA', this)">Plástico</button>
+		<button id="tabQLX" class="tab-btn tab-admin" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
+		<button id="tabSemLocal" class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)">Sem Local</button>
+		<button id="tabFerramentaria" class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
+		<button id="tabHistorico" class="tab-btn tab-ferram" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
+	  </div>
 
-    <!-- TABELA -->
-    <div class="table-container" id="tblContainer">
-      <table>
-        <thead id="tblHead">
-          <tr>
-            <th>Local / Molde N°</th>
-            <th>Código</th>
-            <th>Descrição</th>
-            <th>Aba / Origem</th>
-            <th class="col-acoes">Ações</th>
-          </tr>
-        </thead>
-        <tbody id="tblBody">
-          <tr><td colspan="5" style="text-align:center;">Selecione uma aba...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+	  <!-- AÇÕES -->
+	  <div class="actions-bar">
+		<div class="search-box">
+		  <i class="fa fa-search"></i>
+		  <input type="text" id="txtBusca" placeholder="Pesquisar em TODAS as abas..." onkeyup="filtrarTabelaGlobal()">
+		</div>
+		<button class="btn-add" id="btnAddMolde" onclick="abrirModalAdicionar()"><i class="fa fa-plus"></i> Adicionar Molde</button>
+	  </div>
 
-  <!-- MODAL: ADICIONAR MOLDE -->
-  <div id="modalAdicionarMolde" class="modal">
-    <div class="modal-content">
-      <h3><i class="fa fa-plus"></i> Adicionar Molde</h3>
-      
-      <div class="form-group">
-        <label for="addAbaDestino">Destino (Aba):</label>
-        <select id="addAbaDestino" class="form-control">
-          <option value="ATUALIZADA">Plástico</option>
-          <option value="Moldes QLX">Moldes QLX</option>
-          <option value="Sem local">Sem Local</option>
-        </select>
-      </div>
+	  <!-- TABELA -->
+	  <div class="table-container" id="tblContainer">
+		<table>
+		  <thead id="tblHead">
+			<tr>
+			  <th>Local / Molde N°</th>
+			  <th>Código</th>
+			  <th>Descrição</th>
+			  <th>Aba / Origem</th>
+			  <th class="col-acoes">Ações</th>
+			</tr>
+		  </thead>
+		  <tbody id="tblBody">
+			<tr><td colspan="5" style="text-align:center;">Selecione uma aba...</td></tr>
+		  </tbody>
+		</table>
+	  </div>
+	</div>
 
-      <div class="form-group">
-        <label for="addLocal">Local / Molde N°:</label>
-        <input type="text" id="addLocal" class="form-control" placeholder="Ex: A1, MOD-058...">
-      </div>
+	<!-- MODAL: ADICIONAR MOLDE -->
+	<div id="modalAdicionarMolde" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa fa-plus"></i> Adicionar Molde</h3>
 
-      <div class="form-group">
-        <label for="addCodigo">Código:</label>
-        <input type="text" id="addCodigo" class="form-control" placeholder="Código do molde">
-      </div>
+		<div class="form-group">
+		  <label for="addAbaDestino">Destino (Aba):</label>
+		  <select id="addAbaDestino" class="form-control">
+			<option value="ATUALIZADA">Plástico</option>
+			<option value="Moldes QLX">Moldes QLX</option>
+			<option value="Sem local">Sem Local</option>
+		  </select>
+		</div>
 
-      <div class="form-group">
-        <label for="addDescricao">Descrição:</label>
-        <input type="text" id="addDescricao" class="form-control" placeholder="Descrição da peça / molde">
-      </div>
+		<div class="form-group">
+		  <label for="addLocal">Local / Molde N°:</label>
+		  <input type="text" id="addLocal" class="form-control" placeholder="Ex: A1, MOD-058...">
+		</div>
 
-      <div class="modal-buttons">
-        <button onclick="fecharModalAdicionar()" class="btn-cancelar">Cancelar</button>
-        <button onclick="salvarNovoMolde()" class="btn-salvar">Salvar</button>
-      </div>
-    </div>
-  </div>
+		<div class="form-group">
+		  <label for="addCodigo">Código:</label>
+		  <input type="text" id="addCodigo" class="form-control" placeholder="Código do molde">
+		</div>
 
-  <!-- MODAL: EDITAR MOLDE -->
-  <div id="modalEditarMolde" class="modal">
-    <div class="modal-content">
-      <h3><i class="fa fa-pencil"></i> Editar Molde</h3>
-      <input type="hidden" id="editRowIndex">
-      <input type="hidden" id="editAbaOrigem">
-      
-      <div class="form-group" id="grpEditAbaDestino">
-        <label for="editAbaDestino">Aba / Destino:</label>
-        <select id="editAbaDestino" class="form-control">
-          <option value="ATUALIZADA">Plástico</option>
-          <option value="Moldes QLX">Moldes QLX</option>
-          <option value="Sem local">Sem Local</option>
-          <option value="ferramentaria">Ferramentaria</option>
-        </select>
-      </div>
+		<div class="form-group">
+		  <label for="addDescricao">Descrição:</label>
+		  <input type="text" id="addDescricao" class="form-control" placeholder="Descrição da peça / molde">
+		</div>
 
-      <div class="form-group">
-        <label for="editLocal">Local / Molde N°:</label>
-        <input type="text" id="editLocal" class="form-control">
-      </div>
+		<div class="modal-buttons">
+		  <button onclick="fecharModalAdicionar()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="salvarNovoMolde()" class="btn-salvar">Salvar</button>
+		</div>
+	  </div>
+	</div>
 
-      <div class="form-group">
-        <label for="editCodigo">Código:</label>
-        <input type="text" id="editCodigo" class="form-control">
-      </div>
+	<!-- MODAL: EDITAR MOLDE -->
+	<div id="modalEditarMolde" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa fa-pencil"></i> Editar Molde</h3>
+		<input type="hidden" id="editRowIndex">
+		<input type="hidden" id="editAbaOrigem">
 
-      <div class="form-group">
-        <label for="editDescricao">Descrição:</label>
-        <input type="text" id="editDescricao" class="form-control">
-      </div>
+		<div class="form-group" id="grpEditAbaDestino">
+		  <label for="editAbaDestino">Aba / Destino:</label>
+		  <select id="editAbaDestino" class="form-control">
+			<option value="ATUALIZADA">Plástico</option>
+			<option value="Moldes QLX">Moldes QLX</option>
+			<option value="Sem local">Sem Local</option>
+			<option value="ferramentaria">Ferramentaria</option>
+		  </select>
+		</div>
 
-      <div class="modal-buttons">
-        <button onclick="fecharModalEditar()" class="btn-cancelar">Cancelar</button>
-        <button onclick="salvarEdicaoMolde()" class="btn-salvar">Salvar Alterações</button>
-      </div>
-    </div>
-  </div>
+		<div class="form-group">
+		  <label for="editLocal">Local / Molde N°:</label>
+		  <input type="text" id="editLocal" class="form-control">
+		</div>
 
-  <!-- MODAL: SOLICITAR FERRAMENTARIA -->
-  <div id="modalFerramentaria" class="modal">
-    <div class="modal-content">
-      <h3><i class="fa fa-wrench"></i> Solicitar Ferramentaria</h3>
-      <input type="hidden" id="ferrRowIndex">
-      <input type="hidden" id="ferrAbaOrigem">
-      <input type="hidden" id="ferrLocal">
-      <input type="hidden" id="ferrCodigo">
-      <input type="hidden" id="ferrDescricao">
+		<div class="form-group">
+		  <label for="editCodigo">Código:</label>
+		  <input type="text" id="editCodigo" class="form-control">
+		</div>
 
-      <div class="form-group">
-        <label for="ferrData">Data Entrada:</label>
-        <input type="date" id="ferrData" class="form-control">
-      </div>
+		<div class="form-group">
+		  <label for="editDescricao">Descrição:</label>
+		  <input type="text" id="editDescricao" class="form-control">
+		</div>
 
-      <div class="form-group">
-        <label for="ferrHora">Hora Entrada:</label>
-        <input type="time" id="ferrHora" class="form-control">
-      </div>
+		<div class="modal-buttons">
+		  <button onclick="fecharModalEditar()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="salvarEdicaoMolde()" class="btn-salvar">Salvar Alterações</button>
+		</div>
+	  </div>
+	</div>
 
-      <div class="form-group">
-        <label for="ferrPrazo">Prazo Estimado (Data):</label>
-        <input type="date" id="ferrPrazo" class="form-control">
-      </div>
+	<!-- MODAL: SOLICITAR FERRAMENTARIA -->
+	<div id="modalFerramentaria" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa fa-wrench"></i> Solicitar Ferramentaria</h3>
+		<input type="hidden" id="ferrRowIndex">
+		<input type="hidden" id="ferrAbaOrigem">
+		<input type="hidden" id="ferrLocal">
+		<input type="hidden" id="ferrCodigo">
+		<input type="hidden" id="ferrDescricao">
 
-      <div class="form-group">
-        <label for="ferrSolicitante">Solicitante:</label>
-        <input type="text" id="ferrSolicitante" class="form-control" placeholder="Nome do solicitante">
-      </div>
+		<div class="form-group">
+		  <label for="ferrData">Data Entrada:</label>
+		  <input type="date" id="ferrData" class="form-control">
+		</div>
 
-      <div class="form-group">
-        <label for="ferrTipos">Tipo de Serviço:</label>
-        <input type="text" id="ferrTipos" class="form-control" placeholder="Ex: Manutenção Corretiva, Ajuste...">
-      </div>
+		<div class="form-group">
+		  <label for="ferrHora">Hora Entrada:</label>
+		  <input type="time" id="ferrHora" class="form-control">
+		</div>
 
-      <div class="form-group">
-        <label for="ferrObs">Observação / Problema:</label>
-        <textarea id="ferrObs" class="form-control" rows="3" placeholder="Detalhes do problema..."></textarea>
-      </div>
+		<div class="form-group">
+		  <label for="ferrPrazo">Prazo Estimado (Data):</label>
+		  <input type="date" id="ferrPrazo" class="form-control">
+		</div>
 
-      <div class="modal-buttons">
-        <button onclick="fecharModalFerramentaria()" class="btn-cancelar">Cancelar</button>
-        <button onclick="confirmarEnvioFerramentaria()" class="btn-salvar">Enviar</button>
-      </div>
-    </div>
-  </div>
+		<div class="form-group">
+		  <label for="ferrSolicitante">Solicitante:</label>
+		  <input type="text" id="ferrSolicitante" class="form-control" placeholder="Nome do solicitante">
+		</div>
 
-  <!-- MODAL: LIBERAR PARA O PLÁSTICO -->
-  <div id="modalLiberarPlastico" class="modal">
-    <div class="modal-content">
-      <h3><i class="fa fa-check-circle"></i> Liberar P/ Plástico</h3>
-      <input type="hidden" id="libRowIndex">
-      
-      <div class="form-group">
-        <label for="libDataSaida">Data de Saída:</label>
-        <input type="date" id="libDataSaida" class="form-control">
-      </div>
+		<div class="form-group">
+		  <label for="ferrTipos">Tipo de Serviço:</label>
+		  <input type="text" id="ferrTipos" class="form-control" placeholder="Ex: Manutenção Corretiva, Ajuste...">
+		</div>
 
-      <div class="form-group">
-        <label for="libHoraSaida">Hora de Saída:</label>
-        <input type="time" id="libHoraSaida" class="form-control">
-      </div>
+		<div class="form-group">
+		  <label for="ferrObs">Observação / Problema:</label>
+		  <textarea id="ferrObs" class="form-control" rows="3" placeholder="Detalhes do problema..."></textarea>
+		</div>
 
-      <div class="form-group">
-        <label for="libTecnico">Técnico / Responsável:</label>
-        <input type="text" id="libTecnico" class="form-control" placeholder="Nome do responsável">
-      </div>
+		<div class="modal-buttons">
+		  <button onclick="fecharModalFerramentaria()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="confirmarEnvioFerramentaria()" class="btn-salvar">Enviar</button>
+		</div>
+	  </div>
+	</div>
 
-      <div class="form-group">
-        <label for="libAcaoRealizada">Ação / Manutenção Realizada:</label>
-        <textarea id="libAcaoRealizada" class="form-control" rows="3" placeholder="Descreva os reparos ou ajustes feitos..."></textarea>
-      </div>
+	<!-- MODAL: LIBERAR PARA O PLÁSTICO -->
+	<div id="modalLiberarPlastico" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa fa-check-circle"></i> Liberar P/ Plástico</h3>
+		<input type="hidden" id="libRowIndex">
 
-      <div class="modal-buttons">
-        <button onclick="fecharModalLiberar()" class="btn-cancelar">Cancelar</button>
-        <button onclick="confirmarLiberacaoPlastico()" class="btn-salvar">Confirmar Liberação</button>
-      </div>
-    </div>
-  </div>
+		<div class="form-group">
+		  <label for="libDataSaida">Data de Saída:</label>
+		  <input type="date" id="libDataSaida" class="form-control">
+		</div>
 
-  <script>
+		<div class="form-group">
+		  <label for="libHoraSaida">Hora de Saída:</label>
+		  <input type="time" id="libHoraSaida" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="libTecnico">Técnico / Responsável:</label>
+		  <input type="text" id="libTecnico" class="form-control" placeholder="Nome do responsável">
+		</div>
+
+		<div class="form-group">
+		  <label for="libAcaoRealizada">Ação / Manutenção Realizada:</label>
+		  <textarea id="libAcaoRealizada" class="form-control" rows="3" placeholder="Descreva os reparos ou ajustes feitos..."></textarea>
+		</div>
+
+		<div class="modal-buttons">
+		  <button onclick="fecharModalLiberar()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="confirmarLiberacaoPlastico()" class="btn-salvar">Confirmar Liberação</button>
+		</div>
+	  </div>
+	</div>
+
+<script>
     const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
     
     let usuarioLogado = null;
@@ -408,6 +408,7 @@
       script.onload = () => document.body.removeChild(script);
     }
 
+    /* --- FUNÇÕES DE LOGIN (MANTIDAS INTACTAS) --- */
     function toggleSenha() {
       const passInput = document.getElementById("loginPass");
       passInput.type = passInput.type === "password" ? "text" : "password";
@@ -490,6 +491,7 @@
         mostrarStatusLogin("Erro no login: " + (res.message || "Usuário ou senha incorretos."), "error");
       }
     }
+    /* ---------------------------------------------- */
 
     function carregarTodasAbasCache() {
       TODAS_AS_ABAS.forEach(aba => {
@@ -794,33 +796,34 @@
     }
 
     function confirmarLiberacaoPlastico() {
-  const rIndex = document.getElementById("libRowIndex").value;
-  const dataSaida = document.getElementById("libDataSaida").value;
-  const horaSaida = document.getElementById("libHoraSaida").value;
-  const tecnico = document.getElementById("libTecnico").value.trim();
-  const acaoRealizada = document.getElementById("libAcaoRealizada").value.trim();
+      const rIndex = document.getElementById("libRowIndex").value;
+      const dataSaida = document.getElementById("libDataSaida").value;
+      const horaSaida = document.getElementById("libHoraSaida").value;
+      const tecnico = document.getElementById("libTecnico").value.trim();
+      const acaoRealizada = document.getElementById("libAcaoRealizada").value.trim();
 
-  if (!rIndex) {
-    alert("Erro: Linha do registro não foi informada!");
-    return;
-  }
+      if (!rIndex) {
+        alert("Erro: Linha do registro não foi informada!");
+        return;
+      }
 
-  if (!acaoRealizada) {
-    alert("Por favor, preencha o campo de Ação / Manutenção Realizada!");
-    return;
-  }
+      if (!acaoRealizada) {
+        alert("Por favor, preencha o campo de Ação / Manutenção Realizada!");
+        return;
+      }
 
-  const url = `${BASE_API}?action=LIBERAR_FERRAMENTARIA` +
-              `&rowIndex=${encodeURIComponent(rIndex)}` +
-              `&dataSaida=${encodeURIComponent(dataSaida)}` +
-              `&horaSaida=${encodeURIComponent(horaSaida)}` +
-              `&tecnico=${encodeURIComponent(tecnico)}` +
-              `&liberadoPor=${encodeURIComponent(tecnico)}` +
-              `&acaoRealizada=${encodeURIComponent(acaoRealizada)}` +
-              `&callback=retornoAcao`;
+      const url = `${BASE_API}?action=LIBERAR_FERRAMENTARIA` +
+                  `&rowIndex=${encodeURIComponent(rIndex)}` +
+                  `&dataSaida=${encodeURIComponent(dataSaida)}` +
+                  `&horaSaida=${encodeURIComponent(horaSaida)}` +
+                  `&tecnico=${encodeURIComponent(tecnico)}` +
+                  `&liberadoPor=${encodeURIComponent(tecnico)}` +
+                  `&acaoRealizada=${encodeURIComponent(acaoRealizada)}` +
+                  `&callback=retornoAcao`;
 
-  executarJSONP(url);
-}
+      executarJSONP(url);
+    }
+
     function abrirModalAdicionar() {
       document.getElementById("modalAdicionarMolde").style.display = "flex";
     }
@@ -971,6 +974,7 @@
         alert("Erro na operação: " + (res && res.message ? res.message : "Erro desconhecido."));
       }
     }
-  </script>
-</body>
+</script>
+  </body>
 </html>
+
