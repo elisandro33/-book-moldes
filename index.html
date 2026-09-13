@@ -4,157 +4,338 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>GESTÃO DE MOLDES</title>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+	<!-- Fontes e Ícones Profissionais -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #121824; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; overflow-x: auto; }
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --success-hover: #059669;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     
+    body { 
+      background-color: var(--bg-dark); 
+      color: var(--text-main); 
+      min-height: 100vh; 
+      display: flex; 
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
     /* TELA DE LOGIN */
-    .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: #121824; }
-    .login-box { background-color: #1e293b; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
-    .login-box h2 { margin-bottom: 20px; font-size: 22px; color: #f8fafc; }
-    .login-box p { margin-bottom: 20px; font-size: 14px; color: #94a3b8; }
+    .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: var(--bg-dark); padding: 20px; }
+    .login-box { 
+      background: var(--card-bg); 
+      padding: 40px 30px; 
+      border-radius: 16px; 
+      width: 100%; 
+      max-width: 400px; 
+      border: 1px solid var(--card-border);
+      box-shadow: var(--shadow-lg); 
+      text-align: center; 
+    }
+    .login-box .logo-icon {
+      width: 50px;
+      height: 50px;
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--primary);
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 15px;
+    }
+    .login-box h2 { margin-bottom: 8px; font-size: 22px; font-weight: 700; color: var(--text-main); }
+    .login-box p { margin-bottom: 24px; font-size: 14px; color: var(--text-muted); }
     
-    .form-group { text-align: left; margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #cbd5e1; font-weight: 600; }
-    .form-control { width: 100%; padding: 10px 12px; background-color: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #fff; font-size: 14px; outline: none; }
-    .form-control:focus { border-color: #3b82f6; }
+    .form-group { text-align: left; margin-bottom: 18px; }
+    .form-group label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+    .form-control { 
+      width: 100%; 
+      padding: 12px 14px; 
+      background-color: #0f172a; 
+      border: 1px solid var(--card-border); 
+      border-radius: 8px; 
+      color: #fff; 
+      font-size: 14px; 
+      outline: none; 
+      transition: all 0.2s;
+    }
+    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
     
     .password-wrapper { position: relative; }
-    .password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; }
+    .password-toggle { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); transition: color 0.2s; }
+    .password-toggle:hover { color: var(--text-main); }
+
+    .btn-primary { 
+      width: 100%; 
+      padding: 12px; 
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover)); 
+      color: #fff; 
+      border: none; 
+      border-radius: 8px; 
+      font-weight: 600; 
+      cursor: pointer; 
+      font-size: 15px; 
+      transition: all 0.2s; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 8px; 
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
     
-    .btn-primary { width: 100%; padding: 12px; background-color: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 15px; transition: background 0.2s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-primary:hover { background-color: #1d4ed8; }
-    .btn-primary:disabled { background-color: #334155; cursor: not-allowed; opacity: 0.8; }
-    
-    .login-status { margin-top: 15px; font-size: 13px; font-weight: 600; min-height: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .login-status { margin-top: 15px; font-size: 13px; font-weight: 500; min-height: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .login-status.loading { color: #38bdf8; }
     .login-status.error { color: #f87171; }
 
-    /* SISTEMA PRINCIPAL */
-    #appContainer { display: none; padding: 20px; flex-direction: column; flex-grow: 1; width: 100%; max-width: 100%; box-sizing: border-box; }
-    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-    header h1 { font-size: 22px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
-    .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; color: #cbd5e1; }
-    .btn-logout { padding: 6px 14px; background-color: #991b1b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
-    .btn-logout:hover { background-color: #7f1d1d; }
+    /* SISTEMA PRINCIPAL LAYOUT */
+    #appContainer { display: none; flex-direction: column; min-height: 100vh; background-color: var(--bg-dark); }
+    
+    /* HEADER NAVBAR */
+    header { 
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 24px;
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-brand { display: flex; align-items: center; gap: 12px; }
+    .header-brand i { font-size: 20px; color: var(--primary); background: rgba(59, 130, 246, 0.1); padding: 8px; border-radius: 8px; }
+    .header-brand h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-main); }
+    
+    .user-info { display: flex; align-items: center; gap: 12px; }
+    .user-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--card-border); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--text-muted); }
+    .user-details { display: flex; flex-direction: column; text-align: right; }
+    .user-name { font-size: 13px; font-weight: 600; color: var(--text-main); }
+    .user-role { font-size: 11px; color: var(--text-muted); }
+    .btn-logout { padding: 8px 12px; background-color: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+    .btn-logout:hover { background-color: var(--danger); color: #fff; }
 
-    /* NAVEGAÇÃO POR ABAS */
-    .tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; width: 100%; }
-    .tab-btn { padding: 10px 18px; background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; white-space: nowrap; transition: all 0.2s; }
-    .tab-btn.active { background-color: #1d4ed8; color: #fff; border-color: #2563eb; }
+    /* CONTEÚDO PRINCIPAL */
+    .main-content { padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 20px; flex-grow: 1; }
 
-    /* BARRA DE AÇÕES */
-    .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; width: 100%; }
-    .search-box { position: relative; flex-grow: 1; max-width: 400px; min-width: 250px; }
-    .search-box input { width: 100%; padding: 10px 12px 10px 35px; background-color: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #fff; font-size: 14px; outline: none; }
-    .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; }
-    .btn-add { padding: 10px 18px; background-color: #059669; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-    .btn-add:hover { background-color: #047857; }
+    /* NAVEGAÇÃO POR ABAS (CARDS NAV) */
+    .tabs-wrapper { overflow-x: auto; padding-bottom: 4px; }
+    .tabs-wrapper::-webkit-scrollbar { height: 4px; }
+    .tabs-wrapper::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+    
+    .tabs { display: flex; gap: 8px; min-width: max-content; }
+    .tab-btn { 
+      padding: 10px 18px; 
+      background-color: var(--card-bg); 
+      color: var(--text-muted); 
+      border: 1px solid var(--card-border); 
+      border-radius: 10px; 
+      cursor: pointer; 
+      font-weight: 500; 
+      font-size: 13px; 
+      white-space: nowrap; 
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tab-btn:hover { background-color: #26334d; color: var(--text-main); }
+    .tab-btn.active { 
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover)); 
+      color: #fff; 
+      border-color: transparent; 
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
 
-    /* TABELA DE DADOS */
+    /* BARRA DE AÇÕES E PESQUISA */
+    .actions-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .search-box { position: relative; flex: 1; min-width: 280px; }
+    .search-box input { 
+      width: 100%; 
+      padding: 12px 16px 12px 42px; 
+      background-color: var(--card-bg); 
+      border: 1px solid var(--card-border); 
+      border-radius: 10px; 
+      color: #fff; 
+      font-size: 14px; 
+      outline: none; 
+      transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+    .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+    .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 15px; }
+
+    .btn-add { 
+      padding: 12px 20px; 
+      background: linear-gradient(135deg, var(--success), var(--success-hover)); 
+      color: #fff; 
+      border: none; 
+      border-radius: 10px; 
+      font-weight: 600; 
+      font-size: 14px;
+      cursor: pointer; 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+      transition: all 0.2s;
+    }
+    .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35); }
+
+    /* TABELA DESIGN PROFISSIONAL */
     .table-container { 
       width: 100%; 
-      max-width: 100%;
       overflow-x: auto; 
-      -webkit-overflow-scrolling: touch;
-      background-color: #1e293b; 
-      border-radius: 8px; 
-      border: 1px solid #334155; 
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); 
+      background-color: var(--card-bg); 
+      border-radius: 14px; 
+      border: 1px solid var(--card-border); 
+      box-shadow: var(--shadow-md); 
     }
     
     table { 
       width: 100%; 
-      min-width: 1100px;
-      table-layout: fixed; 
       border-collapse: collapse; 
       text-align: left; 
       font-size: 14px; 
     }
     
-    th, td { 
-      padding: 12px 10px; 
-      border-bottom: 1px solid #334155; 
-      color: #cbd5e1; 
-      white-space: nowrap; 
-      overflow: hidden; 
-      text-overflow: ellipsis; 
-    }
-    
     th { 
-      background-color: #0f172a; 
-      color: #64748b; 
-      font-weight: 700; 
+      background-color: #141e30; 
+      color: var(--text-muted); 
+      font-weight: 600; 
       text-transform: uppercase; 
-      font-size: 12px; 
+      font-size: 11px; 
+      letter-spacing: 0.8px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--card-border);
     }
     
-    tr:hover { background-color: #26334d; }
+    td { 
+      padding: 16px 20px; 
+      border-bottom: 1px solid var(--card-border); 
+      color: var(--text-main); 
+      white-space: nowrap; 
+    }
+    
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background-color: rgba(255, 255, 255, 0.02); }
 
-    /* DESTAQUE PARA PRAZO VENCIDO */
+    /* DESTAQUE DE PRAZO VENCIDO */
     .prazo-vencido {
-      background-color: rgba(220, 38, 38, 0.25) !important;
+      background-color: rgba(239, 68, 68, 0.12) !important;
+    }
+    .prazo-vencido td {
       color: #fca5a5 !important;
-      font-weight: bold;
     }
 
-    /* LARGURAS DAS COLUNAS PARA ABAS PADRÃO */
-    .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(1), 
-    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(1) { width: 160px; }
-    .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(2), 
-    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(2) { width: 180px; }
-    .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(3), 
-    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(3) { width: 400px; }
-    .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(4), 
-    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(4) { width: 180px; }
-    .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(5), 
-    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(5) { width: 260px; text-align: center; }
+    /* COLUNAS E LARGURAS */
+    .col-acoes { text-align: right; }
+    .btn-group-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; }
 
-    /* LARGURAS DAS COLUNAS PARA ABA FERRAMENTARIA */
-    .table-container.table-ferram-view th:nth-child(1), .table-container.table-ferram-view td:nth-child(1) { width: 140px; }
-    .table-container.table-ferram-view th:nth-child(2), .table-container.table-ferram-view td:nth-child(2) { width: 160px; }
-    .table-container.table-ferram-view th:nth-child(3), .table-container.table-ferram-view td:nth-child(3) { width: 340px; }
-    .table-container.table-ferram-view th:nth-child(4), .table-container.table-ferram-view td:nth-child(4) { width: 150px; }
-    .table-container.table-ferram-view th:nth-child(5), .table-container.table-ferram-view td:nth-child(5) { width: 130px; }
-    .table-container.table-ferram-view th:nth-child(6), .table-container.table-ferram-view td:nth-child(6) { width: 260px; text-align: center; }
+    /* BADGES */
+    .badge-aba { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+    .badge-plastico { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-ferram { background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-qlx { background-color: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-semlocal { background-color: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
 
-    /* AJUSTE PARA ABA HISTÓRICO MANUTENÇÃO */
-    .table-container.table-historico table {
-      table-layout: auto !important;
-      min-width: 1600px !important;
+    /* BOTOES DE AÇÃO DA TABELA */
+    .btn-tbl { padding: 7px 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-ferramentaria { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .btn-ferramentaria:hover { background-color: var(--primary); color: #fff; }
+    .btn-liberar { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .btn-liberar:hover { background-color: var(--success); color: #fff; }
+    .btn-editar { background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .btn-editar:hover { background-color: var(--warning); color: #fff; }
+    .btn-excluir { background-color: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .btn-excluir:hover { background-color: var(--danger); color: #fff; }
+
+    /* MODAIS REFINADOS */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .modal-content { background-color: var(--card-bg); border: 1px solid var(--card-border); padding: 28px; border-radius: 16px; width: 100%; max-width: 480px; box-shadow: var(--shadow-lg); animation: modalFadeIn 0.2s ease-out; }
+    @keyframes modalFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .modal-content h3 { margin-bottom: 20px; color: var(--text-main); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+    .btn-cancelar { padding: 10px 18px; background-color: transparent; color: var(--text-muted); border: 1px solid var(--card-border); border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s; }
+    .btn-cancelar:hover { background-color: rgba(255,255,255,0.05); color: var(--text-main); }
+    .btn-salvar { padding: 10px 18px; background: linear-gradient(135deg, var(--success), var(--success-hover)); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+
+    /* RESPONSIVIDADE MOBILE (LAYOUT EM CARDS PARA DISPOSITIVOS MÓVEIS) */
+    @media (max-width: 768px) {
+      header { padding: 12px 16px; }
+      .header-brand h1 { font-size: 16px; }
+      .main-content { padding: 16px; }
+      .actions-bar { flex-direction: column; align-items: stretch; }
+      .search-box { min-width: 100%; }
+      .btn-add { justify-content: center; width: 100%; }
+
+      /* Esconder Tabela no Mobile e mostrar visualização estilo App/Card */
+      .table-container { background: transparent; border: none; box-shadow: none; }
+      table, thead, tbody, th, td, tr { display: block; }
+      thead tr { position: absolute; top: -9999px; left: -9999px; }
+      
+      tbody tr {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        padding: 14px;
+        box-shadow: var(--shadow-sm);
+      }
+
+      td {
+        padding: 6px 0;
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        white-space: normal;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        margin-right: 12px;
+      }
+
+      td.col-acoes {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--card-border);
+        justify-content: flex-end;
+      }
+
+      .btn-group-acoes { width: 100%; justify-content: flex-end; }
     }
-    .table-container.table-historico th, 
-    .table-container.table-historico td {
-      width: auto !important;
-      white-space: nowrap !important;
-      overflow: visible !important;
-    }
-
-    .col-acoes { text-align: center; }
-    .btn-group-acoes { display: flex; justify-content: center; gap: 6px; flex-wrap: nowrap; }
-
-    /* BADGES DE LOCALIZAÇÃO */
-    .badge-aba { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-    .badge-plastico { background-color: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
-    .badge-ferram { background-color: #854d0e; color: #fef08a; border: 1px solid #eab308; }
-    .badge-qlx { background-color: #581c87; color: #e9d5ff; border: 1px solid #a855f7; }
-    .badge-semlocal { background-color: #374151; color: #d1d5db; border: 1px solid #6b7280; }
-
-    /* BOTOES DE AÇÃO */
-    .btn-tbl { padding: 6px 10px; border: none; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; }
-    .btn-ferramentaria { background-color: #1d4ed8; color: #fff; }
-    .btn-liberar { background-color: #059669; color: #fff; }
-    .btn-editar { background-color: #ca8a04; color: #fff; }
-    .btn-excluir { background-color: #dc2626; color: #fff; }
-
-    /* MODAIS */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 100; }
-    .modal-content { background-color: #1e293b; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    .modal-content h3 { margin-bottom: 20px; color: #f8fafc; font-size: 18px; display: flex; align-items: center; gap: 10px; }
-    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-    .btn-cancelar { padding: 8px 16px; background-color: #475569; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
-    .btn-salvar { padding: 8px 16px; background-color: #10b981; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
 </style>
   </head>
   <body>
@@ -162,8 +343,11 @@
 	<!-- TELA DE LOGIN (MANTIDA) -->
 	<div id="loginScreen" class="login-container">
 	  <div class="login-box">
-		<h2>🔑 Acesso ao Sistema</h2>
-		<p>Digite seu usuário e senha para acessar</p>
+		<div class="logo-icon">
+		  <i class="fa-solid fa-cubes"></i>
+		</div>
+		<h2>Acesso ao Sistema</h2>
+		<p>Gestão Inteligente de Moldes</p>
 
 		<div class="form-group">
 		  <label for="loginUser">Usuário</label>
@@ -178,9 +362,8 @@
 		  </div>
 		</div>
 
-		<button id="btnLogin" onclick="efetuarLogin()" class="btn-primary">Entrar</button>
+		<button id="btnLogin" onclick="efetuarLogin()" class="btn-primary">Entrar no Sistema</button>
 
-		<!-- MENSAGEM DE STATUS DO LOGIN -->
 		<div id="loginStatus" class="login-status"></div>
 	  </div>
 	</div>
@@ -188,54 +371,67 @@
 	<!-- SISTEMA PRINCIPAL -->
 	<div id="appContainer">
 	  <header>
-		<h1>Gestão de Moldes</h1>
+		<div class="header-brand">
+		  <i class="fa-solid fa-shapes"></i>
+		  <h1>Gestão de Moldes</h1>
+		</div>
 		<div class="user-info">
-		  <span>Usuário: <strong id="lblUsuario">--</strong> (<span id="lblRole">--</span>)</span>
-		  <button onclick="logout()" class="btn-logout">Sair</button>
+		  <div class="user-avatar">
+			<i class="fa-solid fa-user"></i>
+		  </div>
+		  <div class="user-details">
+			<span class="user-name" id="lblUsuario">--</span>
+			<span class="user-role" id="lblRole">--</span>
+		  </div>
+		  <button onclick="logout()" class="btn-logout" title="Sair do sistema"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
 		</div>
 	  </header>
 
-	  <!-- ABAS -->
-	  <div class="tabs" id="tabContainer">
-		<button id="tabPlastico" class="tab-btn tab-admin" onclick="trocarAba('ATUALIZADA', this)">Plástico</button>
-		<button id="tabQLX" class="tab-btn tab-admin" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
-		<button id="tabSemLocal" class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)">Sem Local</button>
-		<button id="tabFerramentaria" class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
-		<button id="tabHistorico" class="tab-btn tab-ferram" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
-	  </div>
-
-	  <!-- AÇÕES -->
-	  <div class="actions-bar">
-		<div class="search-box">
-		  <i class="fa fa-search"></i>
-		  <input type="text" id="txtBusca" placeholder="Pesquisar em TODAS as abas..." onkeyup="filtrarTabelaGlobal()">
+	  <main class="main-content">
+		<!-- ABAS COM ROLAGEM SUAVE -->
+		<div class="tabs-wrapper">
+		  <div class="tabs" id="tabContainer">
+			<button id="tabPlastico" class="tab-btn tab-admin" onclick="trocarAba('ATUALIZADA', this)"><i class="fa-solid fa-industry"></i> Plástico</button>
+			<button id="tabQLX" class="tab-btn tab-admin" onclick="trocarAba('Moldes QLX', this)"><i class="fa-solid fa-box-archive"></i> Moldes QLX</button>
+			<button id="tabSemLocal" class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)"><i class="fa-solid fa-location-dot"></i> Sem Local</button>
+			<button id="tabFerramentaria" class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)"><i class="fa-solid fa-wrench"></i> Ferramentaria</button>
+			<button id="tabHistorico" class="tab-btn tab-ferram" onclick="trocarAba('HISTORICO_MANUTENCAO', this)"><i class="fa-solid fa-clock-rotate-left"></i> Histórico Manutenção</button>
+		  </div>
 		</div>
-		<button class="btn-add" id="btnAddMolde" onclick="abrirModalAdicionar()"><i class="fa fa-plus"></i> Adicionar Molde</button>
-	  </div>
 
-	  <!-- TABELA -->
-	  <div class="table-container" id="tblContainer">
-		<table>
-		  <thead id="tblHead">
-			<tr>
-			  <th>Local / Molde N°</th>
-			  <th>Código</th>
-			  <th>Descrição</th>
-			  <th>Aba / Origem</th>
-			  <th class="col-acoes">Ações</th>
-			</tr>
-		  </thead>
-		  <tbody id="tblBody">
-			<tr><td colspan="5" style="text-align:center;">Selecione uma aba...</td></tr>
-		  </tbody>
-		</table>
-	  </div>
+		<!-- BARRA DE AÇÕES -->
+		<div class="actions-bar">
+		  <div class="search-box">
+			<i class="fa-solid fa-magnifying-glass"></i>
+			<input type="text" id="txtBusca" placeholder="Pesquisar moldes, códigos ou locais..." onkeyup="filtrarTabelaGlobal()">
+		  </div>
+		  <button class="btn-add" id="btnAddMolde" onclick="abrirModalAdicionar()"><i class="fa-solid fa-plus"></i> Novo Molde</button>
+		</div>
+
+		<!-- TABELA CONTAINER -->
+		<div class="table-container" id="tblContainer">
+		  <table>
+			<thead id="tblHead">
+			  <tr>
+				<th>Local / Molde N°</th>
+				<th>Código</th>
+				<th>Descrição</th>
+				<th>Aba / Origem</th>
+				<th class="col-acoes">Ações</th>
+			  </tr>
+			</thead>
+			<tbody id="tblBody">
+			  <tr><td colspan="5" style="text-align:center; padding: 40px;">Selecione uma aba para carregar...</td></tr>
+			</tbody>
+		  </table>
+		</div>
+	  </main>
 	</div>
 
 	<!-- MODAL: ADICIONAR MOLDE -->
 	<div id="modalAdicionarMolde" class="modal">
 	  <div class="modal-content">
-		<h3><i class="fa fa-plus"></i> Adicionar Molde</h3>
+		<h3><i class="fa-solid fa-plus-circle" style="color: var(--success);"></i> Adicionar Molde</h3>
 
 		<div class="form-group">
 		  <label for="addAbaDestino">Destino (Aba):</label>
@@ -263,7 +459,7 @@
 
 		<div class="modal-buttons">
 		  <button onclick="fecharModalAdicionar()" class="btn-cancelar">Cancelar</button>
-		  <button onclick="salvarNovoMolde()" class="btn-salvar">Salvar</button>
+		  <button onclick="salvarNovoMolde()" class="btn-salvar">Salvar Molde</button>
 		</div>
 	  </div>
 	</div>
@@ -271,7 +467,7 @@
 	<!-- MODAL: EDITAR MOLDE -->
 	<div id="modalEditarMolde" class="modal">
 	  <div class="modal-content">
-		<h3><i class="fa fa-pencil"></i> Editar Molde</h3>
+		<h3><i class="fa-solid fa-pen-to-square" style="color: var(--warning);"></i> Editar Molde</h3>
 		<input type="hidden" id="editRowIndex">
 		<input type="hidden" id="editAbaOrigem">
 
@@ -310,7 +506,7 @@
 	<!-- MODAL: SOLICITAR FERRAMENTARIA -->
 	<div id="modalFerramentaria" class="modal">
 	  <div class="modal-content">
-		<h3><i class="fa fa-wrench"></i> Solicitar Ferramentaria</h3>
+		<h3><i class="fa-solid fa-wrench" style="color: var(--primary);"></i> Solicitar Ferramentaria</h3>
 		<input type="hidden" id="ferrRowIndex">
 		<input type="hidden" id="ferrAbaOrigem">
 		<input type="hidden" id="ferrLocal">
@@ -349,7 +545,7 @@
 
 		<div class="modal-buttons">
 		  <button onclick="fecharModalFerramentaria()" class="btn-cancelar">Cancelar</button>
-		  <button onclick="confirmarEnvioFerramentaria()" class="btn-salvar">Enviar</button>
+		  <button onclick="confirmarEnvioFerramentaria()" class="btn-salvar">Enviar Solicitação</button>
 		</div>
 	  </div>
 	</div>
@@ -357,7 +553,7 @@
 	<!-- MODAL: LIBERAR PARA O PLÁSTICO -->
 	<div id="modalLiberarPlastico" class="modal">
 	  <div class="modal-content">
-		<h3><i class="fa fa-check-circle"></i> Liberar P/ Plástico</h3>
+		<h3><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Liberar P/ Plástico</h3>
 		<input type="hidden" id="libRowIndex">
 
 		<div class="form-group">
@@ -408,7 +604,7 @@
       script.onload = () => document.body.removeChild(script);
     }
 
-    /* --- FUNÇÕES DE LOGIN (MANTIDAS INTACTAS) --- */
+    /* --- FUNÇÕES DE LOGIN (INTACTAS) --- */
     function toggleSenha() {
       const passInput = document.getElementById("loginPass");
       passInput.type = passInput.type === "password" ? "text" : "password";
@@ -427,7 +623,7 @@
     function restaurarEstadoLogin() {
       const btn = document.getElementById("btnLogin");
       btn.disabled = false;
-      btn.innerHTML = "Entrar";
+      btn.innerHTML = "Entrar no Sistema";
     }
 
     function efetuarLogin() {
@@ -474,7 +670,7 @@
           const btnFerram = document.getElementById("tabFerramentaria");
           trocarAba('ferramentaria', btnFerram);
         } else {
-          document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "inline-block");
+          document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "inline-flex");
           
           if (isNivel1) {
             document.getElementById("btnAddMolde").style.display = "none";
@@ -491,7 +687,6 @@
         mostrarStatusLogin("Erro no login: " + (res.message || "Usuário ou senha incorretos."), "error");
       }
     }
-    /* ---------------------------------------------- */
 
     function carregarTodasAbasCache() {
       TODAS_AS_ABAS.forEach(aba => {
@@ -520,15 +715,6 @@
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
       if (btn) btn.classList.add("active");
       
-      const container = document.getElementById("tblContainer");
-      container.classList.remove("table-historico", "table-ferram-view");
-      
-      if (nomeAba === "HISTORICO_MANUTENCAO") {
-        container.classList.add("table-historico");
-      } else if (nomeAba === "ferramentaria") {
-        container.classList.add("table-ferram-view");
-      }
-
       const selectDestino = document.getElementById("addAbaDestino");
       if (["ATUALIZADA", "Moldes QLX", "Sem local"].includes(nomeAba)) {
         selectDestino.value = nomeAba;
@@ -540,7 +726,7 @@
     function carregarDadosAba(nomeAba) {
       const tbody = document.getElementById("tblBody");
       const colCount = (nomeAba === "ferramentaria") ? 6 : 5;
-      tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;">Carregando dados de ${nomeAba}...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 40px;"><i class="fa-solid fa-circle-notch fa-spin" style="font-size: 24px; color: var(--primary);"></i><br><br>Carregando dados...</td></tr>`;
       
       const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(nomeAba)}&callback=retornoCarregarDados`;
       executarJSONP(url);
@@ -618,10 +804,10 @@
     }
 
     function formatarNomeAba(nomeAba) {
-      if (nomeAba === "ATUALIZADA") return `<span class="badge-aba badge-plastico">Plástico</span>`;
-      if (nomeAba === "ferramentaria") return `<span class="badge-aba badge-ferram">Ferramentaria</span>`;
-      if (nomeAba === "Moldes QLX") return `<span class="badge-aba badge-qlx">Moldes QLX</span>`;
-      if (nomeAba === "Sem local") return `<span class="badge-aba badge-semlocal">Sem Local</span>`;
+      if (nomeAba === "ATUALIZADA") return `<span class="badge-aba badge-plastico"><i class="fa-solid fa-industry"></i> Plástico</span>`;
+      if (nomeAba === "ferramentaria") return `<span class="badge-aba badge-ferram"><i class="fa-solid fa-wrench"></i> Ferramentaria</span>`;
+      if (nomeAba === "Moldes QLX") return `<span class="badge-aba badge-qlx"><i class="fa-solid fa-box-archive"></i> Moldes QLX</span>`;
+      if (nomeAba === "Sem local") return `<span class="badge-aba badge-semlocal"><i class="fa-solid fa-location-dot"></i> Sem Local</span>`;
       return `<span class="badge-aba badge-semlocal">${nomeAba}</span>`;
     }
 
@@ -640,17 +826,14 @@
       if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
         if (!dados || dados.length === 0) {
           thead.innerHTML = `<tr><th>Informação</th></tr>`;
-          tbody.innerHTML = `<tr><td style="text-align:center;">Nenhum histórico encontrado.</td></tr>`;
+          tbody.innerHTML = `<tr><td style="text-align:center; padding: 30px;">Nenhum histórico encontrado.</td></tr>`;
           return;
         }
 
         const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex' && k !== '_origemAba');
         let headerHTML = "<tr>";
         colunas.forEach(col => {
-          let nomeExibicao = col;
-          if (col.toUpperCase() === "COL_12") {
-            nomeExibicao = "STATUS";
-          }
+          let nomeExibicao = col.toUpperCase() === "COL_12" ? "STATUS" : col;
           headerHTML += `<th>${nomeExibicao}</th>`;
         });
         headerHTML += "</tr>";
@@ -658,7 +841,6 @@
 
         dados.forEach(item => {
           const tr = document.createElement("tr");
-          
           const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
           const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
           
@@ -672,7 +854,7 @@
             if (col.toUpperCase().includes("PRAZO")) {
               valor = formatarDataExibicao(valor);
             }
-            rowHTML += `<td>${valor}</td>`;
+            rowHTML += `<td data-label="${col}">${valor}</td>`;
           });
           tr.innerHTML = rowHTML;
           tbody.appendChild(tr);
@@ -695,7 +877,7 @@
 
       if (!dados || dados.length === 0) {
         const colSpan = exibirPrazo ? 6 : 5;
-        tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; padding: 30px;">Nenhum registro encontrado.</td></tr>`;
         return;
       }
 
@@ -719,24 +901,24 @@
         
         if (!isNivel1) {
           if (origemAba === "ferramentaria") {
-            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberarObj(${item._rowIndex})">Liberar P/ Plástico</button>`;
+            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberarObj(${item._rowIndex})"><i class="fa-solid fa-check"></i> Liberar</button>`;
           } else if (!isFerram) {
-            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentariaObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Ferramentaria</button>`;
+            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentariaObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-wrench"></i> Manutenção</button>`;
           }
         }
 
-        const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Editar</button>` : '';
-        const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')">Excluir</button>` : '';
+        const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>` : '';
+        const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>` : '';
 
-        const tdPrazoHTML = exibirPrazo ? `<td>${formatarDataExibicao(valPrazo)}</td>` : '';
+        const tdPrazoHTML = exibirPrazo ? `<td data-label="Prazo">${formatarDataExibicao(valPrazo)}</td>` : '';
 
         tr.innerHTML = `
-          <td>${col1}</td>
-          <td>${col2}</td>
-          <td>${col3}</td>
-          <td>${abaBadgeHTML}</td>
+          <td data-label="Local / Molde N°"><strong>${col1}</strong></td>
+          <td data-label="Código">${col2}</td>
+          <td data-label="Descrição">${col3}</td>
+          <td data-label="Origem">${abaBadgeHTML}</td>
           ${tdPrazoHTML}
-          <td class="col-acoes">
+          <td class="col-acoes" data-label="Ações">
             <div class="btn-group-acoes">
               ${btnAcaoPrincipalHTML}
               ${btnEditarHTML}
