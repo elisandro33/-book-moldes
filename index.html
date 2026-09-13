@@ -847,7 +847,7 @@
         headerHTML += "</tr>";
         thead.innerHTML = headerHTML;
 
-        dados.forEach(item => {
+                dados.forEach(item => {
           const tr = document.createElement("tr");
           const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
           const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
@@ -867,6 +867,7 @@
           tr.innerHTML = rowHTML;
           tbody.appendChild(tr);
         });
+
         return;
       }
 
