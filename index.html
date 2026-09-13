@@ -4,132 +4,53 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>GESTÃO DE MOLDES</title>
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
-    :root {
-      --bg-dark: #0f172a;
-      --card-dark: #1e293b;
-      --card-subtle: #182232;
-      --border-color: #334155;
-      --primary-blue: #2563eb;
-      --primary-blue-hover: #1d4ed8;
-      --success-green: #10b981;
-      --success-green-hover: #059669;
-      --danger-red: #ef4444;
-      --danger-red-hover: #dc2626;
-      --warning-amber: #f59e0b;
-      --warning-amber-hover: #d97706;
-      --purple-accent: #8b5cf6;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #121824; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; overflow-x: auto; }
     
-    /* TELA DE LOGIN ORIGINAL (INTACTA) */
-    .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: var(--bg-dark); padding: 16px; }
-    .login-box { background-color: var(--card-dark); padding: 32px 24px; border-radius: 16px; width: 100%; max-width: 400px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center; }
-    .login-box h2 { margin-bottom: 8px; font-size: 22px; color: var(--text-main); font-weight: 700; }
-    .login-box p { margin-bottom: 24px; font-size: 14px; color: var(--text-muted); }
+    /* TELA DE LOGIN */
+    .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: #121824; }
+    .login-box { background-color: #1e293b; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+    .login-box h2 { margin-bottom: 20px; font-size: 22px; color: #f8fafc; }
+    .login-box p { margin-bottom: 20px; font-size: 14px; color: #94a3b8; }
     
-    .form-group { text-align: left; margin-bottom: 16px; }
-    .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-muted); font-weight: 600; }
-    .form-control { width: 100%; padding: 12px 14px; background-color: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 10px; color: #fff; font-size: 14px; outline: none; transition: border-color 0.2s; }
-    .form-control:focus { border-color: var(--primary-blue); }
+    .form-group { text-align: left; margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #cbd5e1; font-weight: 600; }
+    .form-control { width: 100%; padding: 10px 12px; background-color: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #fff; font-size: 14px; outline: none; }
+    .form-control:focus { border-color: #3b82f6; }
     
     .password-wrapper { position: relative; }
-    .password-toggle { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); }
+    .password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; }
     
-    .btn-primary { width: 100%; padding: 12px; background-color: var(--primary-blue); color: #fff; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 15px; transition: background 0.2s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-primary:hover { background-color: var(--primary-blue-hover); }
-    .btn-primary:disabled { background-color: var(--border-color); cursor: not-allowed; opacity: 0.8; }
+    .btn-primary { width: 100%; padding: 12px; background-color: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 15px; transition: background 0.2s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-primary:hover { background-color: #1d4ed8; }
+    .btn-primary:disabled { background-color: #334155; cursor: not-allowed; opacity: 0.8; }
     
     .login-status { margin-top: 15px; font-size: 13px; font-weight: 600; min-height: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .login-status.loading { color: #38bdf8; }
     .login-status.error { color: #f87171; }
 
-    /* DASHBOARD PROFISSIONAL */
-    #appContainer { display: none; padding: 20px; flex-direction: column; flex-grow: 1; width: 100%; max-width: 1440px; margin: 0 auto; box-sizing: border-box; }
-    
-    header { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      padding: 18px 24px; 
-      background: linear-gradient(135deg, var(--card-dark) 0%, #172033 100%); 
-      border-radius: 16px; 
-      border: 1px solid var(--border-color); 
-      margin-bottom: 20px; 
-      flex-wrap: wrap; 
-      gap: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-    }
-    header .brand { display: flex; align-items: center; gap: 12px; }
-    header .brand-icon { background: rgba(37, 99, 235, 0.2); color: #60a5fa; padding: 10px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3); font-size: 20px; }
-    header h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-main); }
-    header p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    /* SISTEMA PRINCIPAL */
+    #appContainer { display: none; padding: 20px; flex-direction: column; flex-grow: 1; width: 100%; max-width: 100%; box-sizing: border-box; }
+    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    header h1 { font-size: 22px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
+    .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; color: #cbd5e1; }
+    .btn-logout { padding: 6px 14px; background-color: #991b1b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .btn-logout:hover { background-color: #7f1d1d; }
 
-    .user-info { display: flex; align-items: center; gap: 12px; }
-    .user-badge { background: var(--bg-dark); padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border-color); font-weight: 500; color: var(--text-main); font-size: 13px; display: flex; align-items: center; gap: 8px; }
-    .btn-logout { padding: 8px 14px; background-color: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-    .btn-logout:hover { background-color: var(--danger-red); color: #fff; }
-
-    /* PAINEL KPI MODERNO */
-    .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; }
-    .kpi-card { 
-      background: var(--card-dark); 
-      border: 1px solid var(--border-color); 
-      border-radius: 16px; 
-      padding: 18px 20px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-    .kpi-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
-    .kpi-card.blue::before { background-color: var(--primary-blue); }
-    .kpi-card.amber::before { background-color: var(--warning-amber); }
-    .kpi-card.purple::before { background-color: var(--purple-accent); }
-    .kpi-card.red::before { background-color: var(--danger-red); }
-
-    .kpi-details { display: flex; flex-direction: column; }
-    .kpi-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
-    .kpi-value { font-size: 28px; font-weight: 700; color: var(--text-main); }
-    .kpi-icon { font-size: 28px; opacity: 0.7; padding: 12px; border-radius: 12px; }
-    .kpi-card.blue .kpi-icon { color: #60a5fa; background: rgba(37, 99, 235, 0.15); }
-    .kpi-card.amber .kpi-icon { color: #fbbf24; background: rgba(245, 158, 11, 0.15); }
-    .kpi-card.purple .kpi-icon { color: #c084fc; background: rgba(139, 92, 246, 0.15); }
-    .kpi-card.red .kpi-icon { color: #f87171; background: rgba(239, 68, 68, 0.15); }
-
-    /* NAVEGAÇÃO E FILTROS */
-    .tabs-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
-    .tabs { display: flex; gap: 8px; overflow-x: auto; padding: 4px; background: var(--card-dark); border: 1px solid var(--border-color); border-radius: 14px; }
-    .tabs::-webkit-scrollbar { display: none; }
-    .tab-btn { padding: 10px 20px; background: transparent; color: var(--text-muted); border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 13px; white-space: nowrap; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
-    .tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
-    .tab-btn.active { background-color: var(--primary-blue); color: #fff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+    /* NAVEGAÇÃO POR ABAS */
+    .tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; width: 100%; }
+    .tab-btn { padding: 10px 18px; background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; white-space: nowrap; transition: all 0.2s; }
+    .tab-btn.active { background-color: #1d4ed8; color: #fff; border-color: #2563eb; }
 
     /* BARRA DE AÇÕES */
-    .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; width: 100%; }
-    .search-box { position: relative; flex-grow: 1; max-width: 100%; min-width: 250px; }
-    .search-box input { width: 100%; padding: 12px 14px 12px 42px; background-color: var(--card-dark); border: 1px solid var(--border-color); border-radius: 10px; color: #fff; font-size: 14px; outline: none; transition: border-color 0.2s; }
-    .search-box input:focus { border-color: var(--primary-blue); }
-    .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-    
-    .btn-add { width: 100%; padding: 12px 20px; background-color: var(--success-green); color: #fff; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; transition: background 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); }
-    .btn-add:hover { background-color: var(--success-green-hover); }
-
-    @media (min-width: 640px) {
-      .search-box { max-width: 360px; }
-      .btn-add { width: auto; }
-    }
+    .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; width: 100%; }
+    .search-box { position: relative; flex-grow: 1; max-width: 400px; min-width: 250px; }
+    .search-box input { width: 100%; padding: 10px 12px 10px 35px; background-color: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #fff; font-size: 14px; outline: none; }
+    .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; }
+    .btn-add { padding: 10px 18px; background-color: #059669; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .btn-add:hover { background-color: #047857; }
 
     /* TABELA DE DADOS */
     .table-container { 
@@ -137,640 +58,926 @@
       max-width: 100%;
       overflow-x: auto; 
       -webkit-overflow-scrolling: touch;
-      background-color: var(--card-dark); 
-      border-radius: 16px; 
-      border: 1px solid var(--border-color); 
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); 
+      background-color: #1e293b; 
+      border-radius: 8px; 
+      border: 1px solid #334155; 
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); 
     }
     
-    table { width: 100%; min-width: 900px; table-layout: fixed; border-collapse: collapse; text-align: left; font-size: 14px; }
-    th, td { padding: 16px; border-bottom: 1px solid var(--border-color); color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    th { background-color: #151e2e; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover { background-color: rgba(255, 255, 255, 0.02); }
+    table { 
+      width: 100%; 
+      min-width: 1100px;
+      table-layout: fixed; 
+      border-collapse: collapse; 
+      text-align: left; 
+      font-size: 14px; 
+    }
+    
+    th, td { 
+      padding: 12px 10px; 
+      border-bottom: 1px solid #334155; 
+      color: #cbd5e1; 
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+    }
+    
+    th { 
+      background-color: #0f172a; 
+      color: #64748b; 
+      font-weight: 700; 
+      text-transform: uppercase; 
+      font-size: 12px; 
+    }
+    
+    tr:hover { background-color: #26334d; }
 
-    .prazo-vencido { background-color: rgba(239, 68, 68, 0.12) !important; color: #fca5a5 !important; }
+    /* DESTAQUE PARA PRAZO VENCIDO */
+    .prazo-vencido {
+      background-color: rgba(220, 38, 38, 0.25) !important;
+      color: #fca5a5 !important;
+      font-weight: bold;
+    }
 
-    /* LARGURAS DAS COLUNAS */
+    /* LARGURAS DAS COLUNAS PARA ABAS PADRÃO */
     .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(1), 
     .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(1) { width: 160px; }
     .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(2), 
-    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(2) { width: 220px; }
+    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(2) { width: 180px; }
     .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(3), 
-    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(3) { width: 360px; }
+    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(3) { width: 400px; }
     .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(4), 
-    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(4) { width: 160px; }
+    .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(4) { width: 180px; }
     .table-container:not(.table-historico):not(.table-ferram-view) th:nth-child(5), 
     .table-container:not(.table-historico):not(.table-ferram-view) td:nth-child(5) { width: 260px; text-align: center; }
 
+    /* LARGURAS DAS COLUNAS PARA ABA FERRAMENTARIA */
     .table-container.table-ferram-view th:nth-child(1), .table-container.table-ferram-view td:nth-child(1) { width: 140px; }
-    .table-container.table-ferram-view th:nth-child(2), .table-container.table-ferram-view td:nth-child(2) { width: 180px; }
-    .table-container.table-ferram-view th:nth-child(3), .table-container.table-ferram-view td:nth-child(3) { width: 320px; }
-    .table-container.table-ferram-view th:nth-child(4), .table-container.table-ferram-view td:nth-child(4) { width: 140px; }
-    .table-container.table-ferram-view th:nth-child(5), .table-container.table-ferram-view td:nth-child(5) { width: 140px; }
+    .table-container.table-ferram-view th:nth-child(2), .table-container.table-ferram-view td:nth-child(2) { width: 160px; }
+    .table-container.table-ferram-view th:nth-child(3), .table-container.table-ferram-view td:nth-child(3) { width: 340px; }
+    .table-container.table-ferram-view th:nth-child(4), .table-container.table-ferram-view td:nth-child(4) { width: 150px; }
+    .table-container.table-ferram-view th:nth-child(5), .table-container.table-ferram-view td:nth-child(5) { width: 130px; }
     .table-container.table-ferram-view th:nth-child(6), .table-container.table-ferram-view td:nth-child(6) { width: 260px; text-align: center; }
 
-    .table-container.table-historico table { table-layout: auto !important; min-width: 1000px !important; }
-    .table-container.table-historico th, .table-container.table-historico td { width: auto !important; white-space: nowrap !important; overflow: visible !important; }
+    /* AJUSTE PARA ABA HISTÓRICO MANUTENÇÃO */
+    .table-container.table-historico table {
+      table-layout: auto !important;
+      min-width: 1600px !important;
+    }
+    .table-container.table-historico th, 
+    .table-container.table-historico td {
+      width: auto !important;
+      white-space: nowrap !important;
+      overflow: visible !important;
+    }
 
     .col-acoes { text-align: center; }
-    .btn-group-acoes { display: flex; justify-content: center; gap: 8px; flex-wrap: nowrap; }
+    .btn-group-acoes { display: flex; justify-content: center; gap: 6px; flex-wrap: nowrap; }
 
-    .badge-aba { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .badge-plastico { background-color: rgba(37, 99, 235, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
-    .badge-ferram { background-color: rgba(245, 158, 11, 0.2); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.4); }
-    .badge-qlx { background-color: rgba(168, 85, 247, 0.2); color: #e9d5ff; border: 1px solid rgba(168, 85, 247, 0.4); }
-    .badge-semlocal { background-color: rgba(107, 114, 128, 0.2); color: #e5e7eb; border: 1px solid rgba(107, 114, 128, 0.4); }
+    /* BADGES DE LOCALIZAÇÃO */
+    .badge-aba { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-plastico { background-color: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
+    .badge-ferram { background-color: #854d0e; color: #fef08a; border: 1px solid #eab308; }
+    .badge-qlx { background-color: #581c87; color: #e9d5ff; border: 1px solid #a855f7; }
+    .badge-semlocal { background-color: #374151; color: #d1d5db; border: 1px solid #6b7280; }
 
-    .btn-tbl { padding: 7px 12px; border: none; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
-    .btn-tbl:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn-ferramentaria { background-color: var(--primary-blue); color: #fff; }
-    .btn-liberar { background-color: var(--success-green); color: #fff; }
-    .btn-editar { background-color: var(--warning-amber); color: #fff; }
-    .btn-excluir { background-color: var(--danger-red); color: #fff; }
+    /* BOTOES DE AÇÃO */
+    .btn-tbl { padding: 6px 10px; border: none; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; }
+    .btn-ferramentaria { background-color: #1d4ed8; color: #fff; }
+    .btn-liberar { background-color: #059669; color: #fff; }
+    .btn-editar { background-color: #ca8a04; color: #fff; }
+    .btn-excluir { background-color: #dc2626; color: #fff; }
 
     /* MODAIS */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-    .modal-content { background-color: var(--card-dark); padding: 24px; border-radius: 16px; width: 100%; max-width: 450px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    .modal-content h3 { margin-bottom: 20px; color: var(--text-main); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
-    .btn-cancelar { padding: 10px 18px; background-color: rgba(148, 163, 184, 0.15); color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; font-weight: 600; }
-    .btn-salvar { padding: 10px 18px; background-color: var(--success-green); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 100; }
+    .modal-content { background-color: #1e293b; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .modal-content h3 { margin-bottom: 20px; color: #f8fafc; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .btn-cancelar { padding: 8px 16px; background-color: #475569; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-salvar { padding: 8px 16px; background-color: #10b981; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
 </style>
   </head>
   <body>
 
-	<!-- TELA DE LOGIN ORIGINAL (MANTIDA INTACTA) -->
-	<div class="login-container" id="loginPage">
+	<!-- TELA DE LOGIN -->
+	<div id="loginScreen" class="login-container">
 	  <div class="login-box">
-		<h2>SISTEMA DE MOLDES</h2>
-		<p>Digite seu Usuário e Senha para acessar</p>
+		<h2>🔑 Acesso ao Sistema</h2>
+		<p>Digite seu usuário e senha para acessar</p>
 
 		<div class="form-group">
-		  <label for="userInput">Usuário</label>
-		  <input type="text" id="userInput" class="form-control" placeholder="Digite seu usuário">
+		  <label for="loginUser">Usuário</label>
+		  <input type="text" id="loginUser" class="form-control" placeholder="Digite seu usuário..." autocomplete="off">
 		</div>
 
 		<div class="form-group">
-		  <label for="passInput">Senha</label>
+		  <label for="loginPass">Senha</label>
 		  <div class="password-wrapper">
-			<input type="password" id="passInput" class="form-control" placeholder="••••••••">
-			<i class="fas fa-eye password-toggle" id="togglePass"></i>
+			<input type="password" id="loginPass" class="form-control" placeholder="••••••••">
+			<i class="fa fa-eye password-toggle" onclick="toggleSenha()"></i>
 		  </div>
 		</div>
 
-		<button class="btn-primary" id="btnLogin">
-		  <i class="fas fa-sign-in-alt"></i> Entrar
-		</button>
+		<button id="btnLogin" onclick="efetuarLogin()" class="btn-primary">Entrar</button>
 
-		<div class="login-status" id="loginStatus"></div>
+		<!-- MENSAGEM DE STATUS DO LOGIN -->
+		<div id="loginStatus" class="login-status"></div>
 	  </div>
 	</div>
 
-	<!-- SISTEMA PRINCIPAL COM DASHBOARD ATUALIZADO -->
+	<!-- SISTEMA PRINCIPAL -->
 	<div id="appContainer">
 	  <header>
-		<div class="brand">
-		  <div class="brand-icon"><i class="fas fa-cubes"></i></div>
-		  <div>
-			<h1>GESTÃO DE MOLDES</h1>
-			<p>Painel de Controle e Monitoramento Industrial</p>
-		  </div>
-		</div>
+		<h1>Gestão de Moldes</h1>
 		<div class="user-info">
-		  <span class="user-badge" id="userBadge"><i class="fas fa-user-circle"></i> Usuário</span>
-		  <button class="btn-logout" id="btnLogout"><i class="fas fa-sign-out-alt"></i> Sair</button>
+		  <span>Usuário: <strong id="lblUsuario">--</strong> (<span id="lblRole">--</span>)</span>
+		  <button onclick="logout()" class="btn-logout">Sair</button>
 		</div>
 	  </header>
 
-	  <!-- PAINEL KPI CARDS MODERNO -->
-	  <div class="kpi-container">
-		<div class="kpi-card blue">
-		  <div class="kpi-details">
-			<div class="kpi-title">Setor Plástico</div>
-			<div class="kpi-value" id="kpiPlastico">0</div>
-		  </div>
-		  <div class="kpi-icon"><i class="fas fa-industry"></i></div>
-		</div>
-		<div class="kpi-card amber">
-		  <div class="kpi-details">
-			<div class="kpi-title">Em Ferramentaria</div>
-			<div class="kpi-value" id="kpiFerram">0</div>
-		  </div>
-		  <div class="kpi-icon"><i class="fas fa-tools"></i></div>
-		</div>
-		<div class="kpi-card purple">
-		  <div class="kpi-details">
-			<div class="kpi-title">Setor QLX</div>
-			<div class="kpi-value" id="kpiQlx">0</div>
-		  </div>
-		  <div class="kpi-icon"><i class="fas fa-microscope"></i></div>
-		</div>
-		<div class="kpi-card red">
-		  <div class="kpi-details">
-			<div class="kpi-title">Manutenções Vencidas</div>
-			<div class="kpi-value" id="kpiVencidas">0</div>
-		  </div>
-		  <div class="kpi-icon"><i class="fas fa-exclamation-triangle"></i></div>
-		</div>
+	  <!-- ABAS -->
+	  <div class="tabs" id="tabContainer">
+		<button id="tabPlastico" class="tab-btn tab-admin" onclick="trocarAba('ATUALIZADA', this)">Plástico</button>
+		<button id="tabQLX" class="tab-btn tab-admin" onclick="trocarAba('Moldes QLX', this)">Moldes QLX</button>
+		<button id="tabSemLocal" class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)">Sem Local</button>
+		<button id="tabFerramentaria" class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)">Ferramentaria</button>
+		<button id="tabHistorico" class="tab-btn tab-ferram" onclick="trocarAba('HISTORICO_MANUTENCAO', this)">Histórico Manutenção</button>
 	  </div>
 
-	  <!-- CONTROLES E FILTROS -->
-	  <div class="tabs-wrapper">
-		<div class="tabs">
-		  <button class="tab-btn active" data-aba="PLASTICO"><i class="fas fa-boxes"></i> PLÁSTICO</button>
-		  <button class="tab-btn" data-aba="FERRAMENTARIA"><i class="fas fa-wrench"></i> FERRAMENTARIA</button>
-		  <button class="tab-btn" data-aba="QLX"><i class="fas fa-vial"></i> QLX</button>
-		  <button class="tab-btn" data-aba="HISTORICO"><i class="fas fa-history"></i> HISTÓRICO MANUTENÇÃO</button>
+	  <!-- AÇÕES -->
+	  <div class="actions-bar">
+		<div class="search-box">
+		  <i class="fa fa-search"></i>
+		  <input type="text" id="txtBusca" placeholder="Pesquisar em TODAS as abas..." onkeyup="filtrarTabelaGlobal()">
 		</div>
-
-		<div class="actions-bar">
-		  <div class="search-box">
-			<i class="fas fa-search"></i>
-			<input type="text" id="searchInput" placeholder="Buscar por código, ferramenta...">
-		  </div>
-		  <button class="btn-add" id="btnNovoMolde">
-			<i class="fas fa-plus-circle"></i> Novo Molde
-		  </button>
-		</div>
+		<button class="btn-add" id="btnAddMolde" onclick="abrirModalAdicionar()"><i class="fa fa-plus"></i> Adicionar Molde</button>
 	  </div>
 
-	  <!-- TABELA PRINCIPAL -->
-	  <div class="table-container" id="mainTableContainer">
+	  <!-- TABELA -->
+	  <div class="table-container" id="tblContainer">
 		<table>
-		  <thead>
-			<tr id="tableHeader"></tr>
+		  <thead id="tblHead">
+			<tr>
+			  <th>Local / Molde N°</th>
+			  <th>Código</th>
+			  <th>Descrição</th>
+			  <th>Aba / Origem</th>
+			  <th class="col-acoes">Ações</th>
+			</tr>
 		  </thead>
-		  <tbody id="tableBody"></tbody>
+		  <tbody id="tblBody">
+			<tr><td colspan="5" style="text-align:center;">Selecione uma aba...</td></tr>
+		  </tbody>
 		</table>
 	  </div>
 	</div>
 
-	<!-- MODAL CADASTRO / EDIÇÃO -->
-	<div class="modal" id="modalMolde">
+	<!-- MODAL: ADICIONAR MOLDE -->
+	<div id="modalAdicionarMolde" class="modal">
 	  <div class="modal-content">
-		<h3 id="modalTitle"><i class="fas fa-edit"></i> Cadastrar Molde</h3>
+		<h3><i class="fa fa-plus"></i> Adicionar Molde</h3>
 
 		<div class="form-group">
-		  <label>Código do Molde</label>
-		  <input type="text" id="inputCodigo" class="form-control" placeholder="Ex: M-102">
-		</div>
-
-		<div class="form-group">
-		  <label>Ferramenta / Descrição</label>
-		  <input type="text" id="inputFerramenta" class="form-control" placeholder="Ex: Tampa 20mm">
-		</div>
-
-		<div class="form-group">
-		  <label>Observação</label>
-		  <input type="text" id="inputObs" class="form-control" placeholder="Detalhes ou pendências">
-		</div>
-
-		<div class="form-group">
-		  <label>Localização Inicial</label>
-		  <select id="selectLocal" class="form-control">
-			<option value="PLASTICO">PLÁSTICO</option>
-			<option value="FERRAMENTARIA">FERRAMENTARIA</option>
-			<option value="QLX">QLX</option>
+		  <label for="addAbaDestino">Destino (Aba):</label>
+		  <select id="addAbaDestino" class="form-control">
+			<option value="ATUALIZADA">Plástico</option>
+			<option value="Moldes QLX">Moldes QLX</option>
+			<option value="Sem local">Sem Local</option>
 		  </select>
 		</div>
 
+		<div class="form-group">
+		  <label for="addLocal">Local / Molde N°:</label>
+		  <input type="text" id="addLocal" class="form-control" placeholder="Ex: A1, MOD-058...">
+		</div>
+
+		<div class="form-group">
+		  <label for="addCodigo">Código:</label>
+		  <input type="text" id="addCodigo" class="form-control" placeholder="Código do molde">
+		</div>
+
+		<div class="form-group">
+		  <label for="addDescricao">Descrição:</label>
+		  <input type="text" id="addDescricao" class="form-control" placeholder="Descrição da peça / molde">
+		</div>
+
 		<div class="modal-buttons">
-		  <button class="btn-cancelar" id="btnFecharModal">Cancelar</button>
-		  <button class="btn-salvar" id="btnSalvarMolde">Salvar</button>
+		  <button onclick="fecharModalAdicionar()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="salvarNovoMolde()" class="btn-salvar">Salvar</button>
 		</div>
 	  </div>
 	</div>
 
-	<!-- MODAL ENVIAR PARA FERRAMENTARIA -->
-	<div class="modal" id="modalManutencao">
+	<!-- MODAL: EDITAR MOLDE -->
+	<div id="modalEditarMolde" class="modal">
 	  <div class="modal-content">
-		<h3><i class="fas fa-tools"></i> Enviar p/ Ferramentaria</h3>
+		<h3><i class="fa fa-pencil"></i> Editar Molde</h3>
+		<input type="hidden" id="editRowIndex">
+		<input type="hidden" id="editAbaOrigem">
 
-		<div class="form-group">
-		  <label>Motivo da Manutenção</label>
-		  <input type="text" id="inputMotivo" class="form-control" placeholder="Ex: Troca de pino guia">
+		<div class="form-group" id="grpEditAbaDestino">
+		  <label for="editAbaDestino">Aba / Destino:</label>
+		  <select id="editAbaDestino" class="form-control">
+			<option value="ATUALIZADA">Plástico</option>
+			<option value="Moldes QLX">Moldes QLX</option>
+			<option value="Sem local">Sem Local</option>
+			<option value="ferramentaria">Ferramentaria</option>
+		  </select>
 		</div>
 
 		<div class="form-group">
-		  <label>Prazo de Término</label>
-		  <input type="date" id="inputPrazo" class="form-control">
+		  <label for="editLocal">Local / Molde N°:</label>
+		  <input type="text" id="editLocal" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="editCodigo">Código:</label>
+		  <input type="text" id="editCodigo" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="editDescricao">Descrição:</label>
+		  <input type="text" id="editDescricao" class="form-control">
 		</div>
 
 		<div class="modal-buttons">
-		  <button class="btn-cancelar" id="btnFecharModalManut">Cancelar</button>
-		  <button class="btn-salvar" id="btnConfirmarManut">Enviar</button>
+		  <button onclick="fecharModalEditar()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="salvarEdicaoMolde()" class="btn-salvar">Salvar Alterações</button>
+		</div>
+	  </div>
+	</div>
+
+	<!-- MODAL: SOLICITAR FERRAMENTARIA -->
+	<div id="modalFerramentaria" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa fa-wrench"></i> Solicitar Ferramentaria</h3>
+		<input type="hidden" id="ferrRowIndex">
+		<input type="hidden" id="ferrAbaOrigem">
+		<input type="hidden" id="ferrLocal">
+		<input type="hidden" id="ferrCodigo">
+		<input type="hidden" id="ferrDescricao">
+
+		<div class="form-group">
+		  <label for="ferrData">Data Entrada:</label>
+		  <input type="date" id="ferrData" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="ferrHora">Hora Entrada:</label>
+		  <input type="time" id="ferrHora" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="ferrPrazo">Prazo Estimado (Data):</label>
+		  <input type="date" id="ferrPrazo" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="ferrSolicitante">Solicitante:</label>
+		  <input type="text" id="ferrSolicitante" class="form-control" placeholder="Nome do solicitante">
+		</div>
+
+		<div class="form-group">
+		  <label for="ferrTipos">Tipo de Serviço:</label>
+		  <input type="text" id="ferrTipos" class="form-control" placeholder="Ex: Manutenção Corretiva, Ajuste...">
+		</div>
+
+		<div class="form-group">
+		  <label for="ferrObs">Observação / Problema:</label>
+		  <textarea id="ferrObs" class="form-control" rows="3" placeholder="Detalhes do problema..."></textarea>
+		</div>
+
+		<div class="modal-buttons">
+		  <button onclick="fecharModalFerramentaria()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="confirmarEnvioFerramentaria()" class="btn-salvar">Enviar</button>
+		</div>
+	  </div>
+	</div>
+
+	<!-- MODAL: LIBERAR PARA O PLÁSTICO -->
+	<div id="modalLiberarPlastico" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa fa-check-circle"></i> Liberar P/ Plástico</h3>
+		<input type="hidden" id="libRowIndex">
+
+		<div class="form-group">
+		  <label for="libDataSaida">Data de Saída:</label>
+		  <input type="date" id="libDataSaida" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="libHoraSaida">Hora de Saída:</label>
+		  <input type="time" id="libHoraSaida" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="libTecnico">Técnico / Responsável:</label>
+		  <input type="text" id="libTecnico" class="form-control" placeholder="Nome do responsável">
+		</div>
+
+		<div class="form-group">
+		  <label for="libAcaoRealizada">Ação / Manutenção Realizada:</label>
+		  <textarea id="libAcaoRealizada" class="form-control" rows="3" placeholder="Descreva os reparos ou ajustes feitos..."></textarea>
+		</div>
+
+		<div class="modal-buttons">
+		  <button onclick="fecharModalLiberar()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="confirmarLiberacaoPlastico()" class="btn-salvar">Confirmar Liberação</button>
 		</div>
 	  </div>
 	</div>
 
 <script>
-  // URL DO SEU APPS SCRIPT
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
+    const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
+    
+    let usuarioLogado = null;
+    let abaAtual = "ATUALIZADA";
+    let dadosAbaAtual = [];
+    
+    const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
+    let cacheTodasAbas = {};
 
-  let moldes = [];
-  let abaAtual = 'PLASTICO';
-  let idMoldeEmEdicao = null;
-  let idMoldeEmAcao = null;
-
-  // ELEMENTOS DOM
-  const loginPage = document.getElementById('loginPage');
-  const appContainer = document.getElementById('appContainer');
-  const userInput = document.getElementById('userInput');
-  const passInput = document.getElementById('passInput');
-  const btnLogin = document.getElementById('btnLogin');
-  const btnLogout = document.getElementById('btnLogout');
-  const togglePass = document.getElementById('togglePass');
-  const loginStatus = document.getElementById('loginStatus');
-
-  const mainTableContainer = document.getElementById('mainTableContainer');
-  const tableHeader = document.getElementById('tableHeader');
-  const tableBody = document.getElementById('tableBody');
-  const searchInput = document.getElementById('searchInput');
-
-  const modalMolde = document.getElementById('modalMolde');
-  const modalManutencao = document.getElementById('modalManutencao');
-
-  // FUNÇÃO REQUISIÇÕES JSONP
-  function fetchJSONP(url) {
-    return new Promise((resolve, reject) => {
-      const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
-      window[callbackName] = function(data) {
-        delete window[callbackName];
-        document.body.removeChild(script);
-        resolve(data);
-      };
+    function executarJSONP(url) {
       const script = document.createElement('script');
-      script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
-      script.onerror = function() {
-        delete window[callbackName];
-        document.body.removeChild(script);
-        reject(new Error('Falha na conexão JSONP'));
+      script.src = url;
+      script.onerror = () => {
+        restaurarEstadoLogin();
+        mostrarStatusLogin("Erro de conexão ao acessar o servidor Google Apps Script.", "error");
       };
       document.body.appendChild(script);
-    });
-  }
-
-  // TOGGLE SENHA
-  togglePass.addEventListener('click', () => {
-    const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    passInput.setAttribute('type', type);
-    togglePass.classList.toggle('fa-eye-slash');
-  });
-
-  // AUTENTICAÇÃO
-  btnLogin.addEventListener('click', autenticar);
-  passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') autenticar(); });
-
-  async function autenticar() {
-    const usuario = userInput.value.trim();
-    const senha = passInput.value.trim();
-
-    if (!usuario || !senha) {
-      loginStatus.className = 'login-status error';
-      loginStatus.innerText = 'Preencha usuário e senha.';
-      return;
+      script.onload = () => document.body.removeChild(script);
     }
 
-    loginStatus.className = 'login-status loading';
-    loginStatus.innerText = 'Verificando na planilha...';
-    btnLogin.disabled = true;
+    function toggleSenha() {
+      const passInput = document.getElementById("loginPass");
+      passInput.type = passInput.type === "password" ? "text" : "password";
+    }
 
-    try {
-      const url = `${SCRIPT_URL}?action=login&usuario=${encodeURIComponent(usuario)}&senha=${encodeURIComponent(senha)}`;
-
-      const data = await fetchJSONP(url);
-
-      if (data.sucesso) {
-        document.getElementById('userBadge').innerHTML = `<i class="fas fa-user-circle"></i> ${data.nome || usuario}`;
-        loginPage.style.display = 'none';
-        appContainer.style.display = 'flex';
-        carregarDadosDaPlanilha();
+    function mostrarStatusLogin(msg, tipo) {
+      const statusDiv = document.getElementById("loginStatus");
+      statusDiv.className = `login-status ${tipo}`;
+      if (tipo === "loading") {
+        statusDiv.innerHTML = `<i class="fa fa-circle-notch fa-spin"></i> ${msg}`;
       } else {
-        loginStatus.className = 'login-status error';
-        loginStatus.innerText = data.mensagem || 'Usuário ou senha incorretos.';
+        statusDiv.innerHTML = msg;
       }
-    } catch (err) {
-      loginStatus.className = 'login-status error';
-      loginStatus.innerText = 'Erro de conexão com a planilha.';
-    } finally {
-      btnLogin.disabled = false;
     }
-  }
 
-  btnLogout.addEventListener('click', () => {
-    appContainer.style.display = 'none';
-    loginPage.style.display = 'flex';
-    userInput.value = '';
-    passInput.value = '';
-    loginStatus.innerText = '';
-  });
-
-  // CARREGAR DADOS
-  async function carregarDadosDaPlanilha() {
-    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 30px;"><i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary-blue);"></i><br><br>Carregando dados da planilha...</td></tr>`;
-    try {
-      const url = `${SCRIPT_URL}?action=getMoldes`;
-      const data = await fetchJSONP(url);
-      if (Array.isArray(data)) {
-        moldes = data;
-      } else if (data.moldes) {
-        moldes = data.moldes;
-      }
-      renderizarSistema();
-    } catch (error) {
-      alert('Erro ao carregar os moldes da planilha.');
+    function restaurarEstadoLogin() {
+      const btn = document.getElementById("btnLogin");
+      btn.disabled = false;
+      btn.innerHTML = "Entrar";
     }
-  }
 
-  // TROCA DE ABAS
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const target = e.currentTarget;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      target.classList.add('active');
-      abaAtual = target.getAttribute('data-aba');
-      renderizarSistema();
-    });
-  });
+    function efetuarLogin() {
+      const u = document.getElementById("loginUser").value.trim();
+      const p = document.getElementById("loginPass").value.trim();
 
-  searchInput.addEventListener('input', renderizarTabela);
-
-  function atualizarKPIs() {
-    document.getElementById('kpiPlastico').innerText = moldes.filter(m => m.localizacao === 'PLASTICO').length;
-    document.getElementById('kpiFerram').innerText = moldes.filter(m => m.localizacao === 'FERRAMENTARIA').length;
-    document.getElementById('kpiQlx').innerText = moldes.filter(m => m.localizacao === 'QLX').length;
-
-    const hoje = new Date().toISOString().split('T')[0];
-    const vencidas = moldes.filter(m => m.localizacao === 'FERRAMENTARIA' && m.prazo && m.prazo < hoje).length;
-    document.getElementById('kpiVencidas').innerText = vencidas;
-  }
-
-  function renderizarSistema() {
-    atualizarKPIs();
-    renderizarTabela();
-  }
-
-  function renderizarTabela() {
-    const termoBusca = searchInput.value.toLowerCase();
-    tableBody.innerHTML = '';
-    mainTableContainer.className = 'table-container';
-
-    if (abaAtual === 'HISTORICO') {
-      mainTableContainer.classList.add('table-historico');
-      tableHeader.innerHTML = `
-        <th>Código</th>
-        <th>Ferramenta</th>
-        <th>Origem</th>
-        <th>Data Envio</th>
-        <th>Motivo</th>
-        <th>Prazo</th>
-        <th>Data Retorno</th>
-      `;
-
-      let todosHistoricos = [];
-      moldes.forEach(m => {
-        if (m.historico && m.historico.length > 0) {
-          m.historico.forEach(h => {
-            todosHistoricos.push({ ...h, codigo: m.codigo, ferramenta: m.ferramenta });
-          });
-        }
-      });
-
-      const filtrados = todosHistoricos.filter(h => 
-        (h.codigo && h.codigo.toLowerCase().includes(termoBusca)) || 
-        (h.ferramenta && h.ferramenta.toLowerCase().includes(termoBusca)) ||
-        (h.motivo && h.motivo.toLowerCase().includes(termoBusca))
-      );
-
-      if (filtrados.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Nenhum histórico encontrado.</td></tr>`;
+      if (!u || !p) {
+        mostrarStatusLogin("Informe o usuário e a senha!", "error");
         return;
       }
 
-      filtrados.forEach(item => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><b>${item.codigo}</b></td>
-          <td>${item.ferramenta}</td>
-          <td><span class="badge-aba badge-${item.origem ? item.origem.toLowerCase() : 'semlocal'}">${item.origem || '-'}</span></td>
-          <td>${item.dataEnvio || '-'}</td>
-          <td>${item.motivo || '-'}</td>
-          <td>${item.prazo || '-'}</td>
-          <td><span style="color: var(--success-green); font-weight:600;"><i class="fas fa-check-circle"></i> ${item.dataRetorno || '-'}</span></td>
-        `;
-        tableBody.appendChild(tr);
-      });
-      return;
+      const btn = document.getElementById("btnLogin");
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa fa-circle-notch fa-spin"></i> Autenticando...`;
+      mostrarStatusLogin("Autenticando, aguarde...", "loading");
+
+      // Suporta parâmetros user/pass ou usuario/senha via JSONP
+      const url = `${BASE_API}?action=LOGIN&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}&usuario=${encodeURIComponent(u)}&senha=${encodeURIComponent(p)}&callback=retornoLogin`;
+      executarJSONP(url);
     }
 
-    if (abaAtual === 'FERRAMENTARIA') {
-      mainTableContainer.classList.add('table-ferram-view');
-      tableHeader.innerHTML = `
-        <th>Código</th>
-        <th>Ferramenta</th>
-        <th>Motivo</th>
-        <th>Data Envio</th>
-        <th>Prazo</th>
-        <th style="text-align:center;">Ações</th>
-      `;
-    } else {
-      tableHeader.innerHTML = `
-        <th>Código</th>
-        <th>Ferramenta</th>
-        <th>Observação</th>
-        <th>Localização</th>
-        <th style="text-align:center;">Ações</th>
-      `;
-    }
+    function retornoLogin(res) {
+      // Aceita variações de formato de resposta do backend
+      if (res && (res.status === "success" || res.sucesso === true || res.logged === true)) {
+        usuarioLogado = {
+          user: res.user || res.usuario || res.nome || "Usuário",
+          role: res.role || res.cargo || "Usuário"
+        };
+        
+        document.getElementById("lblUsuario").innerText = usuarioLogado.user;
+        document.getElementById("lblRole").innerText = usuarioLogado.role;
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appContainer").style.display = "flex";
 
-    const moldesFiltrados = moldes.filter(m => {
-      const atendeAba = m.localizacao === abaAtual;
-      const atendeBusca = (m.codigo && m.codigo.toLowerCase().includes(termoBusca)) || 
-                           (m.ferramenta && m.ferramenta.toLowerCase().includes(termoBusca)) ||
-                           (m.obs && m.obs.toLowerCase().includes(termoBusca));
-      return atendeAba && atendeBusca;
-    });
+        restaurarEstadoLogin();
+        document.getElementById("loginStatus").innerHTML = "";
 
-    if (moldesFiltrados.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:30px;">Nenhum molde encontrado nesta aba.</td></tr>`;
-      return;
-    }
+        const uName = String(usuarioLogado.user).toLowerCase();
+        const uRole = String(usuarioLogado.role).toLowerCase();
+        
+        const isFerram = (uName === "ferramentaria" || uRole === "ferramentaria");
+        const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
 
-    const hoje = new Date().toISOString().split('T')[0];
+        carregarTodasAbasCache();
 
-    moldesFiltrados.forEach(m => {
-      const tr = document.createElement('tr');
-      const isVencido = abaAtual === 'FERRAMENTARIA' && m.prazo && m.prazo < hoje;
+        if (isFerram) {
+          document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "none");
+          document.getElementById("btnAddMolde").style.display = "none";
+          
+          const btnFerram = document.getElementById("tabFerramentaria");
+          trocarAba('ferramentaria', btnFerram);
+        } else {
+          document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "inline-block");
+          
+          if (isNivel1) {
+            document.getElementById("btnAddMolde").style.display = "none";
+          } else {
+            document.getElementById("btnAddMolde").style.display = "flex";
+          }
+          
+          const btnPlastico = document.getElementById("tabPlastico");
+          trocarAba('ATUALIZADA', btnPlastico);
+        }
 
-      if (isVencido) {
-        tr.classList.add('prazo-vencido');
-      }
-
-      if (abaAtual === 'FERRAMENTARIA') {
-        tr.innerHTML = `
-          <td><b>${m.codigo}</b></td>
-          <td>${m.ferramenta}</td>
-          <td>${m.motivo || '-'}</td>
-          <td>${m.dataEnvio || '-'}</td>
-          <td>${m.prazo || '-'} ${isVencido ? '<i class="fas fa-exclamation-circle" title="Prazo vencido"></i>' : ''}</td>
-          <td class="col-acoes">
-            <div class="btn-group-acoes">
-              <button class="btn-tbl btn-liberar" onclick="liberarMolde(${m.id})"><i class="fas fa-check"></i> Liberar</button>
-              <button class="btn-tbl btn-editar" onclick="abrirModalEdicao(${m.id})"><i class="fas fa-edit"></i></button>
-              <button class="btn-tbl btn-excluir" onclick="excluirMolde(${m.id})"><i class="fas fa-trash"></i></button>
-            </div>
-          </td>
-        `;
       } else {
+        restaurarEstadoLogin();
+        mostrarStatusLogin("Erro no login: " + (res && (res.message || res.mensagem) ? (res.message || res.mensagem) : "Usuário ou senha incorretos."), "error");
+      }
+    }
+
+    function carregarTodasAbasCache() {
+      TODAS_AS_ABAS.forEach(aba => {
+        const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(aba)}&callback=retornoCache_${aba.replace(/[^a-zA-Z0-9]/g, '')}`;
+        window[`retornoCache_${aba.replace(/[^a-zA-Z0-9]/g, '')}`] = function(res) {
+          cacheTodasAbas[aba] = Array.isArray(res) ? res : [];
+        };
+        executarJSONP(url);
+      });
+    }
+
+    function logout() {
+      usuarioLogado = null;
+      document.getElementById("appContainer").style.display = "none";
+      document.getElementById("loginScreen").style.display = "flex";
+      document.getElementById("loginPass").value = "";
+      document.getElementById("txtBusca").value = "";
+      document.getElementById("loginStatus").innerHTML = "";
+      restaurarEstadoLogin();
+    }
+
+    function trocarAba(nomeAba, btn) {
+      abaAtual = nomeAba;
+      document.getElementById("txtBusca").value = "";
+      
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+      
+      const container = document.getElementById("tblContainer");
+      container.classList.remove("table-historico", "table-ferram-view");
+      
+      if (nomeAba === "HISTORICO_MANUTENCAO") {
+        container.classList.add("table-historico");
+      } else if (nomeAba === "ferramentaria") {
+        container.classList.add("table-ferram-view");
+      }
+
+      const selectDestino = document.getElementById("addAbaDestino");
+      if (["ATUALIZADA", "Moldes QLX", "Sem local"].includes(nomeAba)) {
+        selectDestino.value = nomeAba;
+      }
+
+      carregarDadosAba(nomeAba);
+    }
+
+    function carregarDadosAba(nomeAba) {
+      const tbody = document.getElementById("tblBody");
+      const colCount = (nomeAba === "ferramentaria") ? 6 : 5;
+      tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;">Carregando dados de ${nomeAba}...</td></tr>`;
+      
+      const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(nomeAba)}&callback=retornoCarregarDados`;
+      executarJSONP(url);
+    }
+
+    function retornoCarregarDados(res) {
+      dadosAbaAtual = Array.isArray(res) ? res : [];
+      cacheTodasAbas[abaAtual] = dadosAbaAtual;
+      renderizarTabela(dadosAbaAtual);
+    }
+
+    function normalizarString(str) {
+      if (!str) return "";
+      return String(str)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+    }
+
+    function obterValorColuna(item, nomesPossiveis, indicePadrao) {
+      const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_origemAba');
+
+      for (let key of keys) {
+        let keyNorm = normalizarString(key);
+        for (let nome of nomesPossiveis) {
+          if (keyNorm === normalizarString(nome)) {
+            return item[key] || "";
+          }
+        }
+      }
+
+      if (typeof indicePadrao === 'number' && keys[indicePadrao] !== undefined) {
+        return item[keys[indicePadrao]] || "";
+      }
+
+      return "";
+    }
+
+    function formatarDataExibicao(val) {
+      if (!val) return "--";
+      if (val.includes("T")) val = val.split("T")[0];
+      if (val.includes("-")) {
+        const p = val.split("-");
+        if (p.length === 3 && p[0].length === 4) {
+          return `${p[2]}/${p[1]}/${p[0]}`;
+        }
+      }
+      return val;
+    }
+
+    function estaVencido(dataPrazoStr, status) {
+      if (!dataPrazoStr) return false;
+      const statusUpper = String(status || "").toUpperCase();
+      if (statusUpper.includes("CONCLUÍDO") || statusUpper.includes("CONCLUIDO")) return false;
+
+      let dataPrazo;
+      let strLimp = String(dataPrazoStr).split("T")[0];
+      
+      if (strLimp.includes("-")) {
+        const partes = strLimp.split("-");
+        dataPrazo = new Date(partes[0], partes[1] - 1, partes[2]);
+      } else if (strLimp.includes("/")) {
+        const partes = strLimp.split("/");
+        dataPrazo = new Date(partes[2], partes[1] - 1, partes[0]);
+      } else {
+        dataPrazo = new Date(strLimp);
+      }
+
+      if (isNaN(dataPrazo.getTime())) return false;
+
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      return dataPrazo < hoje;
+    }
+
+    function formatarNomeAba(nomeAba) {
+      if (nomeAba === "ATUALIZADA") return `<span class="badge-aba badge-plastico">Plástico</span>`;
+      if (nomeAba === "ferramentaria") return `<span class="badge-aba badge-ferram">Ferramentaria</span>`;
+      if (nomeAba === "Moldes QLX") return `<span class="badge-aba badge-qlx">Moldes QLX</span>`;
+      if (nomeAba === "Sem local") return `<span class="badge-aba badge-semlocal">Sem Local</span>`;
+      return `<span class="badge-aba badge-semlocal">${nomeAba}</span>`;
+    }
+
+    function renderizarTabela(dados, ehPesquisa = false) {
+      const thead = document.getElementById("tblHead");
+      const tbody = document.getElementById("tblBody");
+      tbody.innerHTML = "";
+
+      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase() : "";
+      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase() : "";
+      
+      const isFerram = (uName === "ferramentaria" || uRole === "ferramentaria");
+      const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
+      const isAdmin  = (uName === "admin" || uRole === "admin");
+
+      if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
+        if (!dados || dados.length === 0) {
+          thead.innerHTML = `<tr><th>Informação</th></tr>`;
+          tbody.innerHTML = `<tr><td style="text-align:center;">Nenhum histórico encontrado.</td></tr>`;
+          return;
+        }
+
+        const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex' && k !== '_origemAba');
+        let headerHTML = "<tr>";
+        colunas.forEach(col => {
+          let nomeExibicao = col;
+          if (col.toUpperCase() === "COL_12") {
+            nomeExibicao = "STATUS";
+          }
+          headerHTML += `<th>${nomeExibicao}</th>`;
+        });
+        headerHTML += "</tr>";
+        thead.innerHTML = headerHTML;
+
+        dados.forEach(item => {
+          const tr = document.createElement("tr");
+          
+          const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
+          const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
+          
+          if (estaVencido(valPrazo, valStatus)) {
+            tr.classList.add("prazo-vencido");
+          }
+
+          let rowHTML = "";
+          colunas.forEach(col => {
+            let valor = item[col] || "";
+            if (col.toUpperCase().includes("PRAZO")) {
+              valor = formatarDataExibicao(valor);
+            }
+            rowHTML += `<td>${valor}</td>`;
+          });
+          tr.innerHTML = rowHTML;
+          tbody.appendChild(tr);
+        });
+        return;
+      }
+
+      const exibirPrazo = (abaAtual === "ferramentaria");
+
+      thead.innerHTML = `
+        <tr>
+          <th>Local / Molde N°</th>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th>Aba / Origem</th>
+          ${exibirPrazo ? '<th>Prazo</th>' : ''}
+          <th class="col-acoes">Ações</th>
+        </tr>
+      `;
+
+      if (!dados || dados.length === 0) {
+        const colSpan = exibirPrazo ? 6 : 5;
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;">Nenhum registro encontrado.</td></tr>`;
+        return;
+      }
+
+      dados.forEach((item) => {
+        const tr = document.createElement("tr");
+        
+        const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
+        const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
+        const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
+        const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
+        const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
+
+        if (estaVencido(valPrazo, valStatus)) {
+          tr.classList.add("prazo-vencido");
+        }
+        
+        const origemAba = item._origemAba || abaAtual;
+        const abaBadgeHTML = formatarNomeAba(origemAba);
+
+        let btnAcaoPrincipalHTML = "";
+        
+        if (!isNivel1) {
+          if (origemAba === "ferramentaria") {
+            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberarObj(${item._rowIndex})">Liberar P/ Plástico</button>`;
+          } else if (!isFerram) {
+            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentariaObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Ferramentaria</button>`;
+          }
+        }
+
+        const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')">Editar</button>` : '';
+        const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')">Excluir</button>` : '';
+
+        const tdPrazoHTML = exibirPrazo ? `<td>${formatarDataExibicao(valPrazo)}</td>` : '';
+
         tr.innerHTML = `
-          <td><b>${m.codigo}</b></td>
-          <td>${m.ferramenta}</td>
-          <td>${m.obs || '-'}</td>
-          <td><span class="badge-aba badge-${m.localizacao ? m.localizacao.toLowerCase() : 'semlocal'}">${m.localizacao}</span></td>
+          <td>${col1}</td>
+          <td>${col2}</td>
+          <td>${col3}</td>
+          <td>${abaBadgeHTML}</td>
+          ${tdPrazoHTML}
           <td class="col-acoes">
             <div class="btn-group-acoes">
-              <button class="btn-tbl btn-ferramentaria" onclick="abrirModalManutencao(${m.id})"><i class="fas fa-tools"></i> Maint.</button>
-              <button class="btn-tbl btn-editar" onclick="abrirModalEdicao(${m.id})"><i class="fas fa-edit"></i></button>
-              <button class="btn-tbl btn-excluir" onclick="excluirMolde(${m.id})"><i class="fas fa-trash"></i></button>
+              ${btnAcaoPrincipalHTML}
+              ${btnEditarHTML}
+              ${btnExcluirHTML}
             </div>
           </td>
         `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filtrarTabelaGlobal() {
+      const termo = document.getElementById("txtBusca").value.trim().toLowerCase();
+      
+      if (!termo) {
+        renderizarTabela(dadosAbaAtual);
+        return;
       }
-      tableBody.appendChild(tr);
-    });
-  }
 
-  // MODAL CADASTRO/EDIÇÃO
-  document.getElementById('btnNovoMolde').addEventListener('click', () => {
-    idMoldeEmEdicao = null;
-    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Cadastrar Molde';
-    document.getElementById('inputCodigo').value = '';
-    document.getElementById('inputFerramenta').value = '';
-    document.getElementById('inputObs').value = '';
-    document.getElementById('selectLocal').value = abaAtual === 'HISTORICO' ? 'PLASTICO' : abaAtual;
-    modalMolde.style.display = 'flex';
-  });
+      let resultados = [];
 
-  document.getElementById('btnFecharModal').addEventListener('click', () => { modalMolde.style.display = 'none'; });
+      TODAS_AS_ABAS.forEach(aba => {
+        const listaDaAba = cacheTodasAbas[aba] || (aba === abaAtual ? dadosAbaAtual : []);
+        
+        listaDaAba.forEach(item => {
+          const atende = Object.keys(item).some(k => {
+            if (k === '_rowIndex' || k === '_origemAba') return false;
+            return String(item[k]).toLowerCase().includes(termo);
+          });
 
-  function abrirModalEdicao(id) {
-    const molde = moldes.find(m => m.id === id);
-    if (!molde) return;
-    idMoldeEmEdicao = id;
-    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Molde';
-    document.getElementById('inputCodigo').value = molde.codigo;
-    document.getElementById('inputFerramenta').value = molde.ferramenta;
-    document.getElementById('inputObs').value = molde.obs || '';
-    document.getElementById('selectLocal').value = molde.localizacao;
-    modalMolde.style.display = 'flex';
-  }
+          if (atende) {
+            resultados.push({ ...item, _origemAba: aba });
+          }
+        });
+      });
 
-  async function salvarMoldeNaPlanilha(dados) {
-    const params = new URLSearchParams(dados).toString();
-    const url = `${SCRIPT_URL}?action=salvarMolde&${params}`;
-    return await fetchJSONP(url);
-  }
-
-  document.getElementById('btnSalvarMolde').addEventListener('click', async () => {
-    const codigo = document.getElementById('inputCodigo').value.trim();
-    const ferramenta = document.getElementById('inputFerramenta').value.trim();
-    const obs = document.getElementById('inputObs').value.trim();
-    const localizacao = document.getElementById('selectLocal').value;
-
-    if (!codigo || !ferramenta) {
-      alert('Por favor, preencha o código e a ferramenta.');
-      return;
+      renderizarTabela(resultados, true);
     }
 
-    const payload = {
-      id: idMoldeEmEdicao || Date.now(),
-      codigo,
-      ferramenta,
-      obs,
-      localizacao
-    };
+    function abrirModalLiberarObj(rowIndex) {
+      document.getElementById("libRowIndex").value = rowIndex;
+      
+      const agora = new Date();
+      document.getElementById("libDataSaida").value = agora.toISOString().split('T')[0];
+      document.getElementById("libHoraSaida").value = agora.toTimeString().substring(0,5);
+      
+      if (usuarioLogado) {
+        document.getElementById("libTecnico").value = usuarioLogado.user || "";
+      }
 
-    try {
-      await salvarMoldeNaPlanilha(payload);
-      modalMolde.style.display = 'none';
-      carregarDadosDaPlanilha();
-    } catch (e) {
-      alert('Erro ao salvar na planilha.');
-    }
-  });
-
-  // MANUTENÇÃO
-  function abrirModalManutencao(id) {
-    idMoldeEmAcao = id;
-    document.getElementById('inputMotivo').value = '';
-    document.getElementById('inputPrazo').value = '';
-    modalManutencao.style.display = 'flex';
-  }
-
-  document.getElementById('btnFecharModalManut').addEventListener('click', () => { modalManutencao.style.display = 'none'; });
-
-  document.getElementById('btnConfirmarManut').addEventListener('click', async () => {
-    const motivo = document.getElementById('inputMotivo').value.trim();
-    const prazo = document.getElementById('inputPrazo').value;
-
-    if (!motivo) {
-      alert('Informe o motivo da manutenção.');
-      return;
+      document.getElementById("modalLiberarPlastico").style.display = "flex";
     }
 
-    const molde = moldes.find(m => m.id === idMoldeEmAcao);
-    if (molde) {
-      const payload = {
-        id: molde.id,
-        localizacao: 'FERRAMENTARIA',
-        origemAnterior: molde.localizacao,
-        motivo: motivo,
-        prazo: prazo,
-        dataEnvio: new Date().toISOString().split('T')[0]
-      };
-      try {
-        await salvarMoldeNaPlanilha(payload);
-        modalManutencao.style.display = 'none';
-        carregarDadosDaPlanilha();
-      } catch (e) {
-        alert('Erro ao enviar para manutenção.');
+    function fecharModalLiberar() {
+      document.getElementById("modalLiberarPlastico").style.display = "none";
+      document.getElementById("libAcaoRealizada").value = "";
+    }
+
+    function confirmarLiberacaoPlastico() {
+      const rIndex = document.getElementById("libRowIndex").value;
+      const dataSaida = document.getElementById("libDataSaida").value;
+      const horaSaida = document.getElementById("libHoraSaida").value;
+      const tecnico = document.getElementById("libTecnico").value.trim();
+      const acaoRealizada = document.getElementById("libAcaoRealizada").value.trim();
+
+      if (!rIndex) {
+        alert("Erro: Linha do registro não foi informada!");
+        return;
+      }
+
+      if (!acaoRealizada) {
+        alert("Por favor, preencha o campo de Ação / Manutenção Realizada!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=LIBERAR_FERRAMENTARIA` +
+                  `&rowIndex=${encodeURIComponent(rIndex)}` +
+                  `&dataSaida=${encodeURIComponent(dataSaida)}` +
+                  `&horaSaida=${encodeURIComponent(horaSaida)}` +
+                  `&tecnico=${encodeURIComponent(tecnico)}` +
+                  `&liberadoPor=${encodeURIComponent(tecnico)}` +
+                  `&acaoRealizada=${encodeURIComponent(acaoRealizada)}` +
+                  `&callback=retornoAcao`;
+
+      executarJSONP(url);
+    }
+
+    function abrirModalAdicionar() {
+      document.getElementById("modalAdicionarMolde").style.display = "flex";
+    }
+
+    function fecharModalAdicionar() {
+      document.getElementById("modalAdicionarMolde").style.display = "none";
+      document.getElementById("addLocal").value = "";
+      document.getElementById("addCodigo").value = "";
+      document.getElementById("addDescricao").value = "";
+    }
+
+    function salvarNovoMolde() {
+      const aba = document.getElementById("addAbaDestino").value;
+      const col1 = document.getElementById("addLocal").value.trim();
+      const col2 = document.getElementById("addCodigo").value.trim();
+      const col3 = document.getElementById("addDescricao").value.trim();
+
+      if (!col1 || !col2 || !col3) {
+        alert("Por favor, preencha todos os campos!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=ADICIONAR_MOLDE&sheet=${encodeURIComponent(aba)}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAcao`;
+      executarJSONP(url);
+    }
+
+    function abrirModalEditarObj(aba, rowIndex, local, codigo, descricao) {
+      document.getElementById("editAbaOrigem").value = aba;
+      document.getElementById("editAbaDestino").value = aba;
+      document.getElementById("editRowIndex").value = rowIndex;
+      document.getElementById("editLocal").value = local;
+      document.getElementById("editCodigo").value = codigo;
+      document.getElementById("editDescricao").value = descricao;
+
+      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase() : "";
+      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase() : "";
+      const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
+
+      const grpAba = document.getElementById("grpEditAbaDestino");
+      if (grpAba) {
+        grpAba.style.display = isNivel1 ? "none" : "block";
+      }
+
+      document.getElementById("modalEditarMolde").style.display = "flex";
+    }
+
+    function fecharModalEditar() {
+      document.getElementById("modalEditarMolde").style.display = "none";
+    }
+
+    function salvarEdicaoMolde() {
+      const abaOrigem = document.getElementById("editAbaOrigem").value || abaAtual;
+      const abaDestino = document.getElementById("editAbaDestino").value;
+      const rIndex = document.getElementById("editRowIndex").value;
+      const col1 = document.getElementById("editLocal").value.trim();
+      const col2 = document.getElementById("editCodigo").value.trim();
+      const col3 = document.getElementById("editDescricao").value.trim();
+
+      if (!col1 || !col2 || !col3) {
+        alert("Por favor, preencha todos os campos!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=EDITAR_MOLDE&sheet=${encodeURIComponent(abaOrigem)}&novaAba=${encodeURIComponent(abaDestino)}&rowIndex=${rIndex}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAcao`;
+      executarJSONP(url);
+    }
+
+    function excluirMoldeObj(aba, rowIndex, codigo) {
+      if (confirm(`Tem certeza que deseja excluir o molde '${codigo}' da aba ${aba}?`)) {
+        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(aba)}&rowIndex=${rowIndex}&callback=retornoAcao`;
+        executarJSONP(url);
       }
     }
-  });
 
-  // LIBERAR MOLDE
-  async function liberarMolde(id) {
-    const molde = moldes.find(m => m.id === id);
-    if (!molde) return;
+    function abrirModalFerramentariaObj(aba, rowIndex, local, codigo, descricao) {
+      document.getElementById("ferrAbaOrigem").value = aba;
+      document.getElementById("ferrRowIndex").value = rowIndex;
+      document.getElementById("ferrLocal").value = local;
+      document.getElementById("ferrCodigo").value = codigo;
+      document.getElementById("ferrDescricao").value = descricao;
+      
+      const agora = new Date();
+      document.getElementById("ferrData").value = agora.toISOString().split('T')[0];
+      document.getElementById("ferrHora").value = agora.toTimeString().substring(0,5);
+      document.getElementById("ferrPrazo").value = "";
+      
+      if (usuarioLogado) {
+        document.getElementById("ferrSolicitante").value = usuarioLogado.user || "";
+      }
 
-    const dataHoje = new Date().toISOString().split('T')[0];
-    const payload = {
-      id: molde.id,
-      action: 'liberarMolde',
-      dataRetorno: dataHoje
-    };
-
-    try {
-      const params = new URLSearchParams(payload).toString();
-      await fetchJSONP(`${SCRIPT_URL}?${params}`);
-      carregarDadosDaPlanilha();
-    } catch (e) {
-      alert('Erro ao liberar o molde.');
+      document.getElementById("modalFerramentaria").style.display = "flex";
     }
-  }
 
-  // EXCLUIR MOLDE
-  async function excluirMolde(id) {
-    if (confirm('Tem certeza que deseja excluir este molde?')) {
-      try {
-        await fetchJSONP(`${SCRIPT_URL}?action=excluirMolde&id=${id}`);
-        carregarDadosDaPlanilha();
-      } catch (e) {
-        alert('Erro ao excluir o molde.');
+    function fecharModalFerramentaria() {
+      document.getElementById("modalFerramentaria").style.display = "none";
+      document.getElementById("ferrTipos").value = "";
+      document.getElementById("ferrObs").value = "";
+      document.getElementById("ferrPrazo").value = "";
+    }
+
+    function confirmarEnvioFerramentaria() {
+      const abaOrigem = document.getElementById("ferrAbaOrigem").value || abaAtual;
+      const rIndex = document.getElementById("ferrRowIndex").value;
+      const local = document.getElementById("ferrLocal").value;
+      const codigo = document.getElementById("ferrCodigo").value;
+      const descricao = document.getElementById("ferrDescricao").value;
+      
+      const data = document.getElementById("ferrData").value;
+      const hora = document.getElementById("ferrHora").value;
+      const prazo = document.getElementById("ferrPrazo").value;
+      const solicitante = document.getElementById("ferrSolicitante").value.trim();
+      const tipos = document.getElementById("ferrTipos").value.trim();
+      const obs = document.getElementById("ferrObs").value.trim();
+
+      if (!solicitante) {
+        alert("Informe o nome do solicitante!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=SOLICITAR_FERRAMENTARIA` +
+                  `&abaOrigem=${encodeURIComponent(abaOrigem)}` +
+                  `&rowIndex=${rIndex}` +
+                  `&col1=${encodeURIComponent(local)}` +
+                  `&col2=${encodeURIComponent(codigo)}` +
+                  `&col3=${encodeURIComponent(descricao)}` +
+                  `&data=${encodeURIComponent(data)}` +
+                  `&hora=${encodeURIComponent(hora)}` +
+                  `&prazo=${encodeURIComponent(prazo)}` +
+                  `&solicitante=${encodeURIComponent(solicitante)}` +
+                  `&tipos=${encodeURIComponent(tipos)}` +
+                  `&obs=${encodeURIComponent(obs)}` +
+                  `&callback=retornoAcao`;
+
+      executarJSONP(url);
+    }
+
+    function retornoAcao(res) {
+      if (res && (res.status === "success" || res.sucesso === true)) {
+        alert(res.osNumber ? `Solicitação enviada com sucesso! OS Gerada: ${res.osNumber}` : "Operação realizada com sucesso!");
+        fecharModalAdicionar();
+        fecharModalEditar();
+        fecharModalFerramentaria();
+        fecharModalLiberar();
+        
+        carregarTodasAbasCache();
+        carregarDadosAba(abaAtual);
+      } else {
+        alert("Erro na operação: " + (res && (res.message || res.mensagem) ? (res.message || res.mensagem) : "Erro desconhecido."));
       }
     }
-  }
 </script>
   </body>
 </html>
