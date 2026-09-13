@@ -127,7 +127,11 @@
       box-shadow: var(--shadow-sm);
     }
     .header-brand { display: flex; align-items: center; gap: 12px; }
-    .header-brand i { font-size: 20px; color: var(--primary); background: rgba(59, 130, 246, 0.1); padding: 8px; border-radius: 8px; }
+    .header-brand img { 
+      width: 36px; 
+      height: 36px; 
+      object-fit: contain; 
+    }
     .header-brand h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-main); }
     
     .user-info { display: flex; align-items: center; gap: 12px; }
@@ -372,7 +376,7 @@
 	<div id="appContainer">
 	  <header>
 		<div class="header-brand">
-		  <i class="fa-solid fa-shapes"></i>
+		  <img src="assets/logo.png" alt="Ícone Gestão de Moldes">
 		  <h1>Gestão de Moldes</h1>
 		</div>
 		<div class="user-info">
