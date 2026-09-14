@@ -830,8 +830,8 @@
       const tbody = document.getElementById("tblBody");
       tbody.innerHTML = "";
 
-      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase() : "";
-      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase() : "";
+      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase().trim() : "";
+      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase().trim() : "";
       
       const isFerram = (uName === "ferramentaria" || uRole === "ferramentaria");
       const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
@@ -850,6 +850,10 @@
           let nomeExibicao = formatarNomeColunaHistorico(col);
           headerHTML += `<th>${nomeExibicao}</th>`;
         });
+        
+        if (isAdmin) {
+          headerHTML += `<th class="col-acoes">Ações</th>`;
+        }
         headerHTML += "</tr>";
         thead.innerHTML = headerHTML;
 
@@ -871,6 +875,18 @@
             let rotuloExibicao = formatarNomeColunaHistorico(col);
             rowHTML += `<td data-label="${rotuloExibicao}">${valor}</td>`;
           });
+
+          if (isAdmin) {
+            const rIdx = item._rowIndex;
+            const codSeguro = String(item["CÓDIGO"] || item["CODIGO"] || item["N° OS"] || "Registro").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            rowHTML += `
+              <td class="col-acoes" data-label="Ações">
+                <div class="btn-group-acoes">
+                  <button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('HISTORICO_MANUTENCAO', ${rIdx}, '${codSeguro}')"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </td>`;
+          }
+
           tr.innerHTML = rowHTML;
           tbody.appendChild(tr);
         });
@@ -912,18 +928,24 @@
         const origemAba = item._origemAba || abaAtual;
         const abaBadgeHTML = formatarNomeAba(origemAba);
 
+        const col1Segura = String(col1).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const col2Segura = String(col2).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const col3Segura = String(col3).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
         let btnAcaoPrincipalHTML = "";
         
         if (!isNivel1) {
           if (origemAba === "ferramentaria") {
             btnAcaoPrincipalHTML = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberarObj(${item._rowIndex})"><i class="fa-solid fa-check"></i> Liberar</button>`;
           } else if (!isFerram) {
-            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentariaObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-wrench"></i> Manutenção</button>`;
+            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentariaObj('${origemAba}', ${item._rowIndex}, '${col1Segura}', '${col2Segura}', '${col3Segura}')"><i class="fa-solid fa-wrench"></i> Manutenção</button>`;
           }
         }
 
-        const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>` : '';
-        const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>` : '';
+        const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1Segura}', '${col2Segura}', '${col3Segura}')"><i class="fa-solid fa-pen"></i></button>` : '';
+        
+        // Exibe o botão EXCLUIR exclusivamente para a conta admin
+        const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2Segura}')"><i class="fa-solid fa-trash"></i></button>` : '';
 
         const tdPrazoHTML = exibirPrazo ? `<td data-label="Prazo">${formatarDataExibicao(valPrazo)}</td>` : '';
 
@@ -944,7 +966,6 @@
         tbody.appendChild(tr);
       });
     }
-
     function filtrarTabelaGlobal() {
       const termo = document.getElementById("txtBusca").value.trim().toLowerCase();
       
@@ -1088,9 +1109,21 @@
       executarJSONP(url);
     }
 
-    function excluirMoldeObj(aba, rowIndex, codigo) {
+   function excluirMoldeObj(aba, rowIndex, codigo) {
+      // Trava de segurança no front-end para nivel adm
+      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase().trim() : "";
+      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase().trim() : "";
+      const isAdmin = (uName === "admin" || uRole === "admin");
+
+      if (!isAdmin) {
+        alert("Apenas usuários administradores podem excluir registros.");
+        return;
+      }
+
+      if (!aba) aba = abaAtual;
+
       if (confirm(`Tem certeza que deseja excluir o molde '${codigo}' da aba ${aba}?`)) {
-        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(aba)}&rowIndex=${rowIndex}&callback=retornoAcao`;
+        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(aba)}&rowIndex=${encodeURIComponent(rowIndex)}&callback=retornoAcao`;
         executarJSONP(url);
       }
     }
