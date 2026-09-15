@@ -225,6 +225,7 @@
       border-collapse: collapse; 
       text-align: left; 
       font-size: 14px; 
+      table-layout: fixed;
     }
     
     th { 
@@ -257,7 +258,20 @@
     }
 
     /* COLUNAS E LARGURAS */
-    .col-acoes { text-align: right; }
+    th:nth-child(1), td:nth-child(1) { width: 15%; }
+    th:nth-child(2), td:nth-child(2) { width: 18%; }
+    th:nth-child(3), td:nth-child(3) { 
+      width: 37%; 
+      white-space: normal; 
+      word-wrap: break-word; 
+    }
+    th:nth-child(4), td:nth-child(4) { width: 15%; }
+
+    .col-acoes { 
+      width: 15%; 
+      text-align: right; 
+      white-space: nowrap; 
+    }
     .btn-group-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; }
 
     /* BADGES */
@@ -320,6 +334,7 @@
         align-items: center;
         font-size: 13px;
         white-space: normal;
+        width: 100% !important;
       }
 
       td::before {
@@ -966,6 +981,7 @@
         tbody.appendChild(tr);
       });
     }
+
     function filtrarTabelaGlobal() {
       const termo = document.getElementById("txtBusca").value.trim().toLowerCase();
       
@@ -1109,7 +1125,7 @@
       executarJSONP(url);
     }
 
-   function excluirMoldeObj(aba, rowIndex, codigo) {
+    function excluirMoldeObj(aba, rowIndex, codigo) {
       // Trava de segurança no front-end para nivel adm
       const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase().trim() : "";
       const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase().trim() : "";
@@ -1207,4 +1223,3 @@
 </script>
   </body>
 </html>
-
