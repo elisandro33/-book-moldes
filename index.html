@@ -419,25 +419,27 @@
 		<h2>Acesso ao Sistema</h2>
 		<p>Gestão Inteligente de Moldes</p>
 
-		<div class="form-group">
-		  <label for="loginUser">Usuário</label>
-		  <input type="text" id="loginUser" class="form-control" placeholder="Digite seu usuário..." autocomplete="off">
-		</div>
-
-		<div class="form-group">
-		  <label for="loginPass">Senha</label>
-		  <div class="password-wrapper">
-			<input type="password" id="loginPass" class="form-control" placeholder="••••••••">
-			<i class="fa fa-eye password-toggle" onclick="toggleSenha()"></i>
+		<!-- Tag FORM adicionada para capturar o Enter -->
+		<form onsubmit="event.preventDefault(); efetuarLogin();">
+		  <div class="form-group">
+			<label for="loginUser">Usuário</label>
+			<input type="text" id="loginUser" class="form-control" placeholder="Digite seu usuário..." autocomplete="off">
 		  </div>
-		</div>
 
-		<button id="btnLogin" onclick="efetuarLogin()" class="btn-primary">Entrar no Sistema</button>
+		  <div class="form-group">
+			<label for="loginPass">Senha</label>
+			<div class="password-wrapper">
+			  <input type="password" id="loginPass" class="form-control" placeholder="••••••••">
+			  <i class="fa fa-eye password-toggle" onclick="toggleSenha()"></i>
+			</div>
+		  </div>
+
+		  <button type="submit" id="btnLogin" class="btn-primary">Entrar no Sistema</button>
+		</form>
 
 		<div id="loginStatus" class="login-status"></div>
 	  </div>
 	</div>
-
 	<!-- SISTEMA PRINCIPAL -->
 	<div id="appContainer">
 	  <header>
