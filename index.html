@@ -134,11 +134,15 @@
     }
     .header-brand h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-main); }
     
-    .user-info { display: flex; align-items: center; gap: 12px; }
+    .user-info { display: flex; align-items: center; gap: 10px; }
     .user-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--card-border); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--text-muted); }
     .user-details { display: flex; flex-direction: column; text-align: right; }
     .user-name { font-size: 13px; font-weight: 600; color: var(--text-main); }
     .user-role { font-size: 11px; color: var(--text-muted); }
+    
+    .btn-user-add { padding: 8px 12px; background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease-in-out; display: none; align-items: center; gap: 6px; }
+    .btn-user-add:hover { background-color: var(--primary); color: #fff; }
+
     .btn-logout { padding: 8px 12px; background-color: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease-in-out; }
     .btn-logout:hover { background-color: var(--danger); color: #fff; }
 
@@ -182,7 +186,7 @@
     .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .kpi-value { font-size: 22px; font-weight: 700; color: var(--text-main); margin-top: 2px; }
 
-    /* NAVEGAÇÃO POR ABAS (CARDS NAV) */
+    /* NAVEGAÇÃO POR ABAS */
     .tabs-wrapper { overflow-x: auto; padding-bottom: 4px; }
     .tabs-wrapper::-webkit-scrollbar { height: 4px; }
     .tabs-wrapper::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
@@ -289,12 +293,8 @@
     tr:hover td { background-color: rgba(255, 255, 255, 0.03); }
 
     /* DESTAQUE DE PRAZO VENCIDO */
-    .prazo-vencido {
-      background-color: rgba(239, 68, 68, 0.12) !important;
-    }
-    .prazo-vencido td {
-      color: #fca5a5 !important;
-    }
+    .prazo-vencido { background-color: rgba(239, 68, 68, 0.12) !important; }
+    .prazo-vencido td { color: #fca5a5 !important; }
 
     /* COLUNAS E LARGURAS PARA ABAS COMUNS */
     table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 15%; }
@@ -307,21 +307,10 @@
     table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 15%; }
 
     /* AJUSTES ESPECÍFICOS DA TABELA DE HISTÓRICO */
-    table.tabela-historico {
-      table-layout: auto !important;
-      min-width: 1100px;
-    }
-    table.tabela-historico th, table.tabela-historico td {
-      white-space: normal !important;
-      word-wrap: break-word;
-      max-width: 280px;
-    }
+    table.tabela-historico { table-layout: auto !important; min-width: 1100px; }
+    table.tabela-historico th, table.tabela-historico td { white-space: normal !important; word-wrap: break-word; max-width: 280px; }
 
-    .col-acoes { 
-      width: 15%; 
-      text-align: right; 
-      white-space: nowrap; 
-    }
+    .col-acoes { width: 15%; text-align: right; white-space: nowrap; }
     .btn-group-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; }
 
     /* BADGES */
@@ -363,7 +352,6 @@
       .search-box { min-width: 100%; }
       .btn-add { justify-content: center; width: 100%; }
 
-      /* Esconder Tabela no Mobile e mostrar visualização estilo App/Card */
       .table-container { background: transparent; border: none; box-shadow: none; }
       table, thead, tbody, th, td, tr { display: block; }
       thead tr { position: absolute; top: -9999px; left: -9999px; }
@@ -429,7 +417,7 @@
 			<label for="loginPass">Senha</label>
 			<div class="password-wrapper">
 			  <input type="password" id="loginPass" class="form-control" placeholder="••••••••">
-			  <i class="fa fa-eye password-toggle" onclick="toggleSenha()"></i>
+			  <i class="fa fa-eye password-toggle" onclick="toggleSenha('loginPass')"></i>
 			</div>
 		  </div>
 
@@ -452,6 +440,9 @@
 		  <h1>Gestão de Moldes</h1>
 		</div>
 		<div class="user-info">
+		  <button id="btnCadastrarUsuario" onclick="abrirModalCadastrarUsuario()" class="btn-user-add" title="Cadastrar novo usuário">
+		    <i class="fa-solid fa-user-plus"></i> Novo Usuário
+		  </button>
 		  <div class="user-avatar">
 			<i class="fa-solid fa-user"></i>
 		  </div>
@@ -527,6 +518,41 @@
 		  </table>
 		</div>
 	  </main>
+	</div>
+
+	<!-- MODAL: CADASTRAR USUÁRIO (APENAS ADMIN) -->
+	<div id="modalCadastrarUsuario" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa-solid fa-user-plus" style="color: var(--primary);"></i> Cadastrar Novo Usuário</h3>
+
+		<div class="form-group">
+		  <label for="newUser">Nome de Usuário:</label>
+		  <input type="text" id="newUser" class="form-control" placeholder="Digite o nome de usuário...">
+		</div>
+
+		<div class="form-group">
+		  <label for="newPass">Senha:</label>
+		  <div class="password-wrapper">
+		    <input type="password" id="newPass" class="form-control" placeholder="••••••••">
+		    <i class="fa fa-eye password-toggle" onclick="toggleSenha('newPass')"></i>
+		  </div>
+		</div>
+
+		<div class="form-group">
+		  <label for="newLevel">Nível de Acesso:</label>
+		  <select id="newLevel" class="form-control">
+			<option value="admin">Admin</option>
+			<option value="ferramentaria">Ferramentaria</option>
+			<option value="nivel1">Nível 1</option>
+			<option value="nivel2">Nível 2</option>
+		  </select>
+		</div>
+
+		<div class="modal-buttons">
+		  <button onclick="fecharModalCadastrarUsuario()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="salvarNovoUsuario()" class="btn-salvar">Salvar Usuário</button>
+		</div>
+	  </div>
 	</div>
 
 	<!-- MODAL: ADICIONAR MOLDE -->
@@ -694,7 +720,7 @@
     const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
     let cacheTodasAbas = {};
 
-    // Auto-scroll automático para a última visualização na reabertura
+    // Auto-scroll automático para a última conversa na reabertura
     window.addEventListener("DOMContentLoaded", () => {
       window.scrollTo(0, document.body.scrollHeight);
     });
@@ -725,10 +751,12 @@
       script.onload = () => document.body.removeChild(script);
     }
 
-    /* --- FUNÇÕES DE LOGIN --- */
-    function toggleSenha() {
-      const passInput = document.getElementById("loginPass");
-      passInput.type = passInput.type === "password" ? "text" : "password";
+    /* --- FUNÇÕES DE LOGIN & SESSÃO --- */
+    function toggleSenha(inputId) {
+      const passInput = document.getElementById(inputId);
+      if (passInput) {
+        passInput.type = passInput.type === "password" ? "text" : "password";
+      }
     }
 
     function mostrarStatusLogin(msg, tipo) {
@@ -781,6 +809,12 @@
         
         const isFerram = (uName === "ferramentaria" || uRole === "ferramentaria");
         const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
+        const isAdmin  = (uName === "admin" || uRole === "admin");
+
+        const btnCadUser = document.getElementById("btnCadastrarUsuario");
+        if (btnCadUser) {
+          btnCadUser.style.display = isAdmin ? "inline-flex" : "none";
+        }
 
         carregarTodasAbasCache();
 
@@ -806,6 +840,41 @@
       } else {
         restaurarEstadoLogin();
         mostrarStatusLogin("Erro no login: " + (res.message || "Usuário ou senha incorretos."), "error");
+      }
+    }
+
+    /* --- FUNÇÕES CADASTRO DE USUÁRIOS (ADMIN) --- */
+    function abrirModalCadastrarUsuario() {
+      document.getElementById("newUser").value = "";
+      document.getElementById("newPass").value = "";
+      document.getElementById("newLevel").value = "nivel1";
+      document.getElementById("modalCadastrarUsuario").style.display = "flex";
+    }
+
+    function fecharModalCadastrarUsuario() {
+      document.getElementById("modalCadastrarUsuario").style.display = "none";
+    }
+
+    function salvarNovoUsuario() {
+      const u = document.getElementById("newUser").value.trim();
+      const p = document.getElementById("newPass").value.trim();
+      const n = document.getElementById("newLevel").value;
+
+      if (!u || !p) {
+        alert("Preencha o nome do usuário e a senha!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=ADICIONAR_MOLDE&sheet=USUARIOS&col1=${encodeURIComponent(u)}&col2=${encodeURIComponent(p)}&col3=${encodeURIComponent(n)}&callback=retornoCadastroUsuario`;
+      executarJSONP(url);
+    }
+
+    function retornoCadastroUsuario(res) {
+      if (res && res.status === "success") {
+        alert("Usuário cadastrado com sucesso!");
+        fecharModalCadastrarUsuario();
+      } else {
+        alert("Erro ao cadastrar usuário: " + (res && res.message ? res.message : "Erro desconhecido."));
       }
     }
 
