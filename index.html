@@ -488,6 +488,7 @@
 			<button id="tabSemLocal" class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)"><i class="fa-solid fa-location-dot"></i> Sem Local</button>
 			<button id="tabFerramentaria" class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)"><i class="fa-solid fa-wrench"></i> Ferramentaria</button>
 			<button id="tabHistorico" class="tab-btn tab-ferram" onclick="trocarAba('HISTORICO_MANUTENCAO', this)"><i class="fa-solid fa-clock-rotate-left"></i> Histórico Manutenção</button>
+			<button id="tabUsuarios" class="tab-btn tab-only-admin" style="display:none;" onclick="trocarAba('USUARIOS', this)"><i class="fa-solid fa-users"></i> Usuários</button>
 		  </div>
 		</div>
 
@@ -551,6 +552,42 @@
 		<div class="modal-buttons">
 		  <button onclick="fecharModalCadastrarUsuario()" class="btn-cancelar">Cancelar</button>
 		  <button onclick="salvarNovoUsuario()" class="btn-salvar">Salvar Usuário</button>
+		</div>
+	  </div>
+	</div>
+
+	<!-- MODAL: EDITAR USUÁRIO (APENAS ADMIN) -->
+	<div id="modalEditarUsuario" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa-solid fa-user-pen" style="color: var(--warning);"></i> Editar Usuário</h3>
+		<input type="hidden" id="editUserRowIndex">
+
+		<div class="form-group">
+		  <label for="editUserName">Nome de Usuário:</label>
+		  <input type="text" id="editUserName" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="editUserPass">Nova Senha / Alterar Senha:</label>
+		  <div class="password-wrapper">
+		    <input type="password" id="editUserPass" class="form-control" placeholder="Digite para alterar...">
+		    <i class="fa fa-eye password-toggle" onclick="toggleSenha('editUserPass')"></i>
+		  </div>
+		</div>
+
+		<div class="form-group">
+		  <label for="editUserLevel">Nível de Acesso:</label>
+		  <select id="editUserLevel" class="form-control">
+			<option value="admin">Admin</option>
+			<option value="ferramentaria">Ferramentaria</option>
+			<option value="nivel1">Nível 1</option>
+			<option value="nivel2">Nível 2</option>
+		  </select>
+		</div>
+
+		<div class="modal-buttons">
+		  <button onclick="fecharModalEditarUsuario()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="salvarEdicaoUsuario()" class="btn-salvar">Salvar Alterações</button>
 		</div>
 	  </div>
 	</div>
@@ -816,6 +853,11 @@
           btnCadUser.style.display = isAdmin ? "inline-flex" : "none";
         }
 
+        const tabUsers = document.getElementById("tabUsuarios");
+        if (tabUsers) {
+          tabUsers.style.display = isAdmin ? "inline-flex" : "none";
+        }
+
         carregarTodasAbasCache();
 
         if (isFerram) {
@@ -843,7 +885,7 @@
       }
     }
 
-    /* --- FUNÇÕES CADASTRO DE USUÁRIOS (ADMIN) --- */
+    /* --- FUNÇÕES GESTÃO DE USUÁRIOS (ADMIN) --- */
     function abrirModalCadastrarUsuario() {
       document.getElementById("newUser").value = "";
       document.getElementById("newPass").value = "";
@@ -873,8 +915,43 @@
       if (res && res.status === "success") {
         alert("Usuário cadastrado com sucesso!");
         fecharModalCadastrarUsuario();
+        if (abaAtual === "USUARIOS") carregarDadosAba("USUARIOS");
       } else {
         alert("Erro ao cadastrar usuário: " + (res && res.message ? res.message : "Erro desconhecido."));
+      }
+    }
+
+    function abrirModalEditarUsuario(rIndex, user, pass, level) {
+      document.getElementById("editUserRowIndex").value = rIndex;
+      document.getElementById("editUserName").value = user;
+      document.getElementById("editUserPass").value = pass;
+      document.getElementById("editUserLevel").value = level || "nivel1";
+      document.getElementById("modalEditarUsuario").style.display = "flex";
+    }
+
+    function fecharModalEditarUsuario() {
+      document.getElementById("modalEditarUsuario").style.display = "none";
+    }
+
+    function salvarEdicaoUsuario() {
+      const rIndex = document.getElementById("editUserRowIndex").value;
+      const u = document.getElementById("editUserName").value.trim();
+      const p = document.getElementById("editUserPass").value.trim();
+      const n = document.getElementById("editUserLevel").value;
+
+      if (!u || !p) {
+        alert("Preencha o nome do usuário e a senha!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=EDITAR_MOLDE&sheet=USUARIOS&novaAba=USUARIOS&rowIndex=${rIndex}&col1=${encodeURIComponent(u)}&col2=${encodeURIComponent(p)}&col3=${encodeURIComponent(n)}&callback=retornoAcao`;
+      executarJSONP(url);
+    }
+
+    function excluirUsuario(rIndex, user) {
+      if (confirm(`Tem certeza que deseja excluir o usuário '${user}'?`)) {
+        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=USUARIOS&rowIndex=${rIndex}&callback=retornoAcao`;
+        executarJSONP(url);
       }
     }
 
@@ -916,7 +993,7 @@
 
     function carregarDadosAba(nomeAba) {
       const tbody = document.getElementById("tblBody");
-      const colCount = (nomeAba === "ferramentaria") ? 6 : 5;
+      const colCount = (nomeAba === "ferramentaria") ? 6 : (nomeAba === "USUARIOS" ? 4 : 5);
       tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 40px;"><i class="fa-solid fa-circle-notch fa-spin" style="font-size: 24px; color: var(--primary);"></i><br><br>Carregando dados...</td></tr>`;
       
       const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(nomeAba)}&callback=retornoCarregarDados`;
@@ -1021,6 +1098,50 @@
       const isFerram = (uName === "ferramentaria" || uRole === "ferramentaria");
       const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
       const isAdmin  = (uName === "admin" || uRole === "admin");
+
+      /* TABELA DA ABA USUARIOS */
+      if (abaAtual === "USUARIOS" && !ehPesquisa) {
+        tableElem.classList.remove("tabela-historico");
+        thead.innerHTML = `
+          <tr>
+            <th>Usuário</th>
+            <th>Senha</th>
+            <th>Nível</th>
+            <th class="col-acoes">Ações</th>
+          </tr>
+        `;
+
+        if (!dados || dados.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 30px;">Nenhum usuário cadastrado.</td></tr>`;
+          return;
+        }
+
+        dados.forEach(item => {
+          const tr = document.createElement("tr");
+          const uUser = obterValorColuna(item, ["USUARIO", "Usuario", "NOME"], 0);
+          const uPass = obterValorColuna(item, ["SENHA", "Senha"], 1);
+          const uNivel = obterValorColuna(item, ["NIVEL", "Nivel"], 2);
+
+          const rIdx = item._rowIndex;
+          const uUserSeguro = String(uUser).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          const uPassSeguro = String(uPass).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          const uNivelSeguro = String(uNivel).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+          tr.innerHTML = `
+            <td data-label="Usuário"><strong>${uUser}</strong></td>
+            <td data-label="Senha">••••••••</td>
+            <td data-label="Nível"><span class="badge-aba badge-plastico">${uNivel}</span></td>
+            <td class="col-acoes" data-label="Ações">
+              <div class="btn-group-acoes">
+                <button class="btn-tbl btn-editar" onclick="abrirModalEditarUsuario(${rIdx}, '${uUserSeguro}', '${uPassSeguro}', '${uNivelSeguro}')"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-tbl btn-excluir" onclick="excluirUsuario(${rIdx}, '${uUserSeguro}')"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        return;
+      }
 
       if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
         tableElem.classList.add("tabela-historico");
@@ -1384,6 +1505,7 @@
         fecharModalEditar();
         fecharModalFerramentaria();
         fecharModalLiberar();
+        fecharModalEditarUsuario();
         
         carregarTodasAbasCache();
         carregarDadosAba(abaAtual);
