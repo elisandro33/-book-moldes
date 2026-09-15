@@ -237,6 +237,7 @@
       letter-spacing: 0.8px;
       padding: 16px 20px;
       border-bottom: 1px solid var(--card-border);
+      white-space: nowrap;
     }
     
     td { 
@@ -257,15 +258,26 @@
       color: #fca5a5 !important;
     }
 
-    /* COLUNAS E LARGURAS */
-    th:nth-child(1), td:nth-child(1) { width: 15%; }
-    th:nth-child(2), td:nth-child(2) { width: 18%; }
-    th:nth-child(3), td:nth-child(3) { 
+    /* COLUNAS E LARGURAS PARA ABAS COMUNS */
+    table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 15%; }
+    table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 18%; }
+    table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { 
       width: 37%; 
       white-space: normal; 
       word-wrap: break-word; 
     }
-    th:nth-child(4), td:nth-child(4) { width: 15%; }
+    table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 15%; }
+
+    /* AJUSTES ESPECÍFICOS DA TABELA DE HISTÓRICO */
+    table.tabela-historico {
+      table-layout: auto !important;
+      min-width: 1100px;
+    }
+    table.tabela-historico th, table.tabela-historico td {
+      white-space: normal !important;
+      word-wrap: break-word;
+      max-width: 280px;
+    }
 
     .col-acoes { 
       width: 15%; 
@@ -433,7 +445,7 @@
 
 		<!-- TABELA CONTAINER -->
 		<div class="table-container" id="tblContainer">
-		  <table>
+		  <table id="tblMain">
 			<thead id="tblHead">
 			  <tr>
 				<th>Local / Molde N°</th>
@@ -841,6 +853,7 @@
     }
 
     function renderizarTabela(dados, ehPesquisa = false) {
+      const tableElem = document.getElementById("tblMain");
       const thead = document.getElementById("tblHead");
       const tbody = document.getElementById("tblBody");
       tbody.innerHTML = "";
@@ -853,6 +866,8 @@
       const isAdmin  = (uName === "admin" || uRole === "admin");
 
       if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
+        tableElem.classList.add("tabela-historico");
+
         if (!dados || dados.length === 0) {
           thead.innerHTML = `<tr><th>Informação</th></tr>`;
           tbody.innerHTML = `<tr><td style="text-align:center; padding: 30px;">Nenhum histórico encontrado.</td></tr>`;
@@ -908,6 +923,7 @@
         return;
       }
 
+      tableElem.classList.remove("tabela-historico");
       const exibirPrazo = (abaAtual === "ferramentaria");
 
       thead.innerHTML = `
