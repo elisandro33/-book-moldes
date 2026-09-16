@@ -127,11 +127,6 @@
       box-shadow: var(--shadow-sm);
     }
     .header-brand { display: flex; align-items: center; gap: 12px; }
-    .header-brand img { 
-      width: 36px; 
-      height: 36px; 
-      object-fit: contain; 
-    }
     .header-brand h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-main); }
     
     .user-info { display: flex; align-items: center; gap: 10px; }
@@ -757,7 +752,7 @@
     const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
     let cacheTodasAbas = {};
 
-    // Auto-scroll automático para a última conversa na reabertura
+    // Auto-scroll automático para a última conversa ao reabrir o chat
     window.addEventListener("DOMContentLoaded", () => {
       window.scrollTo(0, document.body.scrollHeight);
     });
@@ -939,19 +934,38 @@
       const p = document.getElementById("editUserPass").value.trim();
       const n = document.getElementById("editUserLevel").value;
 
-      if (!u || !p) {
-        alert("Preencha o nome do usuário e a senha!");
+      if (!u) {
+        alert("Informe o nome do usuário!");
         return;
       }
 
-      const url = `${BASE_API}?action=EDITAR_MOLDE&sheet=USUARIOS&novaAba=USUARIOS&rowIndex=${rIndex}&col1=${encodeURIComponent(u)}&col2=${encodeURIComponent(p)}&col3=${encodeURIComponent(n)}&callback=retornoAcao`;
+      const url = `${BASE_API}?action=EDITAR_MOLDE&sheet=USUARIOS&novaAba=USUARIOS&rowIndex=${rIndex}&col1=${encodeURIComponent(u)}&col2=${encodeURIComponent(p)}&col3=${encodeURIComponent(n)}&callback=retornoEdicaoUsuario`;
       executarJSONP(url);
+    }
+
+    function retornoEdicaoUsuario(res) {
+      if (res && res.status === "success") {
+        alert("Usuário atualizado com sucesso!");
+        fecharModalEditarUsuario();
+        if (abaAtual === "USUARIOS") carregarDadosAba("USUARIOS");
+      } else {
+        alert("Erro ao atualizar usuário: " + (res && res.message ? res.message : "Erro desconhecido."));
+      }
     }
 
     function excluirUsuario(rIndex, user) {
       if (confirm(`Tem certeza que deseja excluir o usuário '${user}'?`)) {
-        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=USUARIOS&rowIndex=${rIndex}&callback=retornoAcao`;
+        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=USUARIOS&rowIndex=${rIndex}&callback=retornoExcluirUsuario`;
         executarJSONP(url);
+      }
+    }
+
+    function retornoExcluirUsuario(res) {
+      if (res && res.status === "success") {
+        alert("Usuário removido com sucesso!");
+        if (abaAtual === "USUARIOS") carregarDadosAba("USUARIOS");
+      } else {
+        alert("Erro ao excluir usuário: " + (res && res.message ? res.message : "Erro desconhecido."));
       }
     }
 
@@ -993,7 +1007,15 @@
 
     function carregarDadosAba(nomeAba) {
       const tbody = document.getElementById("tblBody");
-      const colCount = (nomeAba === "ferramentaria") ? 6 : (nomeAba === "USUARIOS" ? 4 : 5);
+      const tblMain = document.getElementById("tblMain");
+
+      if (nomeAba === "HISTORICO_MANUTENCAO") {
+        tblMain.classList.add("tabela-historico");
+      } else {
+        tblMain.classList.remove("tabela-historico");
+      }
+
+      const colCount = (nomeAba === "ferramentaria") ? 6 : 5;
       tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 40px;"><i class="fa-solid fa-circle-notch fa-spin" style="font-size: 24px; color: var(--primary);"></i><br><br>Carregando dados...</td></tr>`;
       
       const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(nomeAba)}&callback=retornoCarregarDados`;
@@ -1002,9 +1024,11 @@
 
     function retornoCarregarDados(res) {
       dadosAbaAtual = Array.isArray(res) ? res : [];
-      cacheTodasAbas[abaAtual] = dadosAbaAtual;
-      renderizarTabela(dadosAbaAtual);
+      if (abaAtual !== "USUARIOS" && abaAtual !== "HISTORICO_MANUTENCAO") {
+        cacheTodasAbas[abaAtual] = dadosAbaAtual;
+      }
       atualizarKPIs();
+      renderizarTabela(dadosAbaAtual);
     }
 
     function normalizarString(str) {
@@ -1047,12 +1071,6 @@
       return val;
     }
 
-    function formatarNomeColunaHistorico(col) {
-      const c = String(col).trim().toUpperCase();
-      if (c === "COL_12" || c === "STATUS") return "STATUS";
-      return col;
-    }
-
     function estaVencido(dataPrazoStr, status) {
       if (!dataPrazoStr) return false;
       const statusUpper = String(status || "").toUpperCase();
@@ -1087,26 +1105,24 @@
     }
 
     function renderizarTabela(dados, ehPesquisa = false) {
-      const tableElem = document.getElementById("tblMain");
       const thead = document.getElementById("tblHead");
       const tbody = document.getElementById("tblBody");
       tbody.innerHTML = "";
 
-      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase().trim() : "";
-      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase().trim() : "";
+      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase() : "";
+      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase() : "";
       
       const isFerram = (uName === "ferramentaria" || uRole === "ferramentaria");
       const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
       const isAdmin  = (uName === "admin" || uRole === "admin");
 
-      /* TABELA DA ABA USUARIOS */
-      if (abaAtual === "USUARIOS" && !ehPesquisa) {
-        tableElem.classList.remove("tabela-historico");
+      /* VISUALIZAÇÃO DE USUÁRIOS (ADMIN) */
+      if (abaAtual === "USUARIOS") {
         thead.innerHTML = `
           <tr>
             <th>Usuário</th>
             <th>Senha</th>
-            <th>Nível</th>
+            <th>Nível de Acesso</th>
             <th class="col-acoes">Ações</th>
           </tr>
         `;
@@ -1118,23 +1134,18 @@
 
         dados.forEach(item => {
           const tr = document.createElement("tr");
-          const uUser = obterValorColuna(item, ["USUARIO", "Usuario", "NOME"], 0);
-          const uPass = obterValorColuna(item, ["SENHA", "Senha"], 1);
-          const uNivel = obterValorColuna(item, ["NIVEL", "Nivel"], 2);
-
-          const rIdx = item._rowIndex;
-          const uUserSeguro = String(uUser).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-          const uPassSeguro = String(uPass).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-          const uNivelSeguro = String(uNivel).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          const uUser = obterValorColuna(item, ["USUARIO", "Usuário", "User", "USUÁRIO"], 0);
+          const uPass = obterValorColuna(item, ["SENHA", "Senha", "Pass", "PASSWORD"], 1);
+          const uLevel = obterValorColuna(item, ["NIVEL", "Nível", "Role", "PERFIL"], 2);
 
           tr.innerHTML = `
             <td data-label="Usuário"><strong>${uUser}</strong></td>
             <td data-label="Senha">••••••••</td>
-            <td data-label="Nível"><span class="badge-aba badge-plastico">${uNivel}</span></td>
+            <td data-label="Nível">${uLevel}</td>
             <td class="col-acoes" data-label="Ações">
               <div class="btn-group-acoes">
-                <button class="btn-tbl btn-editar" onclick="abrirModalEditarUsuario(${rIdx}, '${uUserSeguro}', '${uPassSeguro}', '${uNivelSeguro}')"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-tbl btn-excluir" onclick="excluirUsuario(${rIdx}, '${uUserSeguro}')"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn-tbl btn-editar" onclick="abrirModalEditarUsuario(${item._rowIndex}, '${uUser.replace(/'/g, "\\'")}', '${uPass.replace(/'/g, "\\'")}', '${uLevel.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-tbl btn-excluir" onclick="excluirUsuario(${item._rowIndex}, '${uUser.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>
               </div>
             </td>
           `;
@@ -1143,9 +1154,8 @@
         return;
       }
 
+      /* VISUALIZAÇÃO DO HISTÓRICO DE MANUTENÇÃO */
       if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
-        tableElem.classList.add("tabela-historico");
-
         if (!dados || dados.length === 0) {
           thead.innerHTML = `<tr><th>Informação</th></tr>`;
           tbody.innerHTML = `<tr><td style="text-align:center; padding: 30px;">Nenhum histórico encontrado.</td></tr>`;
@@ -1155,13 +1165,9 @@
         const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex' && k !== '_origemAba');
         let headerHTML = "<tr>";
         colunas.forEach(col => {
-          let nomeExibicao = formatarNomeColunaHistorico(col);
+          let nomeExibicao = col.toUpperCase() === "COL_12" ? "STATUS" : col;
           headerHTML += `<th>${nomeExibicao}</th>`;
         });
-        
-        if (isAdmin) {
-          headerHTML += `<th class="col-acoes">Ações</th>`;
-        }
         headerHTML += "</tr>";
         thead.innerHTML = headerHTML;
 
@@ -1180,28 +1186,15 @@
             if (col.toUpperCase().includes("PRAZO")) {
               valor = formatarDataExibicao(valor);
             }
-            let rotuloExibicao = formatarNomeColunaHistorico(col);
-            rowHTML += `<td data-label="${rotuloExibicao}">${valor}</td>`;
+            rowHTML += `<td data-label="${col}">${valor}</td>`;
           });
-
-          if (isAdmin) {
-            const rIdx = item._rowIndex;
-            const codSeguro = String(item["CÓDIGO"] || item["CODIGO"] || item["N° OS"] || "Registro").replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            rowHTML += `
-              <td class="col-acoes" data-label="Ações">
-                <div class="btn-group-acoes">
-                  <button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('HISTORICO_MANUTENCAO', ${rIdx}, '${codSeguro}')"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </td>`;
-          }
-
           tr.innerHTML = rowHTML;
           tbody.appendChild(tr);
         });
         return;
       }
 
-      tableElem.classList.remove("tabela-historico");
+      /* VISUALIZAÇÃO PADRÃO DE MOLDES */
       const exibirPrazo = (abaAtual === "ferramentaria");
 
       thead.innerHTML = `
@@ -1237,23 +1230,18 @@
         const origemAba = item._origemAba || abaAtual;
         const abaBadgeHTML = formatarNomeAba(origemAba);
 
-        const col1Segura = String(col1).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const col2Segura = String(col2).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const col3Segura = String(col3).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-
         let btnAcaoPrincipalHTML = "";
         
         if (!isNivel1) {
           if (origemAba === "ferramentaria") {
             btnAcaoPrincipalHTML = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberarObj(${item._rowIndex})"><i class="fa-solid fa-check"></i> Liberar</button>`;
           } else if (!isFerram) {
-            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentariaObj('${origemAba}', ${item._rowIndex}, '${col1Segura}', '${col2Segura}', '${col3Segura}')"><i class="fa-solid fa-wrench"></i> Manutenção</button>`;
+            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentariaObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-wrench"></i> Manutenção</button>`;
           }
         }
 
-        const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1Segura}', '${col2Segura}', '${col3Segura}')"><i class="fa-solid fa-pen"></i></button>` : '';
-        
-        const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2Segura}')"><i class="fa-solid fa-trash"></i></button>` : '';
+        const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>` : '';
+        const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>` : '';
 
         const tdPrazoHTML = exibirPrazo ? `<td data-label="Prazo">${formatarDataExibicao(valPrazo)}</td>` : '';
 
@@ -1419,19 +1407,8 @@
     }
 
     function excluirMoldeObj(aba, rowIndex, codigo) {
-      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase().trim() : "";
-      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase().trim() : "";
-      const isAdmin = (uName === "admin" || uRole === "admin");
-
-      if (!isAdmin) {
-        alert("Apenas usuários administradores podem excluir registros.");
-        return;
-      }
-
-      if (!aba) aba = abaAtual;
-
       if (confirm(`Tem certeza que deseja excluir o molde '${codigo}' da aba ${aba}?`)) {
-        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(aba)}&rowIndex=${encodeURIComponent(rowIndex)}&callback=retornoAcao`;
+        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(aba)}&rowIndex=${rowIndex}&callback=retornoAcao`;
         executarJSONP(url);
       }
     }
@@ -1505,7 +1482,6 @@
         fecharModalEditar();
         fecharModalFerramentaria();
         fecharModalLiberar();
-        fecharModalEditarUsuario();
         
         carregarTodasAbasCache();
         carregarDadosAba(abaAtual);
