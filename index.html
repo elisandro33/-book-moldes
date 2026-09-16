@@ -293,9 +293,9 @@
 
     /* COLUNAS E LARGURAS PARA ABAS COMUNS */
     table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 15%; }
-    table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 18%; }
+    table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 15%; }
     table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { 
-      width: 37%; 
+      width: 35%; 
       white-space: normal; 
       word-wrap: break-word; 
     }
@@ -305,7 +305,7 @@
     table.tabela-historico { table-layout: auto !important; min-width: 1100px; }
     table.tabela-historico th, table.tabela-historico td { white-space: normal !important; word-wrap: break-word; max-width: 280px; }
 
-    .col-acoes { width: 15%; text-align: right; white-space: nowrap; }
+    .col-acoes { width: 20%; text-align: right; white-space: nowrap; }
     .btn-group-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; }
 
     /* BADGES */
@@ -752,7 +752,6 @@
     const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
     let cacheTodasAbas = {};
 
-    // Auto-scroll automático para a última conversa ao reabrir o chat
     window.addEventListener("DOMContentLoaded", () => {
       window.scrollTo(0, document.body.scrollHeight);
     });
