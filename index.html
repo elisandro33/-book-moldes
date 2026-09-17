@@ -261,6 +261,7 @@
       border-collapse: collapse; 
       text-align: left; 
       font-size: 14px; 
+      table-layout: fixed;
     }
     
     th { 
@@ -290,15 +291,22 @@
     .prazo-vencido { background-color: rgba(239, 68, 68, 0.12) !important; }
     .prazo-vencido td { color: #fca5a5 !important; }
 
-    /* AJUSTES DE COLUNAS */
-    .col-prazo { width: 130px; text-align: center; font-weight: 600; }
-    .col-acoes { text-align: right; white-space: nowrap; width: 1%; }
+    /* COLUNAS E LARGURAS PARA ABAS COMUNS */
+    table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 15%; }
+    table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 18%; }
+    table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { 
+      width: 37%; 
+      white-space: normal; 
+      word-wrap: break-word; 
+    }
+    table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 15%; }
 
     /* AJUSTES ESPECÍFICOS DA TABELA DE HISTÓRICO */
     table.tabela-historico { table-layout: auto !important; min-width: 1100px; }
     table.tabela-historico th, table.tabela-historico td { white-space: normal !important; word-wrap: break-word; max-width: 280px; }
 
-    .btn-group-acoes { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: nowrap; }
+    .col-acoes { width: 15%; text-align: right; white-space: nowrap; }
+    .btn-group-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; }
 
     /* BADGES */
     .badge-aba { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
@@ -471,4 +479,1016 @@
 		<div class="tabs-wrapper">
 		  <div class="tabs" id="tabContainer">
 			<button id="tabPlastico" class="tab-btn tab-admin" onclick="trocarAba('ATUALIZADA', this)"><i class="fa-solid fa-industry"></i> Plástico</button>
-			<button id="tabQLX" class="tab-btn tab-admi
+			<button id="tabQLX" class="tab-btn tab-admin" onclick="trocarAba('Moldes QLX', this)"><i class="fa-solid fa-box-archive"></i> Moldes QLX</button>
+			<button id="tabSemLocal" class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)"><i class="fa-solid fa-location-dot"></i> Sem Local</button>
+			<button id="tabFerramentaria" class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)"><i class="fa-solid fa-wrench"></i> Ferramentaria</button>
+			<button id="tabHistorico" class="tab-btn tab-ferram" onclick="trocarAba('HISTORICO_MANUTENCAO', this)"><i class="fa-solid fa-clock-rotate-left"></i> Histórico Manutenção</button>
+			<button id="tabUsuarios" class="tab-btn tab-only-admin" style="display:none;" onclick="trocarAba('USUARIOS', this)"><i class="fa-solid fa-users"></i> Usuários</button>
+		  </div>
+		</div>
+
+		<!-- BARRA DE AÇÕES -->
+		<div class="actions-bar">
+		  <div class="search-box">
+			<i class="fa-solid fa-magnifying-glass"></i>
+			<input type="text" id="txtBusca" placeholder="Pesquisar moldes, códigos ou locais..." onkeyup="filtrarTabelaGlobal()">
+		  </div>
+		  <button class="btn-add" id="btnAddMolde" onclick="abrirModalAdicionar()"><i class="fa-solid fa-plus"></i> Novo Molde</button>
+		</div>
+
+		<!-- TABELA CONTAINER -->
+		<div class="table-container" id="tblContainer">
+		  <table id="tblMain">
+			<thead id="tblHead">
+			  <tr>
+				<th>Local / Molde N°</th>
+				<th>Código</th>
+				<th>Descrição</th>
+				<th>Aba / Origem</th>
+				<th class="col-acoes">Ações</th>
+			  </tr>
+			</thead>
+			<tbody id="tblBody">
+			  <tr><td colspan="5" style="text-align:center; padding: 40px;">Selecione uma aba para carregar...</td></tr>
+			</tbody>
+		  </table>
+		</div>
+	  </main>
+	</div>
+
+	<!-- MODAL: CADASTRAR USUÁRIO (APENAS ADMIN) -->
+	<div id="modalCadastrarUsuario" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa-solid fa-user-plus" style="color: var(--primary);"></i> Cadastrar Novo Usuário</h3>
+
+		<div class="form-group">
+		  <label for="newUser">Nome de Usuário:</label>
+		  <input type="text" id="newUser" class="form-control" placeholder="Digite o nome de usuário...">
+		</div>
+
+		<div class="form-group">
+		  <label for="newPass">Senha:</label>
+		  <div class="password-wrapper">
+		    <input type="password" id="newPass" class="form-control" placeholder="••••••••">
+		    <i class="fa fa-eye password-toggle" onclick="toggleSenha('newPass')"></i>
+		  </div>
+		</div>
+
+		<div class="form-group">
+		  <label for="newLevel">Nível de Acesso:</label>
+		  <select id="newLevel" class="form-control">
+			<option value="admin">Admin</option>
+			<option value="ferramentaria">Ferramentaria</option>
+			<option value="nivel1">Nível 1</option>
+			<option value="nivel2">Nível 2</option>
+		  </select>
+		</div>
+
+		<div class="modal-buttons">
+		  <button onclick="fecharModalCadastrarUsuario()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="salvarNovoUsuario()" class="btn-salvar">Salvar Usuário</button>
+		</div>
+	  </div>
+	</div>
+
+	<!-- MODAL: EDITAR USUÁRIO (APENAS ADMIN) -->
+	<div id="modalEditarUsuario" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa-solid fa-user-pen" style="color: var(--warning);"></i> Editar Usuário</h3>
+		<input type="hidden" id="editUserRowIndex">
+
+		<div class="form-group">
+		  <label for="editUserName">Nome de Usuário:</label>
+		  <input type="text" id="editUserName" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="editUserPass">Nova Senha / Alterar Senha:</label>
+		  <div class="password-wrapper">
+		    <input type="password" id="editUserPass" class="form-control" placeholder="Digite para alterar...">
+		    <i class="fa fa-eye password-toggle" onclick="toggleSenha('editUserPass')"></i>
+		  </div>
+		</div>
+
+		<div class="form-group">
+		  <label for="editUserLevel">Nível de Acesso:</label>
+		  <select id="editUserLevel" class="form-control">
+			<option value="admin">Admin</option>
+			<option value="ferramentaria">Ferramentaria</option>
+			<option value="nivel1">Nível 1</option>
+			<option value="nivel2">Nível 2</option>
+		  </select>
+		</div>
+
+		<div class="modal-buttons">
+		  <button onclick="fecharModalEditarUsuario()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="salvarEdicaoUsuario()" class="btn-salvar">Salvar Alterações</button>
+		</div>
+	  </div>
+	</div>
+
+	<!-- MODAL: ADICIONAR MOLDE -->
+	<div id="modalAdicionarMolde" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa-solid fa-plus-circle" style="color: var(--success);"></i> Adicionar Molde</h3>
+
+		<div class="form-group">
+		  <label for="addAbaDestino">Destino (Aba):</label>
+		  <select id="addAbaDestino" class="form-control">
+			<option value="ATUALIZADA">Plástico</option>
+			<option value="Moldes QLX">Moldes QLX</option>
+			<option value="Sem local">Sem Local</option>
+		  </select>
+		</div>
+
+		<div class="form-group">
+		  <label for="addLocal">Local / Molde N°:</label>
+		  <input type="text" id="addLocal" class="form-control" placeholder="Ex: A1, MOD-058...">
+		</div>
+
+		<div class="form-group">
+		  <label for="addCodigo">Código:</label>
+		  <input type="text" id="addCodigo" class="form-control" placeholder="Código do molde">
+		</div>
+
+		<div class="form-group">
+		  <label for="addDescricao">Descrição:</label>
+		  <input type="text" id="addDescricao" class="form-control" placeholder="Descrição da peça / molde">
+		</div>
+
+		<div class="modal-buttons">
+		  <button onclick="fecharModalAdicionar()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="salvarNovoMolde()" class="btn-salvar">Salvar Molde</button>
+		</div>
+	  </div>
+	</div>
+
+	<!-- MODAL: EDITAR MOLDE -->
+	<div id="modalEditarMolde" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa-solid fa-pen-to-square" style="color: var(--warning);"></i> Editar Molde</h3>
+		<input type="hidden" id="editRowIndex">
+		<input type="hidden" id="editAbaOrigem">
+
+		<div class="form-group" id="grpEditAbaDestino">
+		  <label for="editAbaDestino">Aba / Destino:</label>
+		  <select id="editAbaDestino" class="form-control">
+			<option value="ATUALIZADA">Plástico</option>
+			<option value="Moldes QLX">Moldes QLX</option>
+			<option value="Sem local">Sem Local</option>
+			<option value="ferramentaria">Ferramentaria</option>
+		  </select>
+		</div>
+
+		<div class="form-group">
+		  <label for="editLocal">Local / Molde N°:</label>
+		  <input type="text" id="editLocal" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="editCodigo">Código:</label>
+		  <input type="text" id="editCodigo" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="editDescricao">Descrição:</label>
+		  <input type="text" id="editDescricao" class="form-control">
+		</div>
+
+		<div class="modal-buttons">
+		  <button onclick="fecharModalEditar()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="salvarEdicaoMolde()" class="btn-salvar">Salvar Alterações</button>
+		</div>
+	  </div>
+	</div>
+
+	<!-- MODAL: SOLICITAR FERRAMENTARIA -->
+	<div id="modalFerramentaria" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa-solid fa-wrench" style="color: var(--primary);"></i> Solicitar Ferramentaria</h3>
+		<input type="hidden" id="ferrRowIndex">
+		<input type="hidden" id="ferrAbaOrigem">
+		<input type="hidden" id="ferrLocal">
+		<input type="hidden" id="ferrCodigo">
+		<input type="hidden" id="ferrDescricao">
+
+		<div class="form-group">
+		  <label for="ferrData">Data Entrada:</label>
+		  <input type="date" id="ferrData" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="ferrHora">Hora Entrada:</label>
+		  <input type="time" id="ferrHora" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="ferrPrazo">Prazo Estimado (Data):</label>
+		  <input type="date" id="ferrPrazo" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="ferrSolicitante">Solicitante:</label>
+		  <input type="text" id="ferrSolicitante" class="form-control" placeholder="Nome do solicitante">
+		</div>
+
+		<div class="form-group">
+		  <label for="ferrTipos">Tipo de Serviço:</label>
+		  <input type="text" id="ferrTipos" class="form-control" placeholder="Ex: Manutenção Corretiva, Ajuste...">
+		</div>
+
+		<div class="form-group">
+		  <label for="ferrObs">Observação / Problema:</label>
+		  <textarea id="ferrObs" class="form-control" rows="3" placeholder="Detalhes do problema..."></textarea>
+		</div>
+
+		<div class="modal-buttons">
+		  <button onclick="fecharModalFerramentaria()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="confirmarEnvioFerramentaria()" class="btn-salvar">Enviar Solicitação</button>
+		</div>
+	  </div>
+	</div>
+
+	<!-- MODAL: LIBERAR PARA O PLÁSTICO -->
+	<div id="modalLiberarPlastico" class="modal">
+	  <div class="modal-content">
+		<h3><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Liberar P/ Plástico</h3>
+		<input type="hidden" id="libRowIndex">
+
+		<div class="form-group">
+		  <label for="libDataSaida">Data de Saída:</label>
+		  <input type="date" id="libDataSaida" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="libHoraSaida">Hora de Saída:</label>
+		  <input type="time" id="libHoraSaida" class="form-control">
+		</div>
+
+		<div class="form-group">
+		  <label for="libTecnico">Técnico / Responsável:</label>
+		  <input type="text" id="libTecnico" class="form-control" placeholder="Nome do responsável">
+		</div>
+
+		<div class="form-group">
+		  <label for="libAcaoRealizada">Ação / Manutenção Realizada:</label>
+		  <textarea id="libAcaoRealizada" class="form-control" rows="3" placeholder="Descreva os reparos ou ajustes feitos..."></textarea>
+		</div>
+
+		<div class="modal-buttons">
+		  <button onclick="fecharModalLiberar()" class="btn-cancelar">Cancelar</button>
+		  <button onclick="confirmarLiberacaoPlastico()" class="btn-salvar">Confirmar Liberação</button>
+		</div>
+	  </div>
+	</div>
+
+<script>
+    const BASE_API = "https://script.google.com/macros/s/AKfycbwUeuAbdmfy9Ej-i4mzHpWAUvRXMgAI35vveRyB9U2EuN3r1w5AolAHX0wMS74kVbCj/exec";
+    
+    let usuarioLogado = null;
+    let abaAtual = "ATUALIZADA";
+    let dadosAbaAtual = [];
+    
+    const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
+    let cacheTodasAbas = {};
+
+    // Auto-scroll automático para a última conversa ao reabrir o chat
+    window.addEventListener("DOMContentLoaded", () => {
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+
+    function atualizarKPIs() {
+      const elAba = document.getElementById("kpiTotalAba");
+      const elFerram = document.getElementById("kpiFerramentaria");
+      const elGeral = document.getElementById("kpiTotalGeral");
+
+      if (elAba) elAba.innerText = dadosAbaAtual.length;
+      if (elFerram) elFerram.innerText = (cacheTodasAbas["ferramentaria"] || []).length;
+
+      let total = 0;
+      TODAS_AS_ABAS.forEach(aba => {
+        total += (cacheTodasAbas[aba] || []).length;
+      });
+      if (elGeral) elGeral.innerText = total;
+    }
+
+    function executarJSONP(url) {
+      const script = document.createElement('script');
+      script.src = url;
+      script.onerror = () => {
+        restaurarEstadoLogin();
+        mostrarStatusLogin("Erro de conexão ao acessar o servidor Google Apps Script.", "error");
+      };
+      document.body.appendChild(script);
+      script.onload = () => document.body.removeChild(script);
+    }
+
+    /* --- FUNÇÕES DE LOGIN & SESSÃO --- */
+    function toggleSenha(inputId) {
+      const passInput = document.getElementById(inputId);
+      if (passInput) {
+        passInput.type = passInput.type === "password" ? "text" : "password";
+      }
+    }
+
+    function mostrarStatusLogin(msg, tipo) {
+      const statusDiv = document.getElementById("loginStatus");
+      statusDiv.className = `login-status ${tipo}`;
+      if (tipo === "loading") {
+        statusDiv.innerHTML = `<i class="fa fa-circle-notch fa-spin"></i> ${msg}`;
+      } else {
+        statusDiv.innerHTML = msg;
+      }
+    }
+
+    function restaurarEstadoLogin() {
+      const btn = document.getElementById("btnLogin");
+      btn.disabled = false;
+      btn.innerHTML = "Entrar no Sistema";
+    }
+
+    function efetuarLogin() {
+      const u = document.getElementById("loginUser").value.trim();
+      const p = document.getElementById("loginPass").value.trim();
+
+      if (!u || !p) {
+        mostrarStatusLogin("Informe o usuário e a senha!", "error");
+        return;
+      }
+
+      const btn = document.getElementById("btnLogin");
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa fa-circle-notch fa-spin"></i> Autenticando...`;
+      mostrarStatusLogin("Autenticando, aguarde...", "loading");
+
+      const url = `${BASE_API}?action=LOGIN&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}&callback=retornoLogin`;
+      executarJSONP(url);
+    }
+
+    function retornoLogin(res) {
+      if (res && res.status === "success") {
+        usuarioLogado = res;
+        document.getElementById("lblUsuario").innerText = res.user;
+        document.getElementById("lblRole").innerText = res.role;
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appContainer").style.display = "flex";
+
+        restaurarEstadoLogin();
+        document.getElementById("loginStatus").innerHTML = "";
+
+        const uName = String(res.user).toLowerCase();
+        const uRole = String(res.role).toLowerCase();
+        
+        const isFerram = (uName === "ferramentaria" || uRole === "ferramentaria");
+        const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
+        const isAdmin  = (uName === "admin" || uRole === "admin");
+
+        const btnCadUser = document.getElementById("btnCadastrarUsuario");
+        if (btnCadUser) {
+          btnCadUser.style.display = isAdmin ? "inline-flex" : "none";
+        }
+
+        const tabUsers = document.getElementById("tabUsuarios");
+        if (tabUsers) {
+          tabUsers.style.display = isAdmin ? "inline-flex" : "none";
+        }
+
+        carregarTodasAbasCache();
+
+        if (isFerram) {
+          document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "none");
+          document.getElementById("btnAddMolde").style.display = "none";
+          
+          const btnFerram = document.getElementById("tabFerramentaria");
+          trocarAba('ferramentaria', btnFerram);
+        } else {
+          document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "inline-flex");
+          
+          if (isNivel1) {
+            document.getElementById("btnAddMolde").style.display = "none";
+          } else {
+            document.getElementById("btnAddMolde").style.display = "flex";
+          }
+          
+          const btnPlastico = document.getElementById("tabPlastico");
+          trocarAba('ATUALIZADA', btnPlastico);
+        }
+
+      } else {
+        restaurarEstadoLogin();
+        mostrarStatusLogin("Erro no login: " + (res.message || "Usuário ou senha incorretos."), "error");
+      }
+    }
+
+    /* --- FUNÇÕES GESTÃO DE USUÁRIOS (ADMIN) --- */
+    function abrirModalCadastrarUsuario() {
+      document.getElementById("newUser").value = "";
+      document.getElementById("newPass").value = "";
+      document.getElementById("newLevel").value = "nivel1";
+      document.getElementById("modalCadastrarUsuario").style.display = "flex";
+    }
+
+    function fecharModalCadastrarUsuario() {
+      document.getElementById("modalCadastrarUsuario").style.display = "none";
+    }
+
+    function salvarNovoUsuario() {
+      const u = document.getElementById("newUser").value.trim();
+      const p = document.getElementById("newPass").value.trim();
+      const n = document.getElementById("newLevel").value;
+
+      if (!u || !p) {
+        alert("Preencha o nome do usuário e a senha!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=ADICIONAR_MOLDE&sheet=USUARIOS&col1=${encodeURIComponent(u)}&col2=${encodeURIComponent(p)}&col3=${encodeURIComponent(n)}&callback=retornoCadastroUsuario`;
+      executarJSONP(url);
+    }
+
+    function retornoCadastroUsuario(res) {
+      if (res && res.status === "success") {
+        alert("Usuário cadastrado com sucesso!");
+        fecharModalCadastrarUsuario();
+        if (abaAtual === "USUARIOS") carregarDadosAba("USUARIOS");
+      } else {
+        alert("Erro ao cadastrar usuário: " + (res && res.message ? res.message : "Erro desconhecido."));
+      }
+    }
+
+    function abrirModalEditarUsuario(rIndex, user, pass, level) {
+      document.getElementById("editUserRowIndex").value = rIndex;
+      document.getElementById("editUserName").value = user;
+      document.getElementById("editUserPass").value = pass;
+      document.getElementById("editUserLevel").value = level || "nivel1";
+      document.getElementById("modalEditarUsuario").style.display = "flex";
+    }
+
+    function fecharModalEditarUsuario() {
+      document.getElementById("modalEditarUsuario").style.display = "none";
+    }
+
+    function salvarEdicaoUsuario() {
+      const rIndex = document.getElementById("editUserRowIndex").value;
+      const u = document.getElementById("editUserName").value.trim();
+      const p = document.getElementById("editUserPass").value.trim();
+      const n = document.getElementById("editUserLevel").value;
+
+      if (!u) {
+        alert("Informe o nome do usuário!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=EDITAR_MOLDE&sheet=USUARIOS&novaAba=USUARIOS&rowIndex=${rIndex}&col1=${encodeURIComponent(u)}&col2=${encodeURIComponent(p)}&col3=${encodeURIComponent(n)}&callback=retornoEdicaoUsuario`;
+      executarJSONP(url);
+    }
+
+    function retornoEdicaoUsuario(res) {
+      if (res && res.status === "success") {
+        alert("Usuário atualizado com sucesso!");
+        fecharModalEditarUsuario();
+        if (abaAtual === "USUARIOS") carregarDadosAba("USUARIOS");
+      } else {
+        alert("Erro ao atualizar usuário: " + (res && res.message ? res.message : "Erro desconhecido."));
+      }
+    }
+
+    function excluirUsuario(rIndex, user) {
+      if (confirm(`Tem certeza que deseja excluir o usuário '${user}'?`)) {
+        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=USUARIOS&rowIndex=${rIndex}&callback=retornoExcluirUsuario`;
+        executarJSONP(url);
+      }
+    }
+
+    function retornoExcluirUsuario(res) {
+      if (res && res.status === "success") {
+        alert("Usuário removido com sucesso!");
+        if (abaAtual === "USUARIOS") carregarDadosAba("USUARIOS");
+      } else {
+        alert("Erro ao excluir usuário: " + (res && res.message ? res.message : "Erro desconhecido."));
+      }
+    }
+
+    function carregarTodasAbasCache() {
+      TODAS_AS_ABAS.forEach(aba => {
+        const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(aba)}&callback=retornoCache_${aba.replace(/[^a-zA-Z0-9]/g, '')}`;
+        window[`retornoCache_${aba.replace(/[^a-zA-Z0-9]/g, '')}`] = function(res) {
+          cacheTodasAbas[aba] = Array.isArray(res) ? res : [];
+          atualizarKPIs();
+        };
+        executarJSONP(url);
+      });
+    }
+
+    function logout() {
+      usuarioLogado = null;
+      document.getElementById("appContainer").style.display = "none";
+      document.getElementById("loginScreen").style.display = "flex";
+      document.getElementById("loginPass").value = "";
+      document.getElementById("txtBusca").value = "";
+      document.getElementById("loginStatus").innerHTML = "";
+      restaurarEstadoLogin();
+    }
+
+    function trocarAba(nomeAba, btn) {
+      abaAtual = nomeAba;
+      document.getElementById("txtBusca").value = "";
+      
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+      
+      const selectDestino = document.getElementById("addAbaDestino");
+      if (["ATUALIZADA", "Moldes QLX", "Sem local"].includes(nomeAba)) {
+        selectDestino.value = nomeAba;
+      }
+
+      carregarDadosAba(nomeAba);
+    }
+
+    function carregarDadosAba(nomeAba) {
+      const tbody = document.getElementById("tblBody");
+      const tblMain = document.getElementById("tblMain");
+
+      if (nomeAba === "HISTORICO_MANUTENCAO") {
+        tblMain.classList.add("tabela-historico");
+      } else {
+        tblMain.classList.remove("tabela-historico");
+      }
+
+      const colCount = (nomeAba === "ferramentaria") ? 6 : 5;
+      tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 40px;"><i class="fa-solid fa-circle-notch fa-spin" style="font-size: 24px; color: var(--primary);"></i><br><br>Carregando dados...</td></tr>`;
+      
+      const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(nomeAba)}&callback=retornoCarregarDados`;
+      executarJSONP(url);
+    }
+
+    function retornoCarregarDados(res) {
+      dadosAbaAtual = Array.isArray(res) ? res : [];
+      if (abaAtual !== "USUARIOS" && abaAtual !== "HISTORICO_MANUTENCAO") {
+        cacheTodasAbas[abaAtual] = dadosAbaAtual;
+      }
+      atualizarKPIs();
+      renderizarTabela(dadosAbaAtual);
+    }
+
+    function normalizarString(str) {
+      if (!str) return "";
+      return String(str)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+    }
+
+    function obterValorColuna(item, nomesPossiveis, indicePadrao) {
+      const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_origemAba');
+
+      for (let key of keys) {
+        let keyNorm = normalizarString(key);
+        for (let nome of nomesPossiveis) {
+          if (keyNorm === normalizarString(nome)) {
+            return item[key] || "";
+          }
+        }
+      }
+
+      if (typeof indicePadrao === 'number' && keys[indicePadrao] !== undefined) {
+        return item[keys[indicePadrao]] || "";
+      }
+
+      return "";
+    }
+
+    function formatarDataExibicao(val) {
+      if (!val) return "--";
+      if (val.includes("T")) val = val.split("T")[0];
+      if (val.includes("-")) {
+        const p = val.split("-");
+        if (p.length === 3 && p[0].length === 4) {
+          return `${p[2]}/${p[1]}/${p[0]}`;
+        }
+      }
+      return val;
+    }
+
+    function estaVencido(dataPrazoStr, status) {
+      if (!dataPrazoStr) return false;
+      const statusUpper = String(status || "").toUpperCase();
+      if (statusUpper.includes("CONCLUÍDO") || statusUpper.includes("CONCLUIDO")) return false;
+
+      let dataPrazo;
+      let strLimp = String(dataPrazoStr).split("T")[0];
+      
+      if (strLimp.includes("-")) {
+        const partes = strLimp.split("-");
+        dataPrazo = new Date(partes[0], partes[1] - 1, partes[2]);
+      } else if (strLimp.includes("/")) {
+        const partes = strLimp.split("/");
+        dataPrazo = new Date(partes[2], partes[1] - 1, partes[0]);
+      } else {
+        dataPrazo = new Date(strLimp);
+      }
+
+      if (isNaN(dataPrazo.getTime())) return false;
+
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      return dataPrazo < hoje;
+    }
+
+    function formatarNomeAba(nomeAba) {
+      if (nomeAba === "ATUALIZADA") return `<span class="badge-aba badge-plastico"><i class="fa-solid fa-industry"></i> Plástico</span>`;
+      if (nomeAba === "ferramentaria") return `<span class="badge-aba badge-ferram"><i class="fa-solid fa-wrench"></i> Ferramentaria</span>`;
+      if (nomeAba === "Moldes QLX") return `<span class="badge-aba badge-qlx"><i class="fa-solid fa-box-archive"></i> Moldes QLX</span>`;
+      if (nomeAba === "Sem local") return `<span class="badge-aba badge-semlocal"><i class="fa-solid fa-location-dot"></i> Sem Local</span>`;
+      return `<span class="badge-aba badge-semlocal">${nomeAba}</span>`;
+    }
+
+    function renderizarTabela(dados, ehPesquisa = false) {
+      const thead = document.getElementById("tblHead");
+      const tbody = document.getElementById("tblBody");
+      tbody.innerHTML = "";
+
+      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase() : "";
+      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase() : "";
+      
+      const isFerram = (uName === "ferramentaria" || uRole === "ferramentaria");
+      const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
+      const isAdmin  = (uName === "admin" || uRole === "admin");
+
+      /* VISUALIZAÇÃO DE USUÁRIOS (ADMIN) */
+      if (abaAtual === "USUARIOS") {
+        thead.innerHTML = `
+          <tr>
+            <th>Usuário</th>
+            <th>Senha</th>
+            <th>Nível de Acesso</th>
+            <th class="col-acoes">Ações</th>
+          </tr>
+        `;
+
+        if (!dados || dados.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 30px;">Nenhum usuário cadastrado.</td></tr>`;
+          return;
+        }
+
+        dados.forEach(item => {
+          const tr = document.createElement("tr");
+          const uUser = obterValorColuna(item, ["USUARIO", "Usuário", "User", "USUÁRIO"], 0);
+          const uPass = obterValorColuna(item, ["SENHA", "Senha", "Pass", "PASSWORD"], 1);
+          const uLevel = obterValorColuna(item, ["NIVEL", "Nível", "Role", "PERFIL"], 2);
+
+          tr.innerHTML = `
+            <td data-label="Usuário"><strong>${uUser}</strong></td>
+            <td data-label="Senha">••••••••</td>
+            <td data-label="Nível">${uLevel}</td>
+            <td class="col-acoes" data-label="Ações">
+              <div class="btn-group-acoes">
+                <button class="btn-tbl btn-editar" onclick="abrirModalEditarUsuario(${item._rowIndex}, '${uUser.replace(/'/g, "\\'")}', '${uPass.replace(/'/g, "\\'")}', '${uLevel.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-tbl btn-excluir" onclick="excluirUsuario(${item._rowIndex}, '${uUser.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        return;
+      }
+
+      /* VISUALIZAÇÃO DO HISTÓRICO DE MANUTENÇÃO */
+      if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
+        if (!dados || dados.length === 0) {
+          thead.innerHTML = `<tr><th>Informação</th></tr>`;
+          tbody.innerHTML = `<tr><td style="text-align:center; padding: 30px;">Nenhum histórico encontrado.</td></tr>`;
+          return;
+        }
+
+        const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex' && k !== '_origemAba');
+        let headerHTML = "<tr>";
+        colunas.forEach(col => {
+          let nomeExibicao = col.toUpperCase() === "COL_12" ? "STATUS" : col;
+          headerHTML += `<th>${nomeExibicao}</th>`;
+        });
+        headerHTML += "</tr>";
+        thead.innerHTML = headerHTML;
+
+        dados.forEach(item => {
+          const tr = document.createElement("tr");
+          const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
+          const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
+          
+          if (estaVencido(valPrazo, valStatus)) {
+            tr.classList.add("prazo-vencido");
+          }
+
+          let rowHTML = "";
+          colunas.forEach(col => {
+            let valor = item[col] || "";
+            if (col.toUpperCase().includes("PRAZO")) {
+              valor = formatarDataExibicao(valor);
+            }
+            rowHTML += `<td data-label="${col}">${valor}</td>`;
+          });
+          tr.innerHTML = rowHTML;
+          tbody.appendChild(tr);
+        });
+        return;
+      }
+
+      /* VISUALIZAÇÃO PADRÃO DE MOLDES */
+      const exibirPrazo = (abaAtual === "ferramentaria");
+
+      thead.innerHTML = `
+        <tr>
+          <th>Local / Molde N°</th>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th>Aba / Origem</th>
+          ${exibirPrazo ? '<th>Prazo</th>' : ''}
+          <th class="col-acoes">Ações</th>
+        </tr>
+      `;
+
+      if (!dados || dados.length === 0) {
+        const colSpan = exibirPrazo ? 6 : 5;
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; padding: 30px;">Nenhum registro encontrado.</td></tr>`;
+        return;
+      }
+
+      dados.forEach((item) => {
+        const tr = document.createElement("tr");
+        
+        const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
+        const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
+        const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
+        const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
+        const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
+
+        if (estaVencido(valPrazo, valStatus)) {
+          tr.classList.add("prazo-vencido");
+        }
+        
+        const origemAba = item._origemAba || abaAtual;
+        const abaBadgeHTML = formatarNomeAba(origemAba);
+
+        let btnAcaoPrincipalHTML = "";
+        
+        if (!isNivel1) {
+          if (origemAba === "ferramentaria") {
+            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberarObj(${item._rowIndex})"><i class="fa-solid fa-check"></i> Liberar</button>`;
+          } else if (!isFerram) {
+            btnAcaoPrincipalHTML = `<button class="btn-tbl btn-ferramentaria" onclick="abrirModalFerramentariaObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-wrench"></i> Manutenção</button>`;
+          }
+        }
+
+        const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>` : '';
+        const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>` : '';
+
+        const tdPrazoHTML = exibirPrazo ? `<td data-label="Prazo">${formatarDataExibicao(valPrazo)}</td>` : '';
+
+        tr.innerHTML = `
+          <td data-label="Local / Molde N°"><strong>${col1}</strong></td>
+          <td data-label="Código">${col2}</td>
+          <td data-label="Descrição">${col3}</td>
+          <td data-label="Origem">${abaBadgeHTML}</td>
+          ${tdPrazoHTML}
+          <td class="col-acoes" data-label="Ações">
+            <div class="btn-group-acoes">
+              ${btnAcaoPrincipalHTML}
+              ${btnEditarHTML}
+              ${btnExcluirHTML}
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filtrarTabelaGlobal() {
+      const termo = document.getElementById("txtBusca").value.trim().toLowerCase();
+      
+      if (!termo) {
+        renderizarTabela(dadosAbaAtual);
+        return;
+      }
+
+      let resultados = [];
+
+      TODAS_AS_ABAS.forEach(aba => {
+        const listaDaAba = cacheTodasAbas[aba] || (aba === abaAtual ? dadosAbaAtual : []);
+        
+        listaDaAba.forEach(item => {
+          const atende = Object.keys(item).some(k => {
+            if (k === '_rowIndex' || k === '_origemAba') return false;
+            return String(item[k]).toLowerCase().includes(termo);
+          });
+
+          if (atende) {
+            resultados.push({ ...item, _origemAba: aba });
+          }
+        });
+      });
+
+      renderizarTabela(resultados, true);
+    }
+
+    function abrirModalLiberarObj(rowIndex) {
+      document.getElementById("libRowIndex").value = rowIndex;
+      
+      const agora = new Date();
+      document.getElementById("libDataSaida").value = agora.toISOString().split('T')[0];
+      document.getElementById("libHoraSaida").value = agora.toTimeString().substring(0,5);
+      
+      if (usuarioLogado) {
+        document.getElementById("libTecnico").value = usuarioLogado.user || "";
+      }
+
+      document.getElementById("modalLiberarPlastico").style.display = "flex";
+    }
+
+    function fecharModalLiberar() {
+      document.getElementById("modalLiberarPlastico").style.display = "none";
+      document.getElementById("libAcaoRealizada").value = "";
+    }
+
+    function confirmarLiberacaoPlastico() {
+      const rIndex = document.getElementById("libRowIndex").value;
+      const dataSaida = document.getElementById("libDataSaida").value;
+      const horaSaida = document.getElementById("libHoraSaida").value;
+      const tecnico = document.getElementById("libTecnico").value.trim();
+      const acaoRealizada = document.getElementById("libAcaoRealizada").value.trim();
+
+      if (!rIndex) {
+        alert("Erro: Linha do registro não foi informada!");
+        return;
+      }
+
+      if (!acaoRealizada) {
+        alert("Por favor, preencha o campo de Ação / Manutenção Realizada!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=LIBERAR_FERRAMENTARIA` +
+                  `&rowIndex=${encodeURIComponent(rIndex)}` +
+                  `&dataSaida=${encodeURIComponent(dataSaida)}` +
+                  `&horaSaida=${encodeURIComponent(horaSaida)}` +
+                  `&tecnico=${encodeURIComponent(tecnico)}` +
+                  `&liberadoPor=${encodeURIComponent(tecnico)}` +
+                  `&acaoRealizada=${encodeURIComponent(acaoRealizada)}` +
+                  `&callback=retornoAcao`;
+
+      executarJSONP(url);
+    }
+
+    function abrirModalAdicionar() {
+      document.getElementById("modalAdicionarMolde").style.display = "flex";
+    }
+
+    function fecharModalAdicionar() {
+      document.getElementById("modalAdicionarMolde").style.display = "none";
+      document.getElementById("addLocal").value = "";
+      document.getElementById("addCodigo").value = "";
+      document.getElementById("addDescricao").value = "";
+    }
+
+    function salvarNovoMolde() {
+      const aba = document.getElementById("addAbaDestino").value;
+      const col1 = document.getElementById("addLocal").value.trim();
+      const col2 = document.getElementById("addCodigo").value.trim();
+      const col3 = document.getElementById("addDescricao").value.trim();
+
+      if (!col1 || !col2 || !col3) {
+        alert("Por favor, preencha todos os campos!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=ADICIONAR_MOLDE&sheet=${encodeURIComponent(aba)}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAcao`;
+      executarJSONP(url);
+    }
+
+    function abrirModalEditarObj(aba, rowIndex, local, codigo, descricao) {
+      document.getElementById("editAbaOrigem").value = aba;
+      document.getElementById("editAbaDestino").value = aba;
+      document.getElementById("editRowIndex").value = rowIndex;
+      document.getElementById("editLocal").value = local;
+      document.getElementById("editCodigo").value = codigo;
+      document.getElementById("editDescricao").value = descricao;
+
+      const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase() : "";
+      const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase() : "";
+      const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
+
+      const grpAba = document.getElementById("grpEditAbaDestino");
+      if (grpAba) {
+        grpAba.style.display = isNivel1 ? "none" : "block";
+      }
+
+      document.getElementById("modalEditarMolde").style.display = "flex";
+    }
+
+    function fecharModalEditar() {
+      document.getElementById("modalEditarMolde").style.display = "none";
+    }
+
+    function salvarEdicaoMolde() {
+      const abaOrigem = document.getElementById("editAbaOrigem").value || abaAtual;
+      const abaDestino = document.getElementById("editAbaDestino").value;
+      const rIndex = document.getElementById("editRowIndex").value;
+      const col1 = document.getElementById("editLocal").value.trim();
+      const col2 = document.getElementById("editCodigo").value.trim();
+      const col3 = document.getElementById("editDescricao").value.trim();
+
+      if (!col1 || !col2 || !col3) {
+        alert("Por favor, preencha todos os campos!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=EDITAR_MOLDE&sheet=${encodeURIComponent(abaOrigem)}&novaAba=${encodeURIComponent(abaDestino)}&rowIndex=${rIndex}&col1=${encodeURIComponent(col1)}&col2=${encodeURIComponent(col2)}&col3=${encodeURIComponent(col3)}&callback=retornoAcao`;
+      executarJSONP(url);
+    }
+
+    function excluirMoldeObj(aba, rowIndex, codigo) {
+      if (confirm(`Tem certeza que deseja excluir o molde '${codigo}' da aba ${aba}?`)) {
+        const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(aba)}&rowIndex=${rowIndex}&callback=retornoAcao`;
+        executarJSONP(url);
+      }
+    }
+
+    function abrirModalFerramentariaObj(aba, rowIndex, local, codigo, descricao) {
+      document.getElementById("ferrAbaOrigem").value = aba;
+      document.getElementById("ferrRowIndex").value = rowIndex;
+      document.getElementById("ferrLocal").value = local;
+      document.getElementById("ferrCodigo").value = codigo;
+      document.getElementById("ferrDescricao").value = descricao;
+      
+      const agora = new Date();
+      document.getElementById("ferrData").value = agora.toISOString().split('T')[0];
+      document.getElementById("ferrHora").value = agora.toTimeString().substring(0,5);
+      document.getElementById("ferrPrazo").value = "";
+      
+      if (usuarioLogado) {
+        document.getElementById("ferrSolicitante").value = usuarioLogado.user || "";
+      }
+
+      document.getElementById("modalFerramentaria").style.display = "flex";
+    }
+
+    function fecharModalFerramentaria() {
+      document.getElementById("modalFerramentaria").style.display = "none";
+      document.getElementById("ferrTipos").value = "";
+      document.getElementById("ferrObs").value = "";
+      document.getElementById("ferrPrazo").value = "";
+    }
+
+    function confirmarEnvioFerramentaria() {
+      const abaOrigem = document.getElementById("ferrAbaOrigem").value || abaAtual;
+      const rIndex = document.getElementById("ferrRowIndex").value;
+      const local = document.getElementById("ferrLocal").value;
+      const codigo = document.getElementById("ferrCodigo").value;
+      const descricao = document.getElementById("ferrDescricao").value;
+      
+      const data = document.getElementById("ferrData").value;
+      const hora = document.getElementById("ferrHora").value;
+      const prazo = document.getElementById("ferrPrazo").value;
+      const solicitante = document.getElementById("ferrSolicitante").value.trim();
+      const tipos = document.getElementById("ferrTipos").value.trim();
+      const obs = document.getElementById("ferrObs").value.trim();
+
+      if (!solicitante) {
+        alert("Informe o nome do solicitante!");
+        return;
+      }
+
+      const url = `${BASE_API}?action=SOLICITAR_FERRAMENTARIA` +
+                  `&abaOrigem=${encodeURIComponent(abaOrigem)}` +
+                  `&rowIndex=${rIndex}` +
+                  `&col1=${encodeURIComponent(local)}` +
+                  `&col2=${encodeURIComponent(codigo)}` +
+                  `&col3=${encodeURIComponent(descricao)}` +
+                  `&data=${encodeURIComponent(data)}` +
+                  `&hora=${encodeURIComponent(hora)}` +
+                  `&prazo=${encodeURIComponent(prazo)}` +
+                  `&solicitante=${encodeURIComponent(solicitante)}` +
+                  `&tipos=${encodeURIComponent(tipos)}` +
+                  `&obs=${encodeURIComponent(obs)}` +
+                  `&callback=retornoAcao`;
+
+      executarJSONP(url);
+    }
+
+    function retornoAcao(res) {
+      if (res && res.status === "success") {
+        alert(res.osNumber ? `Solicitação enviada com sucesso! OS Gerada: ${res.osNumber}` : "Operação realizada com sucesso!");
+        fecharModalAdicionar();
+        fecharModalEditar();
+        fecharModalFerramentaria();
+        fecharModalLiberar();
+        
+        carregarTodasAbasCache();
+        carregarDadosAba(abaAtual);
+      } else {
+        alert("Erro na operação: " + (res && res.message ? res.message : "Erro desconhecido."));
+      }
+    }
+</script>
+  </body>
+</html>
