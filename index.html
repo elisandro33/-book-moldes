@@ -295,7 +295,7 @@
     table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 15%; }
     table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 18%; }
     table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { 
-      width: 37%; 
+      width: 32%; 
       white-space: normal; 
       word-wrap: break-word; 
     }
@@ -305,7 +305,12 @@
     table.tabela-historico { table-layout: auto !important; min-width: 1100px; }
     table.tabela-historico th, table.tabela-historico td { white-space: normal !important; word-wrap: break-word; max-width: 280px; }
 
-    .col-acoes { width: 15%; text-align: right; white-space: nowrap; }
+    td.col-prazo {
+      white-space: nowrap;
+      width: 10%;
+    }
+
+    .col-acoes { width: 10%; text-align: right; white-space: nowrap; }
     .btn-group-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; }
 
     /* BADGES */
@@ -752,11 +757,6 @@
     const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
     let cacheTodasAbas = {};
 
-    // Auto-scroll automático para a última conversa ao reabrir o chat
-    window.addEventListener("DOMContentLoaded", () => {
-      window.scrollTo(0, document.body.scrollHeight);
-    });
-
     function atualizarKPIs() {
       const elAba = document.getElementById("kpiTotalAba");
       const elFerram = document.getElementById("kpiFerramentaria");
@@ -1107,7 +1107,7 @@
     function renderizarTabela(dados, ehPesquisa = false) {
       const thead = document.getElementById("tblHead");
       const tbody = document.getElementById("tblBody");
-      
+
       const uName = usuarioLogado ? String(usuarioLogado.user).toLowerCase() : "";
       const uRole = usuarioLogado ? String(usuarioLogado.role).toLowerCase() : "";
       
@@ -1153,27 +1153,6 @@
         tbody.innerHTML = htmlUsers;
         return;
       }
-        dados.forEach(item => {
-          const tr = document.createElement("tr");
-          const uUser = obterValorColuna(item, ["USUARIO", "Usuário", "User", "USUÁRIO"], 0);
-          const uPass = obterValorColuna(item, ["SENHA", "Senha", "Pass", "PASSWORD"], 1);
-          const uLevel = obterValorColuna(item, ["NIVEL", "Nível", "Role", "PERFIL"], 2);
-
-          tr.innerHTML = `
-            <td data-label="Usuário"><strong>${uUser}</strong></td>
-            <td data-label="Senha">••••••••</td>
-            <td data-label="Nível">${uLevel}</td>
-            <td class="col-acoes" data-label="Ações">
-              <div class="btn-group-acoes">
-                <button class="btn-tbl btn-editar" onclick="abrirModalEditarUsuario(${item._rowIndex}, '${uUser.replace(/'/g, "\\'")}', '${uPass.replace(/'/g, "\\'")}', '${uLevel.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-tbl btn-excluir" onclick="excluirUsuario(${item._rowIndex}, '${uUser.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>
-              </div>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-        return;
-      }
 
       /* VISUALIZAÇÃO DO HISTÓRICO DE MANUTENÇÃO */
       if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
@@ -1192,26 +1171,23 @@
         headerHTML += "</tr>";
         thead.innerHTML = headerHTML;
 
+        let htmlHist = "";
         dados.forEach(item => {
-          const tr = document.createElement("tr");
           const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
           const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
-          
-          if (estaVencido(valPrazo, valStatus)) {
-            tr.classList.add("prazo-vencido");
-          }
+          const classeVencido = estaVencido(valPrazo, valStatus) ? 'class="prazo-vencido"' : '';
 
-          let rowHTML = "";
+          htmlHist += `<tr ${classeVencido}>`;
           colunas.forEach(col => {
             let valor = item[col] || "";
             if (col.toUpperCase().includes("PRAZO")) {
               valor = formatarDataExibicao(valor);
             }
-            rowHTML += `<td data-label="${col}">${valor}</td>`;
+            htmlHist += `<td data-label="${col}">${valor}</td>`;
           });
-          tr.innerHTML = rowHTML;
-          tbody.appendChild(tr);
+          htmlHist += `</tr>`;
         });
+        tbody.innerHTML = htmlHist;
         return;
       }
 
@@ -1224,7 +1200,7 @@
           <th>Código</th>
           <th>Descrição</th>
           <th>Aba / Origem</th>
-          ${exibirPrazo ? '<th>Prazo</th>' : ''}
+          ${exibirPrazo ? '<th class="col-prazo">Prazo</th>' : ''}
           <th class="col-acoes">Ações</th>
         </tr>
       `;
@@ -1235,19 +1211,16 @@
         return;
       }
 
+      let htmlBuffer = "";
+
       dados.forEach((item) => {
-        const tr = document.createElement("tr");
-        
         const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
         const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
         const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
         const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
         const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
 
-        if (estaVencido(valPrazo, valStatus)) {
-          tr.classList.add("prazo-vencido");
-        }
-        
+        const classeVencido = estaVencido(valPrazo, valStatus) ? 'class="prazo-vencido"' : '';
         const origemAba = item._origemAba || abaAtual;
         const abaBadgeHTML = formatarNomeAba(origemAba);
 
@@ -1264,24 +1237,31 @@
         const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>` : '';
         const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>` : '';
 
-        const tdPrazoHTML = exibirPrazo ? `<td data-label="Prazo">${formatarDataExibicao(valPrazo)}</td>` : '';
+        // SE TIVER BOTÃO LIBERAR (NA ABA FERRAMENTARIA), O BOTÃO É EXIBIDO NA COLUNA DE PRAZO NO LUGAR DA DATA
+        const textoPrazo = formatarDataExibicao(valPrazo);
+        const tdPrazoHTML = (exibirPrazo) 
+          ? `<td class="col-prazo" data-label="Prazo">${btnAcaoPrincipalHTML !== "" ? btnAcaoPrincipalHTML : textoPrazo}</td>` 
+          : '';
 
-        tr.innerHTML = `
-          <td data-label="Local / Molde N°"><strong>${col1}</strong></td>
-          <td data-label="Código">${col2}</td>
-          <td data-label="Descrição">${col3}</td>
-          <td data-label="Origem">${abaBadgeHTML}</td>
-          ${tdPrazoHTML}
-          <td class="col-acoes" data-label="Ações">
-            <div class="btn-group-acoes">
-              ${btnAcaoPrincipalHTML}
-              ${btnEditarHTML}
-              ${btnExcluirHTML}
-            </div>
-          </td>
+        htmlBuffer += `
+          <tr ${classeVencido}>
+            <td data-label="Local / Molde N°"><strong>${col1}</strong></td>
+            <td data-label="Código">${col2}</td>
+            <td data-label="Descrição">${col3}</td>
+            <td data-label="Origem">${abaBadgeHTML}</td>
+            ${tdPrazoHTML}
+            <td class="col-acoes" data-label="Ações">
+              <div class="btn-group-acoes">
+                ${(origemAba === "ferramentaria") ? "" : btnAcaoPrincipalHTML}
+                ${btnEditarHTML}
+                ${btnExcluirHTML}
+              </div>
+            </td>
+          </tr>
         `;
-        tbody.appendChild(tr);
       });
+
+      tbody.innerHTML = htmlBuffer;
     }
 
     function filtrarTabelaGlobal() {
