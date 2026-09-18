@@ -307,18 +307,66 @@
 
     td.col-prazo {
       white-space: nowrap;
-      width: 10%;
+      width: 12%;
     }
 
     .col-acoes { width: 10%; text-align: right; white-space: nowrap; }
     .btn-group-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; }
 
-    /* BADGES */
+    /* BADGES DE ABA */
     .badge-aba { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
     .badge-plastico { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
     .badge-ferram { background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
     .badge-qlx { background-color: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
     .badge-semlocal { background-color: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+
+    /* BADGES DE STATUS PARA PRAZO */
+    .badge-prazo {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Verde: Mais de 5 dias */
+    .prazo-normal {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* Amarelo/Laranja: 3 a 5 dias restantes */
+    .prazo-atencao {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    /* Vermelho: 1 a 2 dias (Crítico) */
+    .prazo-critico {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      font-weight: 700;
+    }
+
+    /* Vermelho Escuro e Piscando: Vencido */
+    .prazo-vencido-badge {
+      background-color: rgba(220, 38, 38, 0.35);
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      font-weight: 700;
+      animation: pulse-alerta 1.5s infinite;
+    }
+
+    @keyframes pulse-alerta {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
 
     /* BOTOES DE AÇÃO DA TABELA */
     .btn-tbl { padding: 7px 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s ease-in-out; display: inline-flex; align-items: center; gap: 6px; }
@@ -1071,6 +1119,45 @@
       return val;
     }
 
+    /* CALCULA STATUS E DIAS RESTANTES DO PRAZO */
+    function obterStatusEDiasPrazo(dataPrazoStr) {
+      if (!dataPrazoStr) return { classe: '', texto: '' };
+
+      let strLimp = String(dataPrazoStr).split("T")[0];
+      let dataPrazo;
+
+      if (strLimp.includes("-")) {
+        const p = strLimp.split("-");
+        dataPrazo = new Date(p[0], p[1] - 1, p[2]);
+      } else if (strLimp.includes("/")) {
+        const p = strLimp.split("/");
+        dataPrazo = new Date(p[2], p[1] - 1, p[0]);
+      } else {
+        dataPrazo = new Date(strLimp);
+      }
+
+      if (isNaN(dataPrazo.getTime())) return { classe: '', texto: '' };
+
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      dataPrazo.setHours(0, 0, 0, 0);
+
+      const diffTempo = dataPrazo.getTime() - hoje.getTime();
+      const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
+
+      if (diffDias < 0) {
+        return { classe: 'prazo-vencido-badge', texto: `Vencido (${Math.abs(diffDias)}d)` };
+      } else if (diffDias === 0) {
+        return { classe: 'prazo-critico', texto: 'Vence Hoje' };
+      } else if (diffDias <= 2) {
+        return { classe: 'prazo-critico', texto: `${diffDias}d restante(s)` };
+      } else if (diffDias <= 5) {
+        return { classe: 'prazo-atencao', texto: `${diffDias}d restantes` };
+      } else {
+        return { classe: 'prazo-normal', texto: `${diffDias}d restantes` };
+      }
+    }
+
     function estaVencido(dataPrazoStr, status) {
       if (!dataPrazoStr) return false;
       const statusUpper = String(status || "").toUpperCase();
@@ -1237,11 +1324,26 @@
         const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>` : '';
         const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>` : '';
 
-        // SE TIVER BOTÃO LIBERAR (NA ABA FERRAMENTARIA), O BOTÃO É EXIBIDO NA COLUNA DE PRAZO NO LUGAR DA DATA
-        const textoPrazo = formatarDataExibicao(valPrazo);
-        const tdPrazoHTML = (exibirPrazo) 
-          ? `<td class="col-prazo" data-label="Prazo">${btnAcaoPrincipalHTML !== "" ? btnAcaoPrincipalHTML : textoPrazo}</td>` 
-          : '';
+        // RENDERIZAÇÃO DA COLUNA PRAZO (DATA + BADGE COLORIDO + BOTÃO LIBERAR)
+        let tdPrazoHTML = '';
+        if (exibirPrazo) {
+          const dataFormatada = formatarDataExibicao(valPrazo);
+          const statusPrazo = obterStatusEDiasPrazo(valPrazo);
+          
+          const badgeHTML = (valPrazo && statusPrazo.texto) 
+            ? `<span class="badge-prazo ${statusPrazo.classe}">${statusPrazo.texto}</span>` 
+            : '';
+
+          tdPrazoHTML = `
+            <td class="col-prazo" data-label="Prazo">
+              <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+                <span style="font-weight: 600; font-size: 13px;">${dataFormatada}</span>
+                ${badgeHTML}
+                ${btnAcaoPrincipalHTML ? `<div style="margin-top: 4px;">${btnAcaoPrincipalHTML}</div>` : ''}
+              </div>
+            </td>
+          `;
+        }
 
         htmlBuffer += `
           <tr ${classeVencido}>
