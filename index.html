@@ -805,6 +805,19 @@
     const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
     let cacheTodasAbas = {};
 
+    /* --- AUTO-LOGIN AO ATUALIZAR A PÁGINA (PERSISTÊNCIA) --- */
+    window.addEventListener('DOMContentLoaded', () => {
+      const usuarioSalvo = localStorage.getItem('usuarioLogado');
+      if (usuarioSalvo) {
+        try {
+          const res = JSON.parse(usuarioSalvo);
+          retornoLogin(res);
+        } catch (e) {
+          localStorage.removeItem('usuarioLogado');
+        }
+      }
+    });
+
     function atualizarKPIs() {
       const elAba = document.getElementById("kpiTotalAba");
       const elFerram = document.getElementById("kpiFerramentaria");
@@ -876,6 +889,10 @@
     function retornoLogin(res) {
       if (res && res.status === "success") {
         usuarioLogado = res;
+        
+        // Salva a sessão no navegador para não deslogar com F5
+        localStorage.setItem('usuarioLogado', JSON.stringify(res));
+
         document.getElementById("lblUsuario").innerText = res.user;
         document.getElementById("lblRole").innerText = res.role;
         document.getElementById("loginScreen").style.display = "none";
@@ -901,6 +918,7 @@
           tabUsers.style.display = isAdmin ? "inline-flex" : "none";
         }
 
+        // Carregamento rápido unificado
         carregarTodasAbasCache();
 
         if (isFerram) {
@@ -926,6 +944,17 @@
         restaurarEstadoLogin();
         mostrarStatusLogin("Erro no login: " + (res.message || "Usuário ou senha incorretos."), "error");
       }
+    }
+
+    function logout() {
+      usuarioLogado = null;
+      localStorage.removeItem('usuarioLogado'); // Limpa os dados salvos de sessão
+      document.getElementById("appContainer").style.display = "none";
+      document.getElementById("loginScreen").style.display = "flex";
+      document.getElementById("loginPass").value = "";
+      document.getElementById("txtBusca").value = "";
+      document.getElementById("loginStatus").innerHTML = "";
+      restaurarEstadoLogin();
     }
 
     /* --- FUNÇÕES GESTÃO DE USUÁRIOS (ADMIN) --- */
@@ -1017,25 +1046,21 @@
       }
     }
 
+    /* --- CARREGAMENTO OTIMIZADO (UMA SÓ REQUISIÇÃO PARA O CACHE) --- */
     function carregarTodasAbasCache() {
-      TODAS_AS_ABAS.forEach(aba => {
-        const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(aba)}&callback=retornoCache_${aba.replace(/[^a-zA-Z0-9]/g, '')}`;
-        window[`retornoCache_${aba.replace(/[^a-zA-Z0-9]/g, '')}`] = function(res) {
-          cacheTodasAbas[aba] = Array.isArray(res) ? res : [];
-          atualizarKPIs();
-        };
-        executarJSONP(url);
-      });
+      const url = `${BASE_API}?action=GET_ALL_DATA&callback=retornoGeralCache`;
+      executarJSONP(url);
     }
 
-    function logout() {
-      usuarioLogado = null;
-      document.getElementById("appContainer").style.display = "none";
-      document.getElementById("loginScreen").style.display = "flex";
-      document.getElementById("loginPass").value = "";
-      document.getElementById("txtBusca").value = "";
-      document.getElementById("loginStatus").innerHTML = "";
-      restaurarEstadoLogin();
+    function retornoGeralCache(res) {
+      if (res && typeof res === 'object') {
+        cacheTodasAbas = res;
+        if (cacheTodasAbas[abaAtual]) {
+          dadosAbaAtual = cacheTodasAbas[abaAtual];
+          renderizarTabela(dadosAbaAtual);
+        }
+        atualizarKPIs();
+      }
     }
 
     function trocarAba(nomeAba, btn) {
@@ -1061,6 +1086,13 @@
         tblMain.classList.add("tabela-historico");
       } else {
         tblMain.classList.remove("tabela-historico");
+      }
+
+      if (cacheTodasAbas[nomeAba] && nomeAba !== "HISTORICO_MANUTENCAO" && nomeAba !== "USUARIOS") {
+        dadosAbaAtual = cacheTodasAbas[nomeAba];
+        atualizarKPIs();
+        renderizarTabela(dadosAbaAtual);
+        return;
       }
 
       const colCount = (nomeAba === "ferramentaria") ? 6 : 5;
