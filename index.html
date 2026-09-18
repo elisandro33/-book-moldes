@@ -292,14 +292,14 @@
     .prazo-vencido td { color: #fca5a5 !important; }
 
     /* COLUNAS E LARGURAS PARA ABAS COMUNS */
-    table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 15%; }
-    table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 18%; }
+    table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 14%; }
+    table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 16%; }
     table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { 
-      width: 32%; 
+      width: 30%; 
       white-space: normal; 
       word-wrap: break-word; 
     }
-    table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 15%; }
+    table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 14%; }
 
     /* AJUSTES ESPECÍFICOS DA TABELA DE HISTÓRICO */
     table.tabela-historico { table-layout: auto !important; min-width: 1100px; }
@@ -307,11 +307,11 @@
 
     td.col-prazo {
       white-space: nowrap;
-      width: 12%;
+      width: 14%;
     }
 
-    .col-acoes { width: 10%; text-align: right; white-space: nowrap; }
-    .btn-group-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; }
+    .col-acoes { width: 12%; text-align: right; white-space: nowrap; }
+    .btn-group-acoes { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: nowrap; }
 
     /* BADGES DE ABA */
     .badge-aba { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
@@ -1324,7 +1324,7 @@
         const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>` : '';
         const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>` : '';
 
-        // RENDERIZAÇÃO DA COLUNA PRAZO (DATA + BADGE COLORIDO + BOTÃO LIBERAR)
+        // EXIBIÇÃO APENAS DA DATA E BADGE NA COLUNA PRAZO
         let tdPrazoHTML = '';
         if (exibirPrazo) {
           const dataFormatada = formatarDataExibicao(valPrazo);
@@ -1339,7 +1339,6 @@
               <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
                 <span style="font-weight: 600; font-size: 13px;">${dataFormatada}</span>
                 ${badgeHTML}
-                ${btnAcaoPrincipalHTML ? `<div style="margin-top: 4px;">${btnAcaoPrincipalHTML}</div>` : ''}
               </div>
             </td>
           `;
@@ -1354,7 +1353,7 @@
             ${tdPrazoHTML}
             <td class="col-acoes" data-label="Ações">
               <div class="btn-group-acoes">
-                ${(origemAba === "ferramentaria") ? "" : btnAcaoPrincipalHTML}
+                ${btnAcaoPrincipalHTML}
                 ${btnEditarHTML}
                 ${btnExcluirHTML}
               </div>
