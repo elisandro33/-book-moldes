@@ -103,7 +103,6 @@
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
     }
     .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4); }
-    .btn-primary:active { transform: translateY(0); }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
     
     .login-status { margin-top: 15px; font-size: 13px; font-weight: 500; min-height: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -113,11 +112,11 @@
     /* SISTEMA PRINCIPAL LAYOUT */
     #appContainer { display: none; flex-direction: column; min-height: 100vh; background-color: var(--bg-dark); }
     
-    /* HEADER NAVBAR */
+    /* HEADER NAVBAR COM MENU DROPDOWN */
     header { 
       background-color: var(--card-bg);
       border-bottom: 1px solid var(--card-border);
-      padding: 14px 24px;
+      padding: 12px 20px;
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
@@ -126,20 +125,64 @@
       z-index: 50;
       box-shadow: var(--shadow-sm);
     }
-    .header-brand { display: flex; align-items: center; gap: 12px; }
-    .header-brand h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-main); }
+    .header-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .header-brand h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-main); white-space: nowrap; }
     
     .user-info { display: flex; align-items: center; gap: 10px; }
-    .user-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--card-border); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--text-muted); }
+    .user-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--card-border); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--text-muted); flex-shrink: 0; }
     .user-details { display: flex; flex-direction: column; text-align: right; }
-    .user-name { font-size: 13px; font-weight: 600; color: var(--text-main); }
-    .user-role { font-size: 11px; color: var(--text-muted); }
+    .user-name { font-size: 13px; font-weight: 600; color: var(--text-main); line-height: 1.2; }
+    .user-role { font-size: 11px; color: var(--text-muted); text-transform: capitalize; }
     
-    .btn-user-add { padding: 8px 12px; background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease-in-out; display: none; align-items: center; gap: 6px; }
-    .btn-user-add:hover { background-color: var(--primary); color: #fff; }
-
-    .btn-logout { padding: 8px 12px; background-color: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease-in-out; }
-    .btn-logout:hover { background-color: var(--danger); color: #fff; }
+    /* MENU 3 PONTINHOS */
+    .menu-dots-container { position: relative; }
+    .btn-dots {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+    .btn-dots:hover { background: rgba(255, 255, 255, 0.1); }
+    
+    .dots-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 44px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      min-width: 170px;
+      box-shadow: var(--shadow-lg);
+      z-index: 100;
+      overflow: hidden;
+    }
+    .dots-dropdown.show { display: block; animation: modalFadeIn 0.15s ease-out; }
+    .dots-dropdown button {
+      width: 100%;
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      color: var(--text-main);
+      text-align: left;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.2s;
+    }
+    .dots-dropdown button:hover { background-color: rgba(255, 255, 255, 0.05); }
+    .dots-dropdown button.btn-logout-menu { color: #f87171; border-top: 1px solid var(--card-border); }
 
     /* CONTEÚDO PRINCIPAL */
     .main-content { padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 20px; flex-grow: 1; }
@@ -159,11 +202,6 @@
       align-items: center;
       gap: 16px;
       box-shadow: var(--shadow-sm);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .kpi-card:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
     }
     .kpi-icon {
       width: 48px;
@@ -181,33 +219,36 @@
     .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .kpi-value { font-size: 22px; font-weight: 700; color: var(--text-main); margin-top: 2px; }
 
-    /* NAVEGAÇÃO POR ABAS */
-    .tabs-wrapper { overflow-x: auto; padding-bottom: 4px; }
-    .tabs-wrapper::-webkit-scrollbar { height: 4px; }
-    .tabs-wrapper::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
-    
-    .tabs { display: flex; gap: 8px; min-width: max-content; }
-    .tab-btn { 
-      padding: 10px 18px; 
-      background-color: var(--card-bg); 
-      color: var(--text-muted); 
-      border: 1px solid var(--card-border); 
-      border-radius: 10px; 
-      cursor: pointer; 
-      font-weight: 500; 
-      font-size: 13px; 
-      white-space: nowrap; 
-      transition: all 0.2s ease-in-out;
+    /* DROPDOWN DE SELEÇÃO DE ABAS */
+    .tabs-select-container {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tabs-select-container label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .tab-btn:hover { background-color: #26334d; color: var(--text-main); }
-    .tab-btn.active { 
-      background: linear-gradient(135deg, var(--primary), var(--primary-hover)); 
-      color: #fff; 
-      border-color: transparent; 
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    .select-aba-dropdown {
+      background-color: #0f172a;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      outline: none;
+      width: 100%;
+      cursor: pointer;
     }
 
     /* BARRA DE AÇÕES E PESQUISA */
@@ -281,86 +322,37 @@
       border-bottom: 1px solid var(--card-border); 
       color: var(--text-main); 
       white-space: nowrap; 
-      transition: background-color 0.2s ease;
     }
     
     tr:last-child td { border-bottom: none; }
     tr:hover td { background-color: rgba(255, 255, 255, 0.03); }
 
-    /* DESTAQUE DE PRAZO VENCIDO */
     .prazo-vencido { background-color: rgba(239, 68, 68, 0.12) !important; }
     .prazo-vencido td { color: #fca5a5 !important; }
 
-    /* COLUNAS E LARGURAS PARA ABAS COMUNS */
     table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 14%; }
     table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 16%; }
-    table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { 
-      width: 30%; 
-      white-space: normal; 
-      word-wrap: break-word; 
-    }
+    table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { width: 30%; white-space: normal; word-wrap: break-word; }
     table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 14%; }
 
-    /* AJUSTES ESPECÍFICOS DA TABELA DE HISTÓRICO */
     table.tabela-historico { table-layout: auto !important; min-width: 1100px; }
     table.tabela-historico th, table.tabela-historico td { white-space: normal !important; word-wrap: break-word; max-width: 280px; }
 
-    td.col-prazo {
-      white-space: nowrap;
-      width: 14%;
-    }
-
+    td.col-prazo { white-space: nowrap; width: 14%; }
     .col-acoes { width: 12%; text-align: right; white-space: nowrap; }
     .btn-group-acoes { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: nowrap; }
 
-    /* BADGES DE ABA */
     .badge-aba { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
     .badge-plastico { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
     .badge-ferram { background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
     .badge-qlx { background-color: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
     .badge-semlocal { background-color: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
 
-    /* BADGES DE STATUS PARA PRAZO */
-    .badge-prazo {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-
-    /* Verde: Mais de 5 dias */
-    .prazo-normal {
-      background-color: rgba(16, 185, 129, 0.15);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    /* Amarelo/Laranja: 3 a 5 dias restantes */
-    .prazo-atencao {
-      background-color: rgba(245, 158, 11, 0.15);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    /* Vermelho: 1 a 2 dias (Crítico) */
-    .prazo-critico {
-      background-color: rgba(239, 68, 68, 0.2);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      font-weight: 700;
-    }
-
-    /* Vermelho Escuro e Piscando: Vencido */
-    .prazo-vencido-badge {
-      background-color: rgba(220, 38, 38, 0.35);
-      color: #fca5a5;
-      border: 1px solid #ef4444;
-      font-weight: 700;
-      animation: pulse-alerta 1.5s infinite;
-    }
+    .badge-prazo { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+    .prazo-normal { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .prazo-atencao { background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .prazo-critico { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 700; }
+    .prazo-vencido-badge { background-color: rgba(220, 38, 38, 0.35); color: #fca5a5; border: 1px solid #ef4444; font-weight: 700; animation: pulse-alerta 1.5s infinite; }
 
     @keyframes pulse-alerta {
       0% { opacity: 1; }
@@ -368,7 +360,6 @@
       100% { opacity: 1; }
     }
 
-    /* BOTOES DE AÇÃO DA TABELA */
     .btn-tbl { padding: 7px 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s ease-in-out; display: inline-flex; align-items: center; gap: 6px; }
     .btn-ferramentaria { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
     .btn-ferramentaria:hover { background-color: var(--primary); color: #fff; }
@@ -379,7 +370,7 @@
     .btn-excluir { background-color: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
     .btn-excluir:hover { background-color: var(--danger); color: #fff; }
 
-    /* MODAIS REFINADOS */
+    /* MODAIS */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 100; padding: 16px; }
     .modal-content { background-color: var(--card-bg); border: 1px solid var(--card-border); padding: 28px; border-radius: 16px; width: 100%; max-width: 480px; box-shadow: var(--shadow-lg); animation: modalFadeIn 0.2s ease-out; }
     @keyframes modalFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -393,9 +384,16 @@
 
     /* RESPONSIVIDADE MOBILE */
     @media (max-width: 768px) {
-      header { padding: 12px 16px; }
-      .header-brand h1 { font-size: 16px; }
-      .main-content { padding: 16px; }
+      header { padding: 10px 12px; }
+      .header-brand h1 { font-size: 14px; }
+      
+      /* GARANTE QUE O NOME E O NÍVEL FIQUEM VISÍVEIS MESMO EM ECRÃS PEQUENOS */
+      .user-details { display: flex !important; text-align: right; }
+      .user-name { font-size: 12px; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .user-role { font-size: 10px; }
+      .user-avatar { width: 30px; height: 30px; font-size: 12px; }
+
+      .main-content { padding: 12px; gap: 14px; }
       .actions-bar { flex-direction: column; align-items: stretch; }
       .search-box { min-width: 100%; }
       .btn-add { justify-content: center; width: 100%; }
@@ -480,17 +478,13 @@
 	<div id="appContainer">
 	  <header>
 		<div class="header-brand">
-		  <div style="width: 40px; height: 40px; min-width: 40px; flex-shrink: 0;">
-			<img src="https://raw.githubusercontent.com/elisandro33/-book-moldes/refs/heads/main/logo.png" 
-			  alt="Logo" 
-			  style="width: 100%; height: 100%; object-fit: contain;">
+		  <div style="width: 32px; height: 32px; min-width: 32px;">
+			<img src="https://raw.githubusercontent.com/elisandro33/-book-moldes/refs/heads/main/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
 		  </div>
 		  <h1>Gestão de Moldes</h1>
 		</div>
+
 		<div class="user-info">
-		  <button id="btnCadastrarUsuario" onclick="abrirModalCadastrarUsuario()" class="btn-user-add" title="Cadastrar novo usuário">
-		    <i class="fa-solid fa-user-plus"></i> Novo Usuário
-		  </button>
 		  <div class="user-avatar">
 			<i class="fa-solid fa-user"></i>
 		  </div>
@@ -498,7 +492,21 @@
 			<span class="user-name" id="lblUsuario">--</span>
 			<span class="user-role" id="lblRole">--</span>
 		  </div>
-		  <button onclick="logout()" class="btn-logout" title="Sair do sistema"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+
+		  <!-- MENU DE 3 PONTINHOS NO TOPO -->
+		  <div class="menu-dots-container">
+		    <button class="btn-dots" onclick="toggleMenuDots(event)" title="Opções">
+		      <i class="fa-solid fa-ellipsis-vertical"></i>
+		    </button>
+		    <div id="dropdownDotsMenu" class="dots-dropdown">
+		      <button id="btnCadastrarUsuario" onclick="abrirModalCadastrarUsuario(); fecharMenuDots();" style="display: none;">
+		        <i class="fa-solid fa-user-plus" style="color: var(--primary);"></i> Novo Usuário
+		      </button>
+		      <button onclick="logout(); fecharMenuDots();" class="btn-logout-menu">
+		        <i class="fa-solid fa-right-from-bracket"></i> Sair do Sistema
+		      </button>
+		    </div>
+		  </div>
 		</div>
 	  </header>
 
@@ -528,16 +536,17 @@
 		  </div>
 		</div>
 
-		<!-- ABAS COM ROLAGEM SUAVE -->
-		<div class="tabs-wrapper">
-		  <div class="tabs" id="tabContainer">
-			<button id="tabPlastico" class="tab-btn tab-admin" onclick="trocarAba('ATUALIZADA', this)"><i class="fa-solid fa-industry"></i> Plástico</button>
-			<button id="tabQLX" class="tab-btn tab-admin" onclick="trocarAba('Moldes QLX', this)"><i class="fa-solid fa-box-archive"></i> Moldes QLX</button>
-			<button id="tabSemLocal" class="tab-btn tab-admin" onclick="trocarAba('Sem local', this)"><i class="fa-solid fa-location-dot"></i> Sem Local</button>
-			<button id="tabFerramentaria" class="tab-btn tab-ferram" onclick="trocarAba('ferramentaria', this)"><i class="fa-solid fa-wrench"></i> Ferramentaria</button>
-			<button id="tabHistorico" class="tab-btn tab-ferram" onclick="trocarAba('HISTORICO_MANUTENCAO', this)"><i class="fa-solid fa-clock-rotate-left"></i> Histórico Manutenção</button>
-			<button id="tabUsuarios" class="tab-btn tab-only-admin" style="display:none;" onclick="trocarAba('USUARIOS', this)"><i class="fa-solid fa-users"></i> Usuários</button>
-		  </div>
+		<!-- MENU DROPDOWN DAS ABAS -->
+		<div class="tabs-select-container">
+		  <label for="selectAbas"><i class="fa-solid fa-folder-tree"></i> Selecionar Aba:</label>
+		  <select id="selectAbas" class="select-aba-dropdown" onchange="trocarAba(this.value)">
+		    <option value="ATUALIZADA" class="opt-admin">Plástico</option>
+		    <option value="Moldes QLX" class="opt-admin">Moldes QLX</option>
+		    <option value="Sem local" class="opt-admin">Sem Local</option>
+		    <option value="ferramentaria">Ferramentaria</option>
+		    <option value="HISTORICO_MANUTENCAO">Histórico Manutenção</option>
+		    <option value="USUARIOS" id="optUsuarios" style="display: none;">Usuários</option>
+		  </select>
 		</div>
 
 		<!-- BARRA DE AÇÕES -->
@@ -805,7 +814,23 @@
     const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
     let cacheTodasAbas = {};
 
-    /* --- AUTO-LOGIN AO ATUALIZAR A PÁGINA (PERSISTÊNCIA) --- */
+    /* CONTROLE DO MENU DE 3 PONTINHOS */
+    function toggleMenuDots(event) {
+      event.stopPropagation();
+      const menu = document.getElementById("dropdownDotsMenu");
+      menu.classList.toggle("show");
+    }
+
+    function fecharMenuDots() {
+      const menu = document.getElementById("dropdownDotsMenu");
+      if (menu) menu.classList.remove("show");
+    }
+
+    window.addEventListener("click", () => {
+      fecharMenuDots();
+    });
+
+    /* AUTO-LOGIN AO ATUALIZAR A PÁGINA */
     window.addEventListener('DOMContentLoaded', () => {
       const usuarioSalvo = localStorage.getItem('usuarioLogado');
       if (usuarioSalvo) {
@@ -844,7 +869,7 @@
       script.onload = () => document.body.removeChild(script);
     }
 
-    /* --- FUNÇÕES DE LOGIN & SESSÃO --- */
+    /* FUNÇÕES DE LOGIN & SESSÃO */
     function toggleSenha(inputId) {
       const passInput = document.getElementById(inputId);
       if (passInput) {
@@ -889,8 +914,6 @@
     function retornoLogin(res) {
       if (res && res.status === "success") {
         usuarioLogado = res;
-        
-        // Salva a sessão no navegador para não deslogar com F5
         localStorage.setItem('usuarioLogado', JSON.stringify(res));
 
         document.getElementById("lblUsuario").innerText = res.user;
@@ -910,25 +933,25 @@
 
         const btnCadUser = document.getElementById("btnCadastrarUsuario");
         if (btnCadUser) {
-          btnCadUser.style.display = isAdmin ? "inline-flex" : "none";
+          btnCadUser.style.display = isAdmin ? "flex" : "none";
         }
 
-        const tabUsers = document.getElementById("tabUsuarios");
-        if (tabUsers) {
-          tabUsers.style.display = isAdmin ? "inline-flex" : "none";
+        const optUsers = document.getElementById("optUsuarios");
+        if (optUsers) {
+          optUsers.style.display = isAdmin ? "block" : "none";
         }
 
-        // Carregamento rápido unificado
         carregarTodasAbasCache();
 
+        const selectAbas = document.getElementById("selectAbas");
+
         if (isFerram) {
-          document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "none");
+          document.querySelectorAll(".opt-admin").forEach(el => el.style.display = "none");
           document.getElementById("btnAddMolde").style.display = "none";
-          
-          const btnFerram = document.getElementById("tabFerramentaria");
-          trocarAba('ferramentaria', btnFerram);
+          selectAbas.value = "ferramentaria";
+          trocarAba('ferramentaria');
         } else {
-          document.querySelectorAll(".tab-admin").forEach(el => el.style.display = "inline-flex");
+          document.querySelectorAll(".opt-admin").forEach(el => el.style.display = "block");
           
           if (isNivel1) {
             document.getElementById("btnAddMolde").style.display = "none";
@@ -936,8 +959,8 @@
             document.getElementById("btnAddMolde").style.display = "flex";
           }
           
-          const btnPlastico = document.getElementById("tabPlastico");
-          trocarAba('ATUALIZADA', btnPlastico);
+          selectAbas.value = "ATUALIZADA";
+          trocarAba('ATUALIZADA');
         }
 
       } else {
@@ -948,7 +971,7 @@
 
     function logout() {
       usuarioLogado = null;
-      localStorage.removeItem('usuarioLogado'); // Limpa os dados salvos de sessão
+      localStorage.removeItem('usuarioLogado');
       document.getElementById("appContainer").style.display = "none";
       document.getElementById("loginScreen").style.display = "flex";
       document.getElementById("loginPass").value = "";
@@ -957,7 +980,7 @@
       restaurarEstadoLogin();
     }
 
-    /* --- FUNÇÕES GESTÃO DE USUÁRIOS (ADMIN) --- */
+    /* GESTÃO DE USUÁRIOS (ADMIN) */
     function abrirModalCadastrarUsuario() {
       document.getElementById("newUser").value = "";
       document.getElementById("newPass").value = "";
@@ -1046,7 +1069,7 @@
       }
     }
 
-    /* --- CARREGAMENTO OTIMIZADO (UMA SÓ REQUISIÇÃO PARA O CACHE) --- */
+    /* CARREGAMENTO DE DADOS */
     function carregarTodasAbasCache() {
       const url = `${BASE_API}?action=GET_ALL_DATA&callback=retornoGeralCache`;
       executarJSONP(url);
@@ -1063,12 +1086,9 @@
       }
     }
 
-    function trocarAba(nomeAba, btn) {
+    function trocarAba(nomeAba) {
       abaAtual = nomeAba;
       document.getElementById("txtBusca").value = "";
-      
-      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-      if (btn) btn.classList.add("active");
       
       const selectDestino = document.getElementById("addAbaDestino");
       if (["ATUALIZADA", "Moldes QLX", "Sem local"].includes(nomeAba)) {
@@ -1151,7 +1171,6 @@
       return val;
     }
 
-    /* CALCULA STATUS E DIAS RESTANTES DO PRAZO */
     function obterStatusEDiasPrazo(dataPrazoStr) {
       if (!dataPrazoStr) return { classe: '', texto: '' };
 
@@ -1234,7 +1253,7 @@
       const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
       const isAdmin  = (uName === "admin" || uRole === "admin");
 
-      /* VISUALIZAÇÃO DE USUÁRIOS (ADMIN) */
+      /* USUÁRIOS (ADMIN) */
       if (abaAtual === "USUARIOS") {
         thead.innerHTML = `
           <tr>
@@ -1273,7 +1292,7 @@
         return;
       }
 
-      /* VISUALIZAÇÃO DO HISTÓRICO DE MANUTENÇÃO */
+      /* HISTÓRICO DE MANUTENÇÃO */
       if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
         if (!dados || dados.length === 0) {
           thead.innerHTML = `<tr><th>Informação</th></tr>`;
@@ -1356,7 +1375,6 @@
         const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>` : '';
         const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>` : '';
 
-        // EXIBIÇÃO APENAS DA DATA E BADGE NA COLUNA PRAZO
         let tdPrazoHTML = '';
         if (exibirPrazo) {
           const dataFormatada = formatarDataExibicao(valPrazo);
