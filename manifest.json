@@ -9,12 +9,12 @@
     {
       "src": "https://raw.githubusercontent.com/elisandro33/-book-moldes/refs/heads/main/logo.png",
       "sizes": "192x192",
-      "type": "logo.png"
+      "type": "image/png"
     },
     {
       "src": "https://raw.githubusercontent.com/elisandro33/-book-moldes/refs/heads/main/logo.png",
       "sizes": "512x512",
-      "type": "logo.png"
+      "type": "image/png"
     }
   ]
 }
