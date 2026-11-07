@@ -351,7 +351,7 @@
     table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 12%; }
     table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 14%; }
     table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { width: 22%; white-space: normal; word-wrap: break-word; }
-    table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 12%; }
+    table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 22%; white-space: normal; word-wrap: break-word; }
 
     table.tabela-historico { table-layout: auto !important; min-width: 1100px; }
     table.tabela-historico th, table.tabela-historico td { white-space: normal !important; word-wrap: break-word; max-width: 280px; }
@@ -1269,7 +1269,7 @@
         return;
       }
 
-      const colCount = (nomeAba === "ferramentaria") ? 7 : 5;
+      const colCount = (nomeAba === "ferramentaria") ? 6 : 5;
       tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 40px;"><i class="fa-solid fa-circle-notch fa-spin" style="font-size: 24px; color: var(--primary);"></i><br><br>Carregando dados...</td></tr>`;
       
       const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(nomeAba)}&callback=retornoCarregarDados`;
@@ -1508,15 +1508,24 @@
       let htmlBuffer = "";
 
       dados.forEach((item) => {
-        const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
-        const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
-        const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
+        const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_origemAba');
+
+        // Extração por posição das colunas
+        const col1 = item[keys[0]] || "";
+        const col2 = item[keys[1]] || "";
+        const col3 = item[keys[2]] || "";
         
-        // Campos específicos da ferramentaria (mapeados do Sheet)
-        const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo", "COL_6"], 5);
-        const solicitante = obterValorColuna(item, ["SOLICITANTE", "Solicitante", "COL_7"], 6);
-        const tipoServico = obterValorColuna(item, ["TIPO", "TIPO DE SERVIÇO", "COL_8"], 7);
-        const observacao = obterValorColuna(item, ["OBSERVAÇÃO", "Obs", "COL_9"], 8);
+        let valPrazo = "";
+        let solicitante = "";
+        let tipoServico = "";
+        let observacao = "";
+
+        if (exibirFerram) {
+          valPrazo = item[keys[5]] || item["PRAZO"] || "";
+          solicitante = item[keys[6]] || item["SOLICITANTE"] || "";
+          tipoServico = item[keys[7]] || item["TIPO"] || "";
+          observacao = item[keys[8]] || item["OBS"] || "";
+        }
         
         const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
 
