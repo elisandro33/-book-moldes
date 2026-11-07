@@ -348,16 +348,16 @@
     .prazo-vencido { background-color: rgba(239, 68, 68, 0.12) !important; }
     .prazo-vencido td { color: #fca5a5 !important; }
 
-    table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 14%; }
-    table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 16%; }
-    table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { width: 30%; white-space: normal; word-wrap: break-word; }
-    table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 14%; }
+    table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 12%; }
+    table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 14%; }
+    table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { width: 22%; white-space: normal; word-wrap: break-word; }
+    table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 12%; }
 
     table.tabela-historico { table-layout: auto !important; min-width: 1100px; }
     table.tabela-historico th, table.tabela-historico td { white-space: normal !important; word-wrap: break-word; max-width: 280px; }
 
-    td.col-prazo { white-space: nowrap; width: 14%; }
-    .col-acoes { width: 12%; text-align: right; white-space: nowrap; }
+    td.col-prazo { white-space: nowrap; width: 12%; }
+    .col-acoes { width: 14%; text-align: right; white-space: nowrap; }
     .btn-group-acoes { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: nowrap; }
 
     .badge-aba { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
@@ -938,7 +938,6 @@
     function executarConsultaHistorico() {
       const termo = document.getElementById("histFiltroUnico").value.trim().toLowerCase();
 
-      // Pega os dados do histórico (do cache global ou da aba atual)
       const listaHistorico = cacheTodasAbas["HISTORICO_MANUTENCAO"] || dadosAbaAtual || [];
 
       if (!termo) {
@@ -946,7 +945,6 @@
         return;
       }
 
-      // Filtra em todas as chaves do objeto
       const resultados = listaHistorico.filter(item => {
         return Object.keys(item).some(chave => {
           if (chave === '_rowIndex' || chave === '_origemAba') return false;
@@ -954,10 +952,8 @@
           let valor = item[chave];
           if (valor === null || valor === undefined) return false;
 
-          // Converte objetos/datas para string
           let valorTexto = String(valor);
 
-          // Formata se for data ISO
           if (chave.toUpperCase().includes("DATA") || chave.toUpperCase().includes("PRAZO")) {
             valorTexto = formatarDataExibicao(valorTexto);
           }
@@ -966,7 +962,6 @@
         });
       });
 
-      // O parâmetro 'true' avisa a renderizarTabela que é uma pesquisa filtrada
       renderizarTabela(resultados, true);
     }
 
@@ -1243,7 +1238,6 @@
         selectDestino.value = nomeAba;
       }
 
-      // CONTROLE DE EXIBIÇÃO DAS BARRAS DE PESQUISA
       const painelHist = document.getElementById("painelBuscaHistorico");
       const barraAcoesPadrao = document.querySelector(".actions-bar:not(#painelBuscaHistorico)");
 
@@ -1275,7 +1269,7 @@
         return;
       }
 
-      const colCount = (nomeAba === "ferramentaria") ? 6 : 5;
+      const colCount = (nomeAba === "ferramentaria") ? 7 : 5;
       tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 40px;"><i class="fa-solid fa-circle-notch fa-spin" style="font-size: 24px; color: var(--primary);"></i><br><br>Carregando dados...</td></tr>`;
       
       const url = `${BASE_API}?action=GET_DATA&sheet=${encodeURIComponent(nomeAba)}&callback=retornoCarregarDados`;
@@ -1491,22 +1485,22 @@
         return;
       }
 
-      /* VISUALIZAÇÃO PADRÃO DE MOLDES */
-      const exibirPrazo = (abaAtual === "ferramentaria");
+      /* VISUALIZAÇÃO PADRÃO DE MOLDES E FERRAMENTARIA */
+      const exibirFerram = (abaAtual === "ferramentaria");
 
       thead.innerHTML = `
         <tr>
           <th>Local / Molde N°</th>
           <th>Código</th>
           <th>Descrição</th>
-          <th>Aba / Origem</th>
-          ${exibirPrazo ? '<th class="col-prazo">Prazo</th>' : ''}
+          ${exibirFerram ? '<th>Tipo de Serviço / Solicitante</th>' : '<th>Aba / Origem</th>'}
+          ${exibirFerram ? '<th class="col-prazo">Prazo</th>' : ''}
           <th class="col-acoes">Ações</th>
         </tr>
       `;
 
       if (!dados || dados.length === 0) {
-        const colSpan = exibirPrazo ? 6 : 5;
+        const colSpan = exibirFerram ? 6 : 5;
         tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; padding: 30px;">Nenhum registro encontrado.</td></tr>`;
         return;
       }
@@ -1517,7 +1511,13 @@
         const col1 = obterValorColuna(item, ["LOCAL", "Local", "molde número", "molde numero", "molde", "numero"], 0);
         const col2 = obterValorColuna(item, ["CÓDIGO", "Código", "CODIGO", "código", "codigo"], 1);
         const col3 = obterValorColuna(item, ["DESCRIÇÃO", "Descrição", "DESCRICAO", "descrição", "descricao"], 2);
-        const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
+        
+        // Campos específicos da ferramentaria (mapeados do Sheet)
+        const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo", "COL_6"], 5);
+        const solicitante = obterValorColuna(item, ["SOLICITANTE", "Solicitante", "COL_7"], 6);
+        const tipoServico = obterValorColuna(item, ["TIPO", "TIPO DE SERVIÇO", "COL_8"], 7);
+        const observacao = obterValorColuna(item, ["OBSERVAÇÃO", "Obs", "COL_9"], 8);
+        
         const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
 
         const classeVencido = estaVencido(valPrazo, valStatus) ? 'class="prazo-vencido"' : '';
@@ -1537,8 +1537,23 @@
         const btnEditarHTML = (!isNivel1 && !isFerram) ? `<button class="btn-tbl btn-editar" onclick="abrirModalEditarObj('${origemAba}', ${item._rowIndex}, '${col1.replace(/'/g, "\\'")}', '${col2.replace(/'/g, "\\'")}', '${col3.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i></button>` : '';
         const btnExcluirHTML = isAdmin ? `<button class="btn-tbl btn-excluir" onclick="excluirMoldeObj('${origemAba}', ${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>` : '';
 
+        let colunaMeioHTML = '';
+        if (exibirFerram) {
+          colunaMeioHTML = `
+            <td data-label="Detalhes">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <span style="font-weight: 600; color: #38bdf8;"><i class="fa-solid fa-screwdriver-wrench"></i> ${tipoServico || "Manutenção"}</span>
+                <span style="font-size: 12px; color: var(--text-muted);">Solicitante: <strong>${solicitante || "--"}</strong></span>
+                ${observacao ? `<span style="font-size: 11px; color: #cbd5e1; font-style: italic;">Obs: ${observacao}</span>` : ''}
+              </div>
+            </td>
+          `;
+        } else {
+          colunaMeioHTML = `<td data-label="Origem">${abaBadgeHTML}</td>`;
+        }
+
         let tdPrazoHTML = '';
-        if (exibirPrazo) {
+        if (exibirFerram) {
           const dataFormatada = formatarDataExibicao(valPrazo);
           const statusPrazo = obterStatusEDiasPrazo(valPrazo);
           
@@ -1561,7 +1576,7 @@
             <td data-label="Local / Molde N°"><strong>${col1}</strong></td>
             <td data-label="Código">${col2}</td>
             <td data-label="Descrição">${col3}</td>
-            <td data-label="Origem">${abaBadgeHTML}</td>
+            ${colunaMeioHTML}
             ${tdPrazoHTML}
             <td class="col-acoes" data-label="Ações">
               <div class="btn-group-acoes">
