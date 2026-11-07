@@ -1459,22 +1459,21 @@
         const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex' && k !== '_origemAba');
         let headerHTML = "<tr>";
         colunas.forEach(col => {
-          let nomeExibicao = col.toUpperCase() === "COL_12" ? "STATUS" : col;
-          headerHTML += `<th>${nomeExibicao}</th>`;
+          headerHTML += `<th>${col}</th>`;
         });
         headerHTML += "</tr>";
         thead.innerHTML = headerHTML;
 
         let htmlHist = "";
         dados.forEach(item => {
-          const valPrazo = obterValorColuna(item, ["PRAZO", "PRAZO ESTIMADO", "Prazo"], -1);
-          const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
+          const valPrazo = item["PRAZO"] || item[colunas[7]] || "";
+          const valStatus = item["STATUS"] || item[colunas[14]] || item[colunas[11]] || "";
           const classeVencido = estaVencido(valPrazo, valStatus) ? 'class="prazo-vencido"' : '';
 
           htmlHist += `<tr ${classeVencido}>`;
           colunas.forEach(col => {
             let valor = item[col] || "";
-            if (col.toUpperCase().includes("PRAZO")) {
+            if (col.toUpperCase().includes("PRAZO") || col.toUpperCase().includes("DATA")) {
               valor = formatarDataExibicao(valor);
             }
             htmlHist += `<td data-label="${col}">${valor}</td>`;
@@ -1493,7 +1492,7 @@
           <th>Local / Molde N°</th>
           <th>Código</th>
           <th>Descrição</th>
-          ${exibirFerram ? '<th>Tipo de Serviço / Solicitante</th>' : '<th>Aba / Origem</th>'}
+          ${exibirFerram ? '<th>Tipo / Solicitante / Problema</th>' : '<th>Aba / Origem</th>'}
           ${exibirFerram ? '<th class="col-prazo">Prazo</th>' : ''}
           <th class="col-acoes">Ações</th>
         </tr>
@@ -1510,7 +1509,6 @@
       dados.forEach((item) => {
         const keys = Object.keys(item).filter(k => k !== '_rowIndex' && k !== '_origemAba');
 
-        // Extração por posição das colunas
         const col1 = item[keys[0]] || "";
         const col2 = item[keys[1]] || "";
         const col3 = item[keys[2]] || "";
@@ -1527,8 +1525,7 @@
           observacao = item[keys[8]] || item["OBS"] || "";
         }
         
-        const valStatus = item["COL_12"] || item["STATUS"] || item["Status"] || "";
-
+        const valStatus = item["STATUS"] || item[keys[14]] || "";
         const classeVencido = estaVencido(valPrazo, valStatus) ? 'class="prazo-vencido"' : '';
         const origemAba = item._origemAba || abaAtual;
         const abaBadgeHTML = formatarNomeAba(origemAba);
@@ -1553,7 +1550,7 @@
               <div style="display: flex; flex-direction: column; gap: 3px;">
                 <span style="font-weight: 600; color: #38bdf8;"><i class="fa-solid fa-screwdriver-wrench"></i> ${tipoServico || "Manutenção"}</span>
                 <span style="font-size: 12px; color: var(--text-muted);">Solicitante: <strong>${solicitante || "--"}</strong></span>
-                ${observacao ? `<span style="font-size: 11px; color: #cbd5e1; font-style: italic;">Obs: ${observacao}</span>` : ''}
+                <span style="font-size: 12px; color: #f87171; font-weight: 500;"><i class="fa-solid fa-triangle-exclamation"></i> Problema: <strong>${observacao || "Não informado"}</strong></span>
               </div>
             </td>
           `;
@@ -1678,7 +1675,6 @@
                   `&dataSaida=${encodeURIComponent(dataSaida)}` +
                   `&horaSaida=${encodeURIComponent(horaSaida)}` +
                   `&tecnico=${encodeURIComponent(tecnico)}` +
-                  `&liberadoPor=${encodeURIComponent(tecnico)}` +
                   `&acaoRealizada=${encodeURIComponent(acaoRealizada)}` +
                   `&callback=retornoAcao`;
 
