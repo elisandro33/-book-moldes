@@ -18,12 +18,36 @@
   <link rel="apple-touch-icon" href="./logo.png">
 
   <script>
+    let novoWorker = null;
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('Service Worker registado com sucesso:', reg.scope))
-          .catch(err => console.log('Falha ao registar o Service Worker:', err));
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+          reg.addEventListener('updatefound', () => {
+            novoWorker = reg.installing;
+            novoWorker.addEventListener('statechange', () => {
+              if (novoWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                document.getElementById('pwaUpdateBanner').style.display = 'flex';
+              }
+            });
+          });
+        });
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
       });
+    }
+
+    function atualizarAplicacao() {
+      if (novoWorker) {
+        novoWorker.postMessage({ action: 'skipWaiting' });
+      }
+      window.location.reload();
     }
   </script>
 
@@ -632,6 +656,20 @@
 		  </table>
 		</div>
 	  </main>
+	</div>
+
+	<!-- BANNER DE NOVA ATUALIZAÇÃO DISPONÍVEL -->
+	<div id="pwaUpdateBanner" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background-color: var(--card-bg); border: 1px solid var(--primary); padding: 14px 20px; border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 9999; align-items: center; justify-content: space-between; gap: 16px; max-width: 450px; width: 90%;">
+	  <div style="display: flex; align-items: center; gap: 12px;">
+	    <div style="width: 36px; height: 36px; background: rgba(59, 130, 246, 0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 18px; flex-shrink: 0;">
+	      <i class="fa-solid fa-rotate"></i>
+	    </div>
+	    <div>
+	      <h4 style="font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 2px;">Nova atualização disponível!</h4>
+	      <p style="font-size: 11px; color: var(--text-muted);">Uma nova versão foi publicada no GitHub.</p>
+	    </div>
+	  </div>
+	  <button onclick="atualizarAplicacao()" style="padding: 8px 14px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap;">Atualizar</button>
 	</div>
 
 	<!-- BANNER DE INSTALAÇÃO DO PWA -->
@@ -1477,26 +1515,31 @@
         }
 
         const colunas = Object.keys(dados[0]).filter(k => k !== '_rowIndex' && k !== '_origemAba');
+        
         let headerHTML = "<tr>";
         colunas.forEach(col => {
-          headerHTML += `<th>${col}</th>`;
+          if (col.toUpperCase() !== "ORIGEM") {
+            headerHTML += `<th>${col}</th>`;
+          }
         });
         headerHTML += "</tr>";
         thead.innerHTML = headerHTML;
 
         let htmlHist = "";
         dados.forEach(item => {
-          const valPrazo = item["PRAZO"] || item[colunas[7]] || "";
-          const valStatus = item["STATUS"] || item[colunas[14]] || item[colunas[11]] || "";
+          const valPrazo = item["PRAZO"] || "";
+          const valStatus = item["STATUS"] || "";
           const classeVencido = estaVencido(valPrazo, valStatus) ? 'class="prazo-vencido"' : '';
 
           htmlHist += `<tr ${classeVencido}>`;
           colunas.forEach(col => {
-            let valor = item[col] || "";
-            if (col.toUpperCase().includes("PRAZO") || col.toUpperCase().includes("DATA")) {
-              valor = formatarDataExibicao(valor);
+            if (col.toUpperCase() !== "ORIGEM") {
+              let valor = item[col] || "";
+              if (col.toUpperCase().includes("PRAZO") || col.toUpperCase().includes("DATA")) {
+                valor = formatarDataExibicao(valor);
+              }
+              htmlHist += `<td data-label="${col}">${valor}</td>`;
             }
-            htmlHist += `<td data-label="${col}">${valor}</td>`;
           });
           htmlHist += `</tr>`;
         });
@@ -1792,7 +1835,6 @@
       document.getElementById("ferrHora").value = agora.toTimeString().substring(0,5);
       document.getElementById("ferrPrazo").value = "";
       
-      // Limpar seleções de checkboxes
       document.querySelectorAll('input[name="chkCritico"]').forEach(el => el.checked = (el.value === "Não"));
       document.getElementById("chkPreventiva").checked = false;
       document.getElementById("chkCorretiva").checked = false;
@@ -1812,7 +1854,7 @@
       document.getElementById("ferrPrazo").value = "";
     }
 
-   function confirmarEnvioFerramentaria() {
+    function confirmarEnvioFerramentaria() {
       const abaOrigem = document.getElementById("ferrAbaOrigem").value || abaAtual;
       const rIndex = document.getElementById("ferrRowIndex").value;
       const local = document.getElementById("ferrLocal").value;
@@ -1825,7 +1867,6 @@
       const solicitante = document.getElementById("ferrSolicitante").value.trim();
       const obs = document.getElementById("ferrObs").value.trim();
 
-      // Obter valores selecionados dos checkboxes e rádios
       const radioCritico = document.querySelector('input[name="chkCritico"]:checked');
       const ehCritico = radioCritico ? radioCritico.value : "Não";
 
@@ -1835,7 +1876,6 @@
       if (document.getElementById("chkMelhoria").checked) tiposSelecionados.push("Melhoria");
       if (document.getElementById("chkModificacao").checked) tiposSelecionados.push("Modificação");
 
-      // Validação de campos obrigatórios
       if (!data || !hora || !prazo || !solicitante || !obs) {
         alert("Por favor, preencha todos os campos obrigatórios (Data, Hora, Prazo, Solicitante e Observação)!");
         return;
@@ -1846,10 +1886,7 @@
         return;
       }
 
-      let tiposTexto = `Crítico: ${ehCritico}`;
-      if (tiposSelecionados.length > 0) {
-        tiposTexto += ` | ${tiposSelecionados.join(", ")}`;
-      }
+      let tiposTexto = `Crítico: ${ehCritico} | ${tiposSelecionados.join(", ")}`;
 
       enviarNotificacao(`Item "${codigo}" foi enviado para manutenção.`);
 
@@ -1869,6 +1906,7 @@
 
       executarJSONP(url);
     }
+
     function retornoAcao(res) {
       if (res && res.status === "success") {
         alert(res.osNumber ? `Solicitação enviada com sucesso! OS Gerada: ${res.osNumber}` : "Operação realizada com sucesso!");
