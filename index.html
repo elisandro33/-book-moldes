@@ -18,7 +18,6 @@
   <link rel="apple-touch-icon" href="./logo.png">
 
   <script>
-    // Registo do Service Worker para PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
@@ -84,11 +83,11 @@
     .login-box h2 { margin-bottom: 8px; font-size: 22px; font-weight: 700; color: var(--text-main); }
     .login-box p { margin-bottom: 24px; font-size: 14px; color: var(--text-muted); }
     
-    .form-group { text-align: left; margin-bottom: 18px; }
+    .form-group { text-align: left; margin-bottom: 16px; }
     .form-group label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
     .form-control { 
       width: 100%; 
-      padding: 12px 14px; 
+      padding: 10px 14px; 
       background-color: #0f172a; 
       border: 1px solid var(--card-border); 
       border-radius: 8px; 
@@ -130,7 +129,6 @@
     /* SISTEMA PRINCIPAL LAYOUT */
     #appContainer { display: none; flex-direction: column; min-height: 100vh; background-color: var(--bg-dark); }
     
-    /* HEADER NAVBAR COM MENU DROPDOWN */
     header { 
       background-color: var(--card-bg);
       border-bottom: 1px solid var(--card-border);
@@ -152,7 +150,6 @@
     .user-name { font-size: 13px; font-weight: 600; color: var(--text-main); line-height: 1.2; }
     .user-role { font-size: 11px; color: var(--text-muted); text-transform: capitalize; }
     
-    /* MENU 3 PONTINHOS */
     .menu-dots-container { position: relative; }
     .btn-dots {
       background: rgba(255, 255, 255, 0.05);
@@ -202,10 +199,8 @@
     .dots-dropdown button:hover { background-color: rgba(255, 255, 255, 0.05); }
     .dots-dropdown button.btn-logout-menu { color: #f87171; border-top: 1px solid var(--card-border); }
 
-    /* CONTEÚDO PRINCIPAL */
     .main-content { padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 20px; flex-grow: 1; }
 
-    /* CARDS DE RESUMO KPI */
     .kpi-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -237,7 +232,6 @@
     .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .kpi-value { font-size: 22px; font-weight: 700; color: var(--text-main); margin-top: 2px; }
 
-    /* DROPDOWN DE SELEÇÃO DE ABAS */
     .tabs-select-container {
       background-color: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -269,7 +263,6 @@
       cursor: pointer;
     }
 
-    /* BARRA DE AÇÕES E PESQUISA */
     .actions-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
     .search-box { position: relative; flex: 1; min-width: 280px; }
     .search-box input { 
@@ -305,7 +298,6 @@
     }
     .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35); }
 
-    /* TABELA DESIGN PROFISSIONAL */
     .table-container { 
       width: 100%; 
       overflow-x: auto; 
@@ -390,7 +382,7 @@
 
     /* MODAIS */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-    .modal-content { background-color: var(--card-bg); border: 1px solid var(--card-border); padding: 28px; border-radius: 16px; width: 100%; max-width: 480px; box-shadow: var(--shadow-lg); animation: modalFadeIn 0.2s ease-out; }
+    .modal-content { background-color: var(--card-bg); border: 1px solid var(--card-border); padding: 28px; border-radius: 16px; width: 100%; max-width: 480px; box-shadow: var(--shadow-lg); animation: modalFadeIn 0.2s ease-out; max-height: 90vh; overflow-y: auto; }
     @keyframes modalFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
     .modal-content h3 { margin-bottom: 20px; color: var(--text-main); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
@@ -399,6 +391,38 @@
     .btn-cancelar:hover { background-color: rgba(255,255,255,0.05); color: var(--text-main); }
     .btn-salvar { padding: 10px 18px; background: linear-gradient(135deg, var(--success), var(--success-hover)); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); transition: all 0.2s ease-in-out; }
     .btn-salvar:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
+
+    /* ESTILO DOS CHECKBOXES NO MODAL DE FERRAMENTARIA */
+    .checkbox-group-container {
+      background-color: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .checkbox-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-main);
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .checkbox-label input[type="checkbox"], .checkbox-label input[type="radio"] {
+      accent-color: var(--primary);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
 
     /* RESPONSIVIDADE MOBILE */
     @media (max-width: 768px) {
@@ -803,9 +827,26 @@
 		  <input type="text" id="ferrSolicitante" class="form-control" placeholder="Nome do solicitante">
 		</div>
 
+		<!-- TIPO DE SERVIÇO EM CHECKBOXES -->
 		<div class="form-group">
-		  <label for="ferrTipos">Tipo de Serviço:</label>
-		  <input type="text" id="ferrTipos" class="form-control" placeholder="Ex: Manutenção Corretiva, Ajuste...">
+		  <label>Tipo de Serviço / Crítico:</label>
+		  <div class="checkbox-group-container">
+		    <div style="font-size: 11px; font-weight: 600; color: #38bdf8; text-transform: uppercase;">Crítico:</div>
+		    <div class="checkbox-row">
+		      <label class="checkbox-label"><input type="radio" name="chkCritico" value="Sim"> Sim</label>
+		      <label class="checkbox-label"><input type="radio" name="chkCritico" value="Não" checked> Não</label>
+		    </div>
+		    
+		    <div style="font-size: 11px; font-weight: 600; color: #38bdf8; text-transform: uppercase; margin-top: 4px;">Classificação:</div>
+		    <div class="checkbox-row">
+		      <label class="checkbox-label"><input type="checkbox" id="chkPreventiva" value="Preventiva"> Preventiva</label>
+		      <label class="checkbox-label"><input type="checkbox" id="chkCorretiva" value="Corretiva"> Corretiva</label>
+		    </div>
+		    <div class="checkbox-row">
+		      <label class="checkbox-label"><input type="checkbox" id="chkMelhoria" value="Melhoria"> Melhoria</label>
+		      <label class="checkbox-label"><input type="checkbox" id="chkModificacao" value="Modificação"> Modificação</label>
+		    </div>
+		  </div>
 		</div>
 
 		<div class="form-group">
@@ -823,7 +864,7 @@
 	<!-- MODAL: LIBERAR PARA O PLÁSTICO -->
 	<div id="modalLiberarPlastico" class="modal">
 	  <div class="modal-content">
-		<h3><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Liberar P/ Plástico</h3>
+		<h3><i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Liberar P/ Origem</h3>
 		<input type="hidden" id="libRowIndex">
 
 		<div class="form-group">
@@ -863,7 +904,6 @@
     const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
     let cacheTodasAbas = {};
 
-    /* LÓGICA DO BANNER DE INSTALAÇÃO PWA */
     let deferredPrompt;
     const pwaBanner = document.getElementById('pwaInstallBanner');
     const btnInstalar = document.getElementById('btnInstalarApp');
@@ -902,7 +942,6 @@
       deferredPrompt = null;
     });
 
-    /* NOTIFICAÇÕES DO NAVEGADOR */
     function solicitarPermissaoNotificacao() {
       if ("Notification" in window && Notification.permission !== "granted") {
         Notification.requestPermission();
@@ -918,7 +957,6 @@
       }
     }
 
-    /* CONTROLE DO MENU DE 3 PONTINHOS */
     function toggleMenuDots(event) {
       event.stopPropagation();
       const menu = document.getElementById("dropdownDotsMenu");
@@ -934,10 +972,8 @@
       fecharMenuDots();
     });
     
-    /* Função consultar */
     function executarConsultaHistorico() {
       const termo = document.getElementById("histFiltroUnico").value.trim().toLowerCase();
-
       const listaHistorico = cacheTodasAbas["HISTORICO_MANUTENCAO"] || dadosAbaAtual || [];
 
       if (!termo) {
@@ -948,16 +984,12 @@
       const resultados = listaHistorico.filter(item => {
         return Object.keys(item).some(chave => {
           if (chave === '_rowIndex' || chave === '_origemAba') return false;
-          
           let valor = item[chave];
           if (valor === null || valor === undefined) return false;
-
           let valorTexto = String(valor);
-
           if (chave.toUpperCase().includes("DATA") || chave.toUpperCase().includes("PRAZO")) {
             valorTexto = formatarDataExibicao(valorTexto);
           }
-
           return valorTexto.toLowerCase().includes(termo);
         });
       });
@@ -972,7 +1004,6 @@
       renderizarTabela(listaHistorico);
     }
 
-    /* AUTO-LOGIN AO ATUALIZAR A PÁGINA */
     window.addEventListener('DOMContentLoaded', () => {
       solicitarPermissaoNotificacao();
       const usuarioSalvo = localStorage.getItem('usuarioLogado');
@@ -1012,7 +1043,6 @@
       script.onload = () => document.body.removeChild(script);
     }
 
-    /* FUNÇÕES DE LOGIN & SESSÃO */
     function toggleSenha(inputId) {
       const passInput = document.getElementById(inputId);
       if (passInput) {
@@ -1075,14 +1105,10 @@
         const isAdmin  = (uName === "admin" || uRole === "admin");
 
         const btnCadUser = document.getElementById("btnCadastrarUsuario");
-        if (btnCadUser) {
-          btnCadUser.style.display = isAdmin ? "flex" : "none";
-        }
+        if (btnCadUser) btnCadUser.style.display = isAdmin ? "flex" : "none";
 
         const optUsers = document.getElementById("optUsuarios");
-        if (optUsers) {
-          optUsers.style.display = isAdmin ? "block" : "none";
-        }
+        if (optUsers) optUsers.style.display = isAdmin ? "block" : "none";
 
         carregarTodasAbasCache();
 
@@ -1095,13 +1121,11 @@
           trocarAba('ferramentaria');
         } else {
           document.querySelectorAll(".opt-admin").forEach(el => el.style.display = "block");
-          
           if (isNivel1) {
             document.getElementById("btnAddMolde").style.display = "none";
           } else {
             document.getElementById("btnAddMolde").style.display = "flex";
           }
-          
           selectAbas.value = "ATUALIZADA";
           trocarAba('ATUALIZADA');
         }
@@ -1123,7 +1147,6 @@
       restaurarEstadoLogin();
     }
 
-    /* GESTÃO DE USUÁRIOS (ADMIN) */
     function abrirModalCadastrarUsuario() {
       document.getElementById("newUser").value = "";
       document.getElementById("newPass").value = "";
@@ -1212,7 +1235,6 @@
       }
     }
 
-    /* CARREGAMENTO DE DADOS */
     function carregarTodasAbasCache() {
       const url = `${BASE_API}?action=GET_ALL_DATA&callback=retornoGeralCache`;
       executarJSONP(url);
@@ -1409,7 +1431,6 @@
       const isNivel1 = (uName === "nivel1" || uName === "nível1" || uRole === "nivel1" || uRole === "nível 1" || uRole === "nivel 1");
       const isAdmin  = (uName === "admin" || uRole === "admin");
 
-      /* USUÁRIOS (ADMIN) */
       if (abaAtual === "USUARIOS") {
         thead.innerHTML = `
           <tr>
@@ -1448,7 +1469,6 @@
         return;
       }
 
-      /* HISTÓRICO DE MANUTENÇÃO */
       if (abaAtual === "HISTORICO_MANUTENCAO" && !ehPesquisa) {
         if (!dados || dados.length === 0) {
           thead.innerHTML = `<tr><th>Informação</th></tr>`;
@@ -1484,7 +1504,6 @@
         return;
       }
 
-      /* VISUALIZAÇÃO PADRÃO DE MOLDES E FERRAMENTARIA */
       const exibirFerram = (abaAtual === "ferramentaria");
 
       thead.innerHTML = `
@@ -1573,10 +1592,7 @@
         if (exibirFerram) {
           const dataFormatada = formatarDataExibicao(valPrazo);
           const statusPrazo = obterStatusEDiasPrazo(valPrazo);
-          
-          const badgeHTML = (valPrazo && statusPrazo.texto) 
-            ? `<span class="badge-prazo ${statusPrazo.classe}">${statusPrazo.texto}</span>` 
-            : '';
+          const badgeHTML = (valPrazo && statusPrazo.texto) ? `<span class="badge-prazo ${statusPrazo.classe}">${statusPrazo.texto}</span>` : '';
 
           tdPrazoHTML = `
             <td class="col-prazo" data-label="Prazo">
@@ -1615,7 +1631,6 @@
       clearTimeout(timerBuscaGeral);
       timerBuscaGeral = setTimeout(() => {
         const termo = document.getElementById("txtBusca").value.trim().toLowerCase();
-        
         if (!termo) {
           renderizarTabela(dadosAbaAtual);
           return;
@@ -1625,7 +1640,6 @@
         TODAS_AS_ABAS.forEach(aba => {
           if (aba === "HISTORICO_MANUTENCAO") return;
           const lista = cacheTodasAbas[aba] || [];
-          
           lista.forEach(item => {
             const atende = Object.keys(item).some(k => {
               if (k === '_rowIndex' || k === '_origemAba') return false;
@@ -1778,6 +1792,13 @@
       document.getElementById("ferrHora").value = agora.toTimeString().substring(0,5);
       document.getElementById("ferrPrazo").value = "";
       
+      // Limpar seleções de checkboxes
+      document.querySelectorAll('input[name="chkCritico"]').forEach(el => el.checked = (el.value === "Não"));
+      document.getElementById("chkPreventiva").checked = false;
+      document.getElementById("chkCorretiva").checked = false;
+      document.getElementById("chkMelhoria").checked = false;
+      document.getElementById("chkModificacao").checked = false;
+      
       if (usuarioLogado) {
         document.getElementById("ferrSolicitante").value = usuarioLogado.user || "";
       }
@@ -1787,7 +1808,6 @@
 
     function fecharModalFerramentaria() {
       document.getElementById("modalFerramentaria").style.display = "none";
-      document.getElementById("ferrTipos").value = "";
       document.getElementById("ferrObs").value = "";
       document.getElementById("ferrPrazo").value = "";
     }
@@ -1803,8 +1823,22 @@
       const hora = document.getElementById("ferrHora").value;
       const prazo = document.getElementById("ferrPrazo").value;
       const solicitante = document.getElementById("ferrSolicitante").value.trim();
-      const tipos = document.getElementById("ferrTipos").value.trim();
       const obs = document.getElementById("ferrObs").value.trim();
+
+      // Obter valores selecionados dos checkboxes e rádios
+      const radioCritico = document.querySelector('input[name="chkCritico"]:checked');
+      const ehCritico = radioCritico ? radioCritico.value : "Não";
+
+      let tiposSelecionados = [];
+      if (document.getElementById("chkPreventiva").checked) tiposSelecionados.push("Preventiva");
+      if (document.getElementById("chkCorretiva").checked) tiposSelecionados.push("Corretiva");
+      if (document.getElementById("chkMelhoria").checked) tiposSelecionados.push("Melhoria");
+      if (document.getElementById("chkModificacao").checked) tiposSelecionados.push("Modificação");
+
+      let tiposTexto = `Crítico: ${ehCritico}`;
+      if (tiposSelecionados.length > 0) {
+        tiposTexto += ` | ${tiposSelecionados.join(", ")}`;
+      }
 
       if (!solicitante) {
         alert("Informe o nome do solicitante!");
@@ -1823,7 +1857,7 @@
                   `&hora=${encodeURIComponent(hora)}` +
                   `&prazo=${encodeURIComponent(prazo)}` +
                   `&solicitante=${encodeURIComponent(solicitante)}` +
-                  `&tipos=${encodeURIComponent(tipos)}` +
+                  `&tipos=${encodeURIComponent(tiposTexto)}` +
                   `&obs=${encodeURIComponent(obs)}` +
                   `&callback=retornoAcao`;
 
