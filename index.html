@@ -1812,7 +1812,7 @@
       document.getElementById("ferrPrazo").value = "";
     }
 
-    function confirmarEnvioFerramentaria() {
+   function confirmarEnvioFerramentaria() {
       const abaOrigem = document.getElementById("ferrAbaOrigem").value || abaAtual;
       const rIndex = document.getElementById("ferrRowIndex").value;
       const local = document.getElementById("ferrLocal").value;
@@ -1835,14 +1835,20 @@
       if (document.getElementById("chkMelhoria").checked) tiposSelecionados.push("Melhoria");
       if (document.getElementById("chkModificacao").checked) tiposSelecionados.push("Modificação");
 
+      // Validação de campos obrigatórios
+      if (!data || !hora || !prazo || !solicitante || !obs) {
+        alert("Por favor, preencha todos os campos obrigatórios (Data, Hora, Prazo, Solicitante e Observação)!");
+        return;
+      }
+
+      if (tiposSelecionados.length === 0) {
+        alert("Por favor, selecione pelo menos uma Classificação de Serviço (Preventiva, Corretiva, Melhoria ou Modificação)!");
+        return;
+      }
+
       let tiposTexto = `Crítico: ${ehCritico}`;
       if (tiposSelecionados.length > 0) {
         tiposTexto += ` | ${tiposSelecionados.join(", ")}`;
-      }
-
-      if (!solicitante) {
-        alert("Informe o nome do solicitante!");
-        return;
       }
 
       enviarNotificacao(`Item "${codigo}" foi enviado para manutenção.`);
@@ -1863,7 +1869,6 @@
 
       executarJSONP(url);
     }
-
     function retornoAcao(res) {
       if (res && res.status === "success") {
         alert(res.osNumber ? `Solicitação enviada com sucesso! OS Gerada: ${res.osNumber}` : "Operação realizada com sucesso!");
