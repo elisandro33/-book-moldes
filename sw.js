@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-moldes-v2';
+const CACHE_NAME = 'gestao-moldes-v3';
 const urlsToCache = [
   './index.html',
   './logo.png',
