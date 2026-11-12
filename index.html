@@ -364,10 +364,10 @@
     .prazo-vencido { background-color: rgba(239, 68, 68, 0.12) !important; }
     .prazo-vencido td { color: #fca5a5 !important; }
 
-    table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 10%; }
-    table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 14%; }
-    table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { width: 18%; white-space: normal; word-wrap: break-word; }
-    table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 30%; white-space: normal; word-wrap: break-word; }
+    table:not(.tabela-historico) th:nth-child(1), table:not(.tabela-historico) td:nth-child(1) { width: 14%; }
+    table:not(.tabela-historico) th:nth-child(2), table:not(.tabela-historico) td:nth-child(2) { width: 15%; }
+    table:not(.tabela-historico) th:nth-child(3), table:not(.tabela-historico) td:nth-child(3) { width: 32%; white-space: normal; word-wrap: break-word; }
+    table:not(.tabela-historico) th:nth-child(4), table:not(.tabela-historico) td:nth-child(4) { width: 25%; white-space: normal; word-wrap: break-word; }
 
     table.tabela-historico { table-layout: auto !important; min-width: 1100px; }
     table.tabela-historico th, table.tabela-historico td { white-space: normal !important; word-wrap: break-word; max-width: 280px; }
@@ -381,6 +381,7 @@
     .badge-ferram { background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
     .badge-qlx { background-color: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
     .badge-semlocal { background-color: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+    .badge-codigos { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
 
     .badge-prazo { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
     .prazo-normal { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
@@ -606,6 +607,7 @@
 		  <label for="selectAbas"><i class="fa-solid fa-folder-tree"></i> Selecionar Aba:</label>
 		  <select id="selectAbas" class="select-aba-dropdown" onchange="trocarAba(this.value)">
 		    <option value="ATUALIZADA" class="opt-admin">Plástico</option>
+		    <option value="CODIGOS">Códigos (Referência)</option>
 		    <option value="Moldes QLX" class="opt-admin">Moldes QLX</option>
 		    <option value="Sem local" class="opt-admin">Sem Local</option>
 		    <option value="ferramentaria">Ferramentaria</option>
@@ -618,7 +620,7 @@
 		<div class="actions-bar">
 		  <div class="search-box">
 			<i class="fa-solid fa-magnifying-glass"></i>
-			<input type="text" id="txtBusca" placeholder="Pesquisar moldes, códigos ou locais..." onkeyup="filtrarTabelaGlobal()">
+			<input type="text" id="txtBusca" placeholder="Pesquisar moldes, códigos de cliente, códigos Qualifix ou locais..." onkeyup="filtrarTabelaGlobal()">
 		  </div>
 		  <button class="btn-add" id="btnAddMolde" onclick="abrirModalAdicionar()"><i class="fa-solid fa-plus"></i> Novo Molde</button>
 		</div>
@@ -763,25 +765,26 @@
 	<!-- MODAL: ADICIONAR MOLDE -->
 	<div id="modalAdicionarMolde" class="modal">
 	  <div class="modal-content">
-		<h3><i class="fa-solid fa-plus-circle" style="color: var(--success);"></i> Adicionar Molde</h3>
+		<h3><i class="fa-solid fa-plus-circle" style="color: var(--success);"></i> Adicionar Registro</h3>
 
 		<div class="form-group">
 		  <label for="addAbaDestino">Destino (Aba):</label>
 		  <select id="addAbaDestino" class="form-control">
 			<option value="ATUALIZADA">Plástico</option>
+			<option value="CODIGOS">Códigos (Referência)</option>
 			<option value="Moldes QLX">Moldes QLX</option>
 			<option value="Sem local">Sem Local</option>
 		  </select>
 		</div>
 
 		<div class="form-group">
-		  <label for="addLocal">Local / Molde N°:</label>
-		  <input type="text" id="addLocal" class="form-control" placeholder="Ex: A1, MOD-058...">
+		  <label for="addLocal">Local / Molde N° (ou Cód. Cliente):</label>
+		  <input type="text" id="addLocal" class="form-control" placeholder="Ex: A1, MOD-058 ou Cód. Cliente...">
 		</div>
 
 		<div class="form-group">
-		  <label for="addCodigo">Código:</label>
-		  <input type="text" id="addCodigo" class="form-control" placeholder="Código do molde">
+		  <label for="addCodigo">Código (ou Cód. Qualifix):</label>
+		  <input type="text" id="addCodigo" class="form-control" placeholder="Ex: 00.500.003.60">
 		</div>
 
 		<div class="form-group">
@@ -791,7 +794,7 @@
 
 		<div class="modal-buttons">
 		  <button onclick="fecharModalAdicionar()" class="btn-cancelar">Cancelar</button>
-		  <button onclick="salvarNovoMolde()" class="btn-salvar">Salvar Molde</button>
+		  <button onclick="salvarNovoMolde()" class="btn-salvar">Salvar Registro</button>
 		</div>
 	  </div>
 	</div>
@@ -799,7 +802,7 @@
 	<!-- MODAL: EDITAR MOLDE -->
 	<div id="modalEditarMolde" class="modal">
 	  <div class="modal-content">
-		<h3><i class="fa-solid fa-pen-to-square" style="color: var(--warning);"></i> Editar Molde</h3>
+		<h3><i class="fa-solid fa-pen-to-square" style="color: var(--warning);"></i> Editar Registro</h3>
 		<input type="hidden" id="editRowIndex">
 		<input type="hidden" id="editAbaOrigem">
 
@@ -807,6 +810,7 @@
 		  <label for="editAbaDestino">Aba / Destino:</label>
 		  <select id="editAbaDestino" class="form-control">
 			<option value="ATUALIZADA">Plástico</option>
+			<option value="CODIGOS">Códigos (Referência)</option>
 			<option value="Moldes QLX">Moldes QLX</option>
 			<option value="Sem local">Sem Local</option>
 			<option value="ferramentaria">Ferramentaria</option>
@@ -814,12 +818,12 @@
 		</div>
 
 		<div class="form-group">
-		  <label for="editLocal">Local / Molde N°:</label>
+		  <label for="editLocal">Local / Molde N° (ou Cód. Cliente):</label>
 		  <input type="text" id="editLocal" class="form-control">
 		</div>
 
 		<div class="form-group">
-		  <label for="editCodigo">Código:</label>
+		  <label for="editCodigo">Código (ou Cód. Qualifix):</label>
 		  <input type="text" id="editCodigo" class="form-control">
 		</div>
 
@@ -939,7 +943,8 @@
     let abaAtual = "ATUALIZADA";
     let dadosAbaAtual = [];
     
-    const TODAS_AS_ABAS = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
+    const TODAS_AS_ABAS = ["ATUALIZADA", "CODIGOS", "Moldes QLX", "Sem local", "ferramentaria"];
+    const ABAS_MOLDES_CONTAGEM = ["ATUALIZADA", "Moldes QLX", "Sem local", "ferramentaria"];
     let cacheTodasAbas = {};
 
     let deferredPrompt;
@@ -1064,7 +1069,7 @@
       if (elFerram) elFerram.innerText = (cacheTodasAbas["ferramentaria"] || []).length;
 
       let total = 0;
-      TODAS_AS_ABAS.forEach(aba => {
+      ABAS_MOLDES_CONTAGEM.forEach(aba => {
         total += (cacheTodasAbas[aba] || []).length;
       });
       if (elGeral) elGeral.innerText = total;
@@ -1294,7 +1299,7 @@
       document.getElementById("txtBusca").value = "";
       
       const selectDestino = document.getElementById("addAbaDestino");
-      if (["ATUALIZADA", "Moldes QLX", "Sem local"].includes(nomeAba)) {
+      if (["ATUALIZADA", "CODIGOS", "Moldes QLX", "Sem local"].includes(nomeAba)) {
         selectDestino.value = nomeAba;
       }
 
@@ -1450,6 +1455,7 @@
 
     function formatarNomeAba(nomeAba) {
       if (nomeAba === "ATUALIZADA") return `<span class="badge-aba badge-plastico"><i class="fa-solid fa-industry"></i> Plástico</span>`;
+      if (nomeAba === "CODIGOS") return `<span class="badge-aba badge-codigos"><i class="fa-solid fa-barcode"></i> Códigos</span>`;
       if (nomeAba === "ferramentaria") return `<span class="badge-aba badge-ferram"><i class="fa-solid fa-wrench"></i> Ferramentaria</span>`;
       if (nomeAba === "Moldes QLX") return `<span class="badge-aba badge-qlx"><i class="fa-solid fa-box-archive"></i> Moldes QLX</span>`;
       if (nomeAba === "Sem local") return `<span class="badge-aba badge-semlocal"><i class="fa-solid fa-location-dot"></i> Sem Local</span>`;
@@ -1547,12 +1553,13 @@
         return;
       }
 
-      const exibirFerram = (abaAtual === "ferramentaria");
+      const exibirFerram = (abaAtual === "ferramentaria" && !ehPesquisa);
+      const ehAbaCodigos = (abaAtual === "CODIGOS" && !ehPesquisa);
 
       thead.innerHTML = `
         <tr>
-          <th>Local / Molde N°</th>
-          <th>Código</th>
+          <th>${ehAbaCodigos ? 'Código Cliente' : (ehPesquisa ? 'Local / Cód. Cliente' : 'Local / Molde N°')}</th>
+          <th>${ehAbaCodigos ? 'Código Qualifix' : (ehPesquisa ? 'Código / Qualifix' : 'Código')}</th>
           <th>Descrição</th>
           ${exibirFerram ? '<th>Detalhes da O.S. (Serviço / Solicitante / Problema)</th>' : '<th>Aba / Origem</th>'}
           ${exibirFerram ? '<th class="col-prazo">Prazo</th>' : ''}
@@ -1595,10 +1602,11 @@
         const classeVencido = estaVencido(valPrazo, valStatus) ? 'class="prazo-vencido"' : '';
         const origemAba = item._origemAba || abaAtual;
         const abaBadgeHTML = formatarNomeAba(origemAba);
+        const isItemCodigos = (origemAba === "CODIGOS");
 
         let btnAcaoPrincipalHTML = "";
         
-        if (!isNivel1) {
+        if (!isNivel1 && !isItemCodigos) {
           if (origemAba === "ferramentaria") {
             btnAcaoPrincipalHTML = `<button class="btn-tbl btn-liberar" onclick="abrirModalLiberarObj(${item._rowIndex}, '${col2.replace(/'/g, "\\'")}')"><i class="fa-solid fa-check"></i> Liberar</button>`;
           } else if (!isFerram) {
@@ -1647,10 +1655,13 @@
           `;
         }
 
+        const labelCol1 = isItemCodigos ? "Código Cliente" : "Local / Molde N°";
+        const labelCol2 = isItemCodigos ? "Código Qualifix" : "Código";
+
         htmlBuffer += `
           <tr ${classeVencido}>
-            <td data-label="Local / Molde N°"><strong>${col1}</strong></td>
-            <td data-label="Código">${col2}</td>
+            <td data-label="${labelCol1}"><strong>${col1}</strong></td>
+            <td data-label="${labelCol2}">${col2}</td>
             <td data-label="Descrição">${col3}</td>
             ${colunaMeioHTML}
             ${tdPrazoHTML}
@@ -1817,7 +1828,7 @@
     }
 
     function excluirMoldeObj(aba, rowIndex, codigo) {
-      if (confirm(`Tem certeza que deseja excluir o molde '${codigo}' da aba ${aba}?`)) {
+      if (confirm(`Tem certeza que deseja excluir o registro '${codigo}' da aba ${aba}?`)) {
         const url = `${BASE_API}?action=EXCLUIR_MOLDE&sheet=${encodeURIComponent(aba)}&rowIndex=${rowIndex}&callback=retornoAcao`;
         executarJSONP(url);
       }
